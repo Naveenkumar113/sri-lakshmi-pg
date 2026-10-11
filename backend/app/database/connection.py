@@ -1,13 +1,19 @@
 import os
-from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-# Load .env file explicitly
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 # Default to PostgreSQL if specified, or SQLite for zero-dependency execution
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./sri_lakshmi_pg.db")
+
+# Fix SQLAlchemy dialect prefix if cloud provider gives postgres://
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 # SQLite needs check_same_thread=False
 connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
