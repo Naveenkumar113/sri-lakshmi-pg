@@ -193,15 +193,6 @@ docker compose up --build -d
 
 ---
 
-## 🔑 Default Seed Credentials
-
-For evaluation and demonstration purposes, the system initializes with pre-configured accounts:
-
-| Role | Email | Password | Access Level |
-|---|---|---|---|
-| **Administrator** | `admin@srilakshmipg.com` | `Admin@PG2026!` | Full ERP Portal (`/admin/*`) |
-| **Resident / User** | `karthik.r@example.com` | `User@PG2026!` | Resident Portal (`/dashboard`) |
-
 ---
 
 ## 🧪 Automated Testing
