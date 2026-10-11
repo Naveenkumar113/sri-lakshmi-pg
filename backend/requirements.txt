@@ -9,6 +9,7 @@ passlib>=1.7.4
 python-multipart>=0.0.9
 email-validator>=2.1.0
 psycopg2-binary>=2.9.9
+psycopg[binary]>=3.1.18
 requests>=2.31.0
 python-dateutil>=2.8.2
 python-dotenv>=1.0.0
