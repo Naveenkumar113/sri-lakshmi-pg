@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 18 Enterprise Relational Database
+  postgres:
+    image: postgres:18-alpine
+    container_name: sri_lakshmi_pg_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: pg_password_2026
+      POSTGRES_DB: sri_lakshmi_pg
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/migrations/001_initial_schema.sql:/docker-entrypoint-initdb.d/001_initial_schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend API Server
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sri_lakshmi_pg_api
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://postgres:pg_password_2026@postgres:5432/sri_lakshmi_pg
+      JWT_SECRET: sri_lakshmi_srinivasa_pg_secret_jwt_key_2026_super_secure
+      PORT: 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # React Frontend (Vite & Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sri_lakshmi_pg_ui
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
