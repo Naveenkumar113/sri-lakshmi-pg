@@ -60,14 +60,26 @@ export default function Home() {
     }
   };
 
-  const parsedFaqs = pgInfo?.faq_data ? JSON.parse(pgInfo.faq_data) : [
-    { q: "How can I visit the PG?", a: "Click 'Schedule a Visit' to choose your convenient date and time. Our manager will confirm your appointment." },
-    { q: "How can I book a room?", a: "Explore our room list, select single, double, triple, or 4-sharing, and submit your booking request." },
-    { q: "Do I need an account?", a: "You can browse all rooms, photos, and information freely. An account is only required when booking or scheduling a visit." },
-    { q: "Are AC and Non-AC rooms available?", a: "Yes, both AC and Non-AC options are available." },
-    { q: "How does approval work?", a: "The PG administration reviews live bed availability and approves your request, sending an instant notification." },
-    { q: "How can I contact the PG?", a: "Call +91 78937 44206 or +91 90032 80430, or message us directly via WhatsApp." }
+  let parsedFaqs = [
+    { q: "How can I visit the PG in Velachery?", a: "You can easily schedule a physical visit by clicking 'Schedule a Visit' on this website. Choose your preferred date and time slot. Our PG manager will confirm the slot, and you'll receive a confirmation with directions." },
+    { q: "What is the location of the PG?", a: "We are located at 3, Bhavani St, Bharathi Nagar, Velachery, Chennai, Tamil Nadu 600113 — within 5-10 minutes from Velachery MRTS station, Taramani IT hub, and 100 Feet Road." },
+    { q: "Are both AC and Non-AC rooms available?", a: "Yes! We offer single, double, triple, and four-sharing options in both AC and well-ventilated Non-AC categories to suit different budgets." },
+    { q: "Do I need to create an account to view rooms?", a: "No, you can browse all photos, room types, facilities, and contact details without logging in. Registration is only needed when booking a room or scheduling an official visit." },
+    { q: "What are the check-in and gate hours?", a: "The PG is open 24 hours daily with round-the-clock security and gated access. Residents have convenient round-the-clock access with their biometric/register ID." },
+    { q: "What amenities are included with the room?", a: "High-speed Wi-Fi, fully automatic washing machines, 24/7 drinking water via commercial RO plant, power backup, hot water geysers, individual steel lockers, and housekeeping are included." },
+    { q: "How does room booking approval work?", a: "When you submit a room booking request, our manager verifies real-time bed availability in that specific room, reviews your profile, and approves the allocation." }
   ];
+
+  if (pgInfo?.faq_data) {
+    try {
+      const data = typeof pgInfo.faq_data === 'string' ? JSON.parse(pgInfo.faq_data) : pgInfo.faq_data;
+      if (Array.isArray(data) && data.length > 0) {
+        parsedFaqs = data;
+      }
+    } catch (e) {
+      console.warn("Could not parse server faq_data, using default FAQs", e);
+    }
+  }
 
   return (
     <div>
