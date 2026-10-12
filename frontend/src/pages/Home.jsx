@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import LightboxModal from '../components/LightboxModal';
@@ -18,6 +18,13 @@ export default function Home() {
 
   // Lightbox state
   const [lightboxIndex, setLightboxIndex] = useState(null);
+
+  // FAQ Accordion state
+  const [openFaqIndex, setOpenFaqIndex] = useState(0);
+
+  const toggleFaq = (idx) => {
+    setOpenFaqIndex((prev) => (prev === idx ? null : idx));
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -624,31 +631,42 @@ export default function Home() {
           </div>
 
           <div className="accordion accordion-flush shadow-sm rounded-4 border overflow-hidden" id="faqAccordion">
-            {parsedFaqs.map((faq, idx) => (
-              <div className="accordion-item" key={idx}>
-                <h2 className="accordion-header" id={`heading${idx}`}>
-                  <button
-                    className={`accordion-button fw-bold text-dark ${idx !== 0 ? 'collapsed' : ''}`}
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target={`#collapse${idx}`}
-                    aria-expanded={idx === 0}
-                    aria-controls={`collapse${idx}`}
-                  >
-                    {faq.q}
-                  </button>
-                </h2>
-                <div
-                  id={`collapse${idx}`}
-                  className={`accordion-collapse collapse ${idx === 0 ? 'show' : ''}`}
-                  data-bs-parent="#faqAccordion"
-                >
-                  <div className="accordion-body text-secondary small lh-lg">
-                    {faq.a}
-                  </div>
+            {parsedFaqs.map((faq, idx) => {
+              const isOpen = openFaqIndex === idx;
+              return (
+                <div className="accordion-item" key={idx}>
+                  <h2 className="accordion-header" id={`heading${idx}`}>
+                    <button
+                      className={`accordion-button fw-bold text-dark ${!isOpen ? 'collapsed' : ''}`}
+                      type="button"
+                      onClick={() => toggleFaq(idx)}
+                      aria-expanded={isOpen}
+                      aria-controls={`collapse${idx}`}
+                      style={{ cursor: 'pointer', transition: 'background-color 0.2s ease, color 0.2s ease' }}
+                    >
+                      {faq.q}
+                    </button>
+                  </h2>
+                  <AnimatePresence initial={false}>
+                    {isOpen && (
+                      <motion.div
+                        id={`collapse${idx}`}
+                        className="accordion-collapse show"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25, ease: 'easeInOut' }}
+                        style={{ overflow: 'hidden' }}
+                      >
+                        <div className="accordion-body text-secondary small lh-lg">
+                          {faq.a}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
