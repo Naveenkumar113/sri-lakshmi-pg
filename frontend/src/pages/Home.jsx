@@ -5,16 +5,22 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import LightboxModal from '../components/LightboxModal';
 import Hero3DVisual from '../components/Hero3DVisual';
+import {
+  DEFAULT_PG_INFO,
+  DEFAULT_ROOMS,
+  DEFAULT_FACILITIES,
+  DEFAULT_GALLERY
+} from '../data/defaultData';
 
 export default function Home() {
   const { requireAuth } = useAuth();
   const navigate = useNavigate();
 
-  const [pgInfo, setPgInfo] = useState(null);
-  const [rooms, setRooms] = useState([]);
-  const [facilities, setFacilities] = useState([]);
-  const [gallery, setGallery] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [pgInfo, setPgInfo] = useState(DEFAULT_PG_INFO);
+  const [rooms, setRooms] = useState(DEFAULT_ROOMS);
+  const [facilities, setFacilities] = useState(DEFAULT_FACILITIES);
+  const [gallery, setGallery] = useState(DEFAULT_GALLERY);
+  const [loading, setLoading] = useState(false);
 
   // Lightbox state
   const [lightboxIndex, setLightboxIndex] = useState(null);
@@ -29,18 +35,27 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [infoRes, roomsRes, facRes, galRes] = await Promise.all([
+        const results = await Promise.allSettled([
           api.get('/pg-details'),
           api.get('/rooms'),
           api.get('/facilities'),
           api.get('/gallery')
         ]);
-        setPgInfo(infoRes.data);
-        setRooms(roomsRes.data);
-        setFacilities(facRes.data);
-        setGallery(galRes.data);
+
+        if (results[0].status === 'fulfilled' && results[0].value?.data) {
+          setPgInfo(results[0].value.data);
+        }
+        if (results[1].status === 'fulfilled' && Array.isArray(results[1].value?.data) && results[1].value.data.length > 0) {
+          setRooms(results[1].value.data);
+        }
+        if (results[2].status === 'fulfilled' && Array.isArray(results[2].value?.data) && results[2].value.data.length > 0) {
+          setFacilities(results[2].value.data);
+        }
+        if (results[3].status === 'fulfilled' && Array.isArray(results[3].value?.data) && results[3].value.data.length > 0) {
+          setGallery(results[3].value.data);
+        }
       } catch (err) {
-        console.error('Error fetching home data', err);
+        console.warn('Network issue fetching home data, maintaining verified PG defaults', err);
       } finally {
         setLoading(false);
       }
@@ -363,16 +378,31 @@ export default function Home() {
           </div>
 
           <div className="row g-4">
-            {rooms.slice(0, 3).map((room) => {
-              const imagesList = room.images ? JSON.parse(room.images) : ['/images/bedroom_double.png'];
+            {rooms.slice(0, 3).map((room, idx) => {
+              let imagesList = ['/images/bedroom_double.png'];
+              if (Array.isArray(room.images)) {
+                imagesList = room.images;
+              } else if (typeof room.images === 'string' && room.images.trim()) {
+                try {
+                  const parsed = JSON.parse(room.images);
+                  if (Array.isArray(parsed) && parsed.length > 0) imagesList = parsed;
+                } catch (e) {
+                  imagesList = [room.images];
+                }
+              }
               const displayImg = imagesList[0] || '/images/bedroom_double.png';
+              const statusRaw = room.status || 'AVAILABLE';
+              const statusLabel = statusRaw.replace('_', ' ');
+              const statusClass = statusRaw.toLowerCase().replace('_', '-');
+              const sharingLabel = room.sharing_type || `${(room.room_type || 'Double').replace('_', ' ')} Sharing`;
 
               return (
-                <div key={room.id} className="col-md-6 col-lg-4">
+                <div key={room.id || `room-${idx}`} className="col-md-6 col-lg-4">
                   <div className="pg-card h-100 d-flex flex-column">
                     <div className="position-relative overflow-hidden" style={{ height: '220px' }}>
                       <img
                         src={displayImg}
+                        onError={(e) => { e.target.src = '/images/bedroom_double.png'; }}
                         alt={`Room ${room.room_number}`}
                         className="w-100 h-100"
                         style={{ objectFit: 'cover' }}
@@ -383,8 +413,8 @@ export default function Home() {
                         </span>
                       </div>
                       <div className="position-absolute top-0 end-0 m-2">
-                        <span className={`status-pill status-${room.status.toLowerCase().replace('_', '-')}`}>
-                          {room.status.replace('_', ' ')}
+                        <span className={`status-pill status-${statusClass}`}>
+                          {statusLabel}
                         </span>
                       </div>
                     </div>
@@ -393,10 +423,10 @@ export default function Home() {
                       <div>
                         <div className="d-flex justify-content-between align-items-center mb-2">
                           <h5 className="fw-bold mb-0">Room {room.room_number}</h5>
-                          <span className="small text-muted fw-semibold">Floor {room.floor}</span>
+                          <span className="small text-muted fw-semibold">Floor {room.floor || 1}</span>
                         </div>
                         <p className="text-secondary small mb-3">
-                          {room.room_type.replace('_', ' ')} Sharing • {room.capacity} Bed Capacity
+                          {sharingLabel} • {room.capacity || 2} Bed Capacity
                         </p>
                         <p className="text-muted small line-clamp-2 mb-3">
                           {room.description || 'Comfortable accommodation with individual lockers, sturdy cots, and daily cleaning.'}

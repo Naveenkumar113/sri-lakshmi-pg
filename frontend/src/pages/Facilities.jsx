@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import { DEFAULT_FACILITIES } from '../data/defaultData';
 
 export default function Facilities() {
-  const [facilities, setFacilities] = useState([]);
+  const [facilities, setFacilities] = useState(DEFAULT_FACILITIES);
   const [activeCategory, setActiveCategory] = useState('ALL');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchFacilities = async () => {
       try {
         const res = await api.get('/facilities');
-        setFacilities(res.data);
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          setFacilities(res.data);
+        }
       } catch (err) {
-        console.error('Failed to load facilities', err);
+        console.warn('Could not load live facilities, keeping verified PG amenities', err);
       } finally {
         setLoading(false);
       }

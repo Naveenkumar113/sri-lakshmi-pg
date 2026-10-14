@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { DEFAULT_ROOMS } from '../data/defaultData';
 
 export default function Rooms() {
   const { requireAuth } = useAuth();
   const navigate = useNavigate();
 
-  const [rooms, setRooms] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [rooms, setRooms] = useState(DEFAULT_ROOMS);
+  const [loading, setLoading] = useState(false);
   const [selectedType, setSelectedType] = useState('ALL');
   const [acFilter, setAcFilter] = useState('ALL');
 
@@ -16,9 +17,11 @@ export default function Rooms() {
     const fetchRooms = async () => {
       try {
         const res = await api.get('/rooms');
-        setRooms(res.data);
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          setRooms(res.data);
+        }
       } catch (err) {
-        console.error('Failed to load rooms', err);
+        console.warn('Could not load live rooms, keeping verified PG rooms', err);
       } finally {
         setLoading(false);
       }
@@ -118,18 +121,33 @@ export default function Rooms() {
           </div>
         ) : (
           <div className="row g-4">
-            {filteredRooms.map((room) => {
-              const imagesList = room.images ? JSON.parse(room.images) : ['/images/bedroom_double.png'];
+            {filteredRooms.map((room, idx) => {
+              let imagesList = ['/images/bedroom_double.png'];
+              if (Array.isArray(room.images)) {
+                imagesList = room.images;
+              } else if (typeof room.images === 'string' && room.images.trim()) {
+                try {
+                  const parsed = JSON.parse(room.images);
+                  if (Array.isArray(parsed) && parsed.length > 0) imagesList = parsed;
+                } catch (e) {
+                  imagesList = [room.images];
+                }
+              }
               const displayImg = imagesList[0] || '/images/bedroom_double.png';
               const amenities = room.amenities ? room.amenities.split(',').map((s) => s.trim()) : [];
+              const statusRaw = room.status || 'AVAILABLE';
+              const statusLabel = statusRaw.replace('_', ' ');
+              const statusClass = statusRaw.toLowerCase().replace('_', '-');
+              const sharingLabel = room.sharing_type || `${(room.room_type || 'Double').replace('_', ' ')} Sharing`;
 
               return (
-                <div key={room.id} className="col-md-6 col-lg-4">
+                <div key={room.id || `room-${idx}`} className="col-md-6 col-lg-4">
                   <div className="pg-card h-100 d-flex flex-column">
                     {/* Image Header */}
                     <div className="position-relative overflow-hidden" style={{ height: '220px' }}>
                       <img
                         src={displayImg}
+                        onError={(e) => { e.target.src = '/images/bedroom_double.png'; }}
                         alt={`Room ${room.room_number}`}
                         className="w-100 h-100"
                         style={{ objectFit: 'cover' }}
@@ -139,12 +157,12 @@ export default function Rooms() {
                           {room.is_ac ? 'Air Conditioned' : 'Non-AC Ventilated'}
                         </span>
                         <span className="badge bg-secondary">
-                          Floor {room.floor}
+                          Floor {room.floor || 1}
                         </span>
                       </div>
                       <div className="position-absolute top-0 end-0 m-2">
-                        <span className={`status-pill status-${room.status.toLowerCase().replace('_', '-')}`}>
-                          {room.status.replace('_', ' ')}
+                        <span className={`status-pill status-${statusClass}`}>
+                          {statusLabel}
                         </span>
                       </div>
                     </div>
@@ -155,12 +173,12 @@ export default function Rooms() {
                         <div className="d-flex justify-content-between align-items-center mb-1">
                           <h4 className="fw-bold mb-0">Room {room.room_number}</h4>
                           <span className="badge bg-light text-dark border">
-                            {room.available_beds} of {room.capacity} Beds Free
+                            {room.available_beds !== undefined ? room.available_beds : room.capacity} of {room.capacity} Beds Free
                           </span>
                         </div>
 
                         <div className="text-secondary small fw-semibold mb-2">
-                          {room.room_type.replace('_', ' ')} Sharing
+                          {sharingLabel}
                         </div>
 
                         <p className="text-muted small line-clamp-2 mb-3">

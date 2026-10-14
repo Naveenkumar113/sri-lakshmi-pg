@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import LightboxModal from '../components/LightboxModal';
+import { DEFAULT_GALLERY } from '../data/defaultData';
 
 export default function Gallery() {
-  const [gallery, setGallery] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [gallery, setGallery] = useState(DEFAULT_GALLERY);
+  const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [lightboxIndex, setLightboxIndex] = useState(null);
 
@@ -12,9 +13,11 @@ export default function Gallery() {
     const fetchGallery = async () => {
       try {
         const res = await api.get('/gallery');
-        setGallery(res.data);
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          setGallery(res.data);
+        }
       } catch (err) {
-        console.error('Failed to load gallery', err);
+        console.warn('Could not load live gallery, keeping verified property photos', err);
       } finally {
         setLoading(false);
       }
