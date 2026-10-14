@@ -11,7 +11,9 @@ export default function AdminBookings() {
   const [activeBooking, setActiveBooking] = useState(null);
   const [modalMode, setModalMode] = useState(null); // 'APPROVE' | 'REJECT'
   const [actionForm, setActionForm] = useState({
-    allocated_bed: 'B1',
+    room_id: '',
+    bed_id: '',
+    allocated_bed: '',
     admin_notes: '',
   });
   const [submitting, setSubmitting] = useState(false);
@@ -20,7 +22,7 @@ export default function AdminBookings() {
     try {
       const [bookRes, roomRes] = await Promise.all([
         api.get('/admin/bookings'),
-        api.get('/rooms'),
+        api.get('/admin/rooms'),
       ]);
       setBookings(bookRes.data);
       setRooms(roomRes.data);
@@ -38,8 +40,19 @@ export default function AdminBookings() {
   const openModal = (booking, mode) => {
     setActiveBooking(booking);
     setModalMode(mode);
+
+    // Find best matching room
+    const matchingRoom = rooms.find((r) => r.id === booking.room_id) ||
+      rooms.find((r) => r.is_ac === booking.is_ac && r.available_beds > 0 && r.status !== 'MAINTENANCE') ||
+      rooms.find((r) => r.available_beds > 0 && r.status !== 'MAINTENANCE') ||
+      rooms[0];
+
+    const freeBed = matchingRoom?.beds?.find((b) => !b.is_occupied && b.bed_status !== 'MAINTENANCE');
+
     setActionForm({
-      allocated_bed: 'B1',
+      room_id: matchingRoom?.id || '',
+      bed_id: freeBed?.id || '',
+      allocated_bed: freeBed?.bed_number || '',
       admin_notes: mode === 'APPROVE' ? 'Room allocated. Welcome to Sri Lakshmi Srinivasa PG!' : '',
     });
   };
@@ -57,7 +70,9 @@ export default function AdminBookings() {
     try {
       if (modalMode === 'APPROVE') {
         await api.put(`/admin/bookings/${activeBooking.id}/approve`, {
-          allocated_bed: actionForm.allocated_bed,
+          room_id: actionForm.room_id || null,
+          bed_id: actionForm.bed_id || null,
+          allocated_bed: actionForm.allocated_bed || null,
           admin_notes: actionForm.admin_notes,
         });
       } else {
@@ -73,6 +88,7 @@ export default function AdminBookings() {
       setSubmitting(false);
     }
   };
+
 
   const filtered = bookings.filter((b) => {
     if (filterStatus === 'ALL') return true;
@@ -212,22 +228,70 @@ export default function AdminBookings() {
                   </div>
 
                   {modalMode === 'APPROVE' && (
-                    <div className="mb-3">
-                      <label className="form-label small fw-semibold">Assign Bed Label *</label>
-                      <select
-                        className="form-select"
-                        value={actionForm.allocated_bed}
-                        onChange={(e) => setActionForm({ ...actionForm, allocated_bed: e.target.value })}
-                      >
-                        <option value="B1">Bed 1 (B1)</option>
-                        <option value="B2">Bed 2 (B2)</option>
-                        <option value="B3">Bed 3 (B3)</option>
-                        <option value="B4">Bed 4 (B4)</option>
-                      </select>
-                      <div className="text-muted small mt-1" style={{ fontSize: '0.72rem' }}>
-                        The server will re-verify availability before committing bed allocation.
+                    <>
+                      <div className="mb-3">
+                        <label className="form-label small fw-semibold">Select Room *</label>
+                        <select
+                          className="form-select"
+                          required
+                          value={actionForm.room_id}
+                          onChange={(e) => {
+                            const newRoomId = e.target.value;
+                            const r = rooms.find((rm) => rm.id === newRoomId);
+                            const firstFree = r?.beds?.find((b) => !b.is_occupied && b.bed_status !== 'MAINTENANCE');
+                            setActionForm({
+                              ...actionForm,
+                              room_id: newRoomId,
+                              bed_id: firstFree?.id || '',
+                              allocated_bed: firstFree?.bed_number || '',
+                            });
+                          }}
+                        >
+                          <option value="">-- Choose Available Room --</option>
+                          {rooms
+                            .filter((rm) => rm.available_beds > 0 && rm.status !== 'MAINTENANCE')
+                            .map((rm) => (
+                              <option key={rm.id} value={rm.id}>
+                                Room {rm.room_number} • {rm.sharing_type} ({rm.is_ac ? 'AC' : 'Non-AC'}) • {rm.available_beds} beds free
+                              </option>
+                            ))}
+                        </select>
                       </div>
-                    </div>
+
+                      <div className="mb-3">
+                        <label className="form-label small fw-semibold">Select Available Bed *</label>
+                        <select
+                          className="form-select"
+                          required
+                          value={actionForm.bed_id}
+                          disabled={!actionForm.room_id}
+                          onChange={(e) => {
+                            const selectedBedId = e.target.value;
+                            const r = rooms.find((rm) => rm.id === actionForm.room_id);
+                            const bObj = r?.beds?.find((b) => b.id === selectedBedId);
+                            setActionForm({
+                              ...actionForm,
+                              bed_id: selectedBedId,
+                              allocated_bed: bObj?.bed_number || '',
+                            });
+                          }}
+                        >
+                          <option value="">-- Choose Free Bed --</option>
+                          {rooms
+                            .find((rm) => rm.id === actionForm.room_id)
+                            ?.beds?.filter((b) => !b.is_occupied && b.bed_status !== 'MAINTENANCE')
+                            .map((b) => (
+                              <option key={b.id} value={b.id}>
+                                {b.bed_number} (Free)
+                              </option>
+                            ))}
+                        </select>
+                        <div className="p-2 bg-success-subtle text-success rounded-3 small mt-2" style={{ fontSize: '0.74rem' }}>
+                          <i className="bi bi-shield-check me-1"></i>
+                          Approving will link this user to a resident profile, automatically generate a unique Resident ID (e.g. SLPG-XXXX), allocate the bed, and increment occupied beds.
+                        </div>
+                      </div>
+                    </>
                   )}
 
                   <div className="mb-2">
@@ -244,9 +308,10 @@ export default function AdminBookings() {
                           : 'e.g. Please bring original Aadhaar copy and 1 passport photo.'
                       }
                       value={actionForm.admin_notes}
-                      onChange={(e) => setActionForm({ ...actionForm, notes: e.target.value })}
+                      onChange={(e) => setActionForm({ ...actionForm, admin_notes: e.target.value })}
                     ></textarea>
                   </div>
+
                 </div>
 
                 <div className="modal-footer border-0 bg-light py-2">

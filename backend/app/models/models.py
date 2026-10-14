@@ -31,6 +31,7 @@ class User(Base):
     visits = relationship("VisitRequest", back_populates="user", cascade="all, delete-orphan")
     bookings = relationship("Booking", back_populates="user", cascade="all, delete-orphan")
     notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
+    resident = relationship("Resident", back_populates="user", uselist=False)
 
 
 class Room(Base):
@@ -39,11 +40,13 @@ class Room(Base):
     id = Column(String(36), primary_key=True, default=generate_uuid)
     room_number = Column(String(20), unique=True, nullable=False)
     room_type = Column(String(30), nullable=False)  # SINGLE, DOUBLE, TRIPLE, FOUR_SHARING
+    sharing_type = Column(String(30), default="DOUBLE", nullable=True)  # Single, Double, Triple, Four Sharing
     is_ac = Column(Boolean, default=False)
     floor = Column(Integer, default=1)
     capacity = Column(Integer, default=2)
     available_beds = Column(Integer, default=2)
     monthly_rent = Column(Float, nullable=True)  # Contact if null
+    monthly_rent_per_bed = Column(Float, nullable=True)
     security_deposit = Column(Float, nullable=True)
     description = Column(Text, nullable=True)
     amenities = Column(Text, nullable=True)  # Comma-separated or JSON string
@@ -52,8 +55,9 @@ class Room(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    beds = relationship("RoomBed", back_populates="room", cascade="all, delete-orphan")
+    beds = relationship("RoomBed", back_populates="room", cascade="all, delete-orphan", order_by="RoomBed.bed_number")
     bookings = relationship("Booking", back_populates="room")
+    allocations = relationship("BedAllocation", back_populates="room")
 
 
 class RoomBed(Base):
@@ -61,11 +65,75 @@ class RoomBed(Base):
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
     room_id = Column(String(36), ForeignKey("rooms.id", ondelete="CASCADE"), nullable=False)
-    bed_number = Column(String(20), nullable=False)  # B1, B2, etc.
+    bed_number = Column(String(20), nullable=False)  # Bed 1, Bed 2, or B1, B2, etc.
+    bed_status = Column(String(30), default="AVAILABLE")  # AVAILABLE, OCCUPIED, RESERVED, MAINTENANCE
     is_occupied = Column(Boolean, default=False)
     current_occupant_name = Column(String(100), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     room = relationship("Room", back_populates="beds")
+    allocations = relationship("BedAllocation", back_populates="bed", cascade="all, delete-orphan")
+
+
+class Resident(Base):
+    __tablename__ = "residents"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    resident_code = Column(String(30), unique=True, index=True, nullable=False)  # SLPG-0001, SLPG-0002...
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    full_name = Column(String(100), nullable=False)
+    phone = Column(String(20), nullable=False, index=True)
+    email = Column(String(120), nullable=True)
+    occupation = Column(String(100), nullable=True)
+    emergency_contact = Column(String(20), nullable=True)
+    address = Column(Text, nullable=True)
+    resident_status = Column(String(30), default="ACTIVE", nullable=False)  # ACTIVE, CHECKED_OUT, INACTIVE
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = relationship("User", back_populates="resident")
+    allocations = relationship("BedAllocation", back_populates="resident", cascade="all, delete-orphan", order_by="desc(BedAllocation.created_at)")
+    history = relationship("ResidentHistory", back_populates="resident", cascade="all, delete-orphan", order_by="desc(ResidentHistory.created_at)")
+
+
+class BedAllocation(Base):
+    __tablename__ = "bed_allocations"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    resident_id = Column(String(36), ForeignKey("residents.id", ondelete="CASCADE"), nullable=False)
+    bed_id = Column(String(36), ForeignKey("room_beds.id", ondelete="CASCADE"), nullable=False)
+    room_id = Column(String(36), ForeignKey("rooms.id", ondelete="CASCADE"), nullable=False)
+    booking_id = Column(String(36), ForeignKey("bookings.id", ondelete="SET NULL"), nullable=True)
+    move_in_date = Column(String(30), nullable=False)
+    move_out_date = Column(String(30), nullable=True)
+    allocation_status = Column(String(30), default="ACTIVE", nullable=False)  # ACTIVE, TRANSFERRED, CHECKED_OUT, CANCELLED
+    created_by_admin_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    resident = relationship("Resident", back_populates="allocations")
+    bed = relationship("RoomBed", back_populates="allocations")
+    room = relationship("Room", back_populates="allocations")
+    booking = relationship("Booking", back_populates="bed_allocation")
+
+
+class ResidentHistory(Base):
+    __tablename__ = "resident_history"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    resident_id = Column(String(36), ForeignKey("residents.id", ondelete="CASCADE"), nullable=False)
+    event_type = Column(String(50), nullable=False)  # REGISTERED, ALLOCATED, TRANSFERRED, CHECKED_OUT, UPDATED
+    room_id = Column(String(36), ForeignKey("rooms.id", ondelete="SET NULL"), nullable=True)
+    bed_id = Column(String(36), ForeignKey("room_beds.id", ondelete="SET NULL"), nullable=True)
+    from_room_id = Column(String(36), ForeignKey("rooms.id", ondelete="SET NULL"), nullable=True)
+    from_bed_id = Column(String(36), ForeignKey("room_beds.id", ondelete="SET NULL"), nullable=True)
+    details = Column(Text, nullable=False)
+    actor_admin_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    resident = relationship("Resident", back_populates="history")
 
 
 class Booking(Base):
@@ -89,6 +157,8 @@ class Booking(Base):
 
     user = relationship("User", back_populates="bookings")
     room = relationship("Room", back_populates="bookings")
+    bed_allocation = relationship("BedAllocation", back_populates="booking", uselist=False)
+
 
 
 class VisitRequest(Base):

@@ -36,7 +36,10 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminVisits from './pages/admin/AdminVisits';
 import AdminBookings from './pages/admin/AdminBookings';
 import AdminRooms from './pages/admin/AdminRooms';
+import AdminResidents from './pages/admin/AdminResidents';
 import AdminUsers from './pages/admin/AdminUsers';
+
+
 import AdminFacilities from './pages/admin/AdminFacilities';
 import AdminGallery from './pages/admin/AdminGallery';
 import AdminPGDetails from './pages/admin/AdminPGDetails';
@@ -104,7 +107,9 @@ export default function App() {
             <Route path="visits" element={<AdminVisits />} />
             <Route path="bookings" element={<AdminBookings />} />
             <Route path="rooms" element={<AdminRooms />} />
+            <Route path="residents" element={<AdminResidents />} />
             <Route path="users" element={<AdminUsers />} />
+
             <Route path="facilities" element={<AdminFacilities />} />
             <Route path="gallery" element={<AdminGallery />} />
             <Route path="pg-details" element={<AdminPGDetails />} />

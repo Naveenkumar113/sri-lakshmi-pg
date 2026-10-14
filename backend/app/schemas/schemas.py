@@ -1,17 +1,140 @@
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, EmailStr, Field
+import re
+from pydantic import BaseModel, EmailStr, Field, field_validator
+
+# Dynamic Sharing Types and Capacity Mappings (1 to 20 persons)
+CAPACITY_WORDS = {
+    1: "Single",
+    2: "Double",
+    3: "Triple",
+    4: "Four",
+    5: "Five",
+    6: "Six",
+    7: "Seven",
+    8: "Eight",
+    9: "Nine",
+    10: "Ten",
+    11: "Eleven",
+    12: "Twelve",
+    13: "Thirteen",
+    14: "Fourteen",
+    15: "Fifteen",
+    16: "Sixteen",
+    17: "Seventeen",
+    18: "Eighteen",
+    19: "Nineteen",
+    20: "Twenty",
+}
+
+def capacity_to_sharing_type(capacity: int) -> str:
+    """Converts a numeric bed capacity (e.g. 7) to human-readable sharing type ('Seven Sharing')."""
+    cap = max(1, min(20, int(capacity)))
+    word = CAPACITY_WORDS.get(cap, str(cap))
+    return f"{word} Sharing"
+
+WORD_TO_CAPACITY = {v.lower(): k for k, v in CAPACITY_WORDS.items()}
+WORD_TO_CAPACITY.update({
+    "single": 1,
+    "double": 2,
+    "triple": 3,
+    "four": 4,
+    "four_sharing": 4,
+    "five": 5,
+    "six": 6,
+    "seven": 7,
+    "eight": 8,
+    "nine": 9,
+    "ten": 10,
+})
+
+def parse_sharing_capacity(v: any, default: int = 2) -> int:
+    """Parses capacity from an integer, float string, or sharing type name like 'Seven Sharing'."""
+    if v is None:
+        return default
+    if isinstance(v, int):
+        return max(1, min(20, v))
+    s = str(v).strip().lower()
+    m = re.match(r'^(\d+)', s)
+    if m:
+        num = int(m.group(1))
+        return max(1, min(20, num))
+    for word, num in WORD_TO_CAPACITY.items():
+        if word in s:
+            return num
+    return default
+
+VALID_SHARING_TYPES = [
+    capacity_to_sharing_type(i) for i in range(1, 21)
+] + ["Single Sharing", "Double Sharing", "Triple Sharing", "Four Sharing"]
+VALID_SHARING_TYPES = list(dict.fromkeys(VALID_SHARING_TYPES))
+
+SHARING_CAPACITY_MAP = {
+    capacity_to_sharing_type(i): i for i in range(1, 21)
+}
+SHARING_CAPACITY_MAP.update({
+    "Single Sharing": 1,
+    "Double Sharing": 2,
+    "Triple Sharing": 3,
+    "Four Sharing": 4,
+    "Five Sharing": 5,
+    "Six Sharing": 6,
+    "Seven Sharing": 7,
+    "Eight Sharing": 8,
+    "Nine Sharing": 9,
+    "Ten Sharing": 10,
+})
+
+LEGACY_SHARING_MAP = {
+    "SINGLE": "Single Sharing",
+    "DOUBLE": "Double Sharing",
+    "TRIPLE": "Triple Sharing",
+    "FOUR_SHARING": "Four Sharing",
+    "Single": "Single Sharing",
+    "Double": "Double Sharing",
+    "Triple": "Triple Sharing",
+    "Four": "Four Sharing",
+}
+
+
+def validate_indian_mobile(v: Optional[str], field_name: str = "Phone number") -> Optional[str]:
+    """
+    Enforces exactly 10 numeric digits (0-9) for Indian mobile numbers.
+    Rejects alphabetic chars, special chars, spaces, and length != 10.
+    """
+    if v is None:
+        return None
+    s = str(v).strip()
+    if not s:
+        raise ValueError(f"{field_name} cannot be empty.")
+    if not s.isdigit():
+        raise ValueError(f"{field_name} must contain numeric digits (0–9) only. Alphabetic characters, special characters, and spaces are rejected.")
+    if len(s) != 10:
+        raise ValueError(f"{field_name} must be exactly 10 digits for Indian mobile numbers (received {len(s)} digits).")
+    return s
 
 # AUTH & USER SCHEMAS
 class UserRegister(BaseModel):
     full_name: str = Field(..., min_length=2, max_length=100)
     email: EmailStr
-    phone: str = Field(..., min_length=10, max_length=15)
+    phone: str = Field(..., min_length=10, max_length=10)
     password: str = Field(..., min_length=6)
     occupation: Optional[str] = None
     company_or_college: Optional[str] = None
     emergency_contact: Optional[str] = None
     address: Optional[str] = None
+
+    @field_validator('phone', mode='before')
+    @classmethod
+    def validate_phone(cls, v):
+        return validate_indian_mobile(v, "Phone number")
+
+    @field_validator('emergency_contact', mode='before')
+    @classmethod
+    def validate_emergency(cls, v):
+        if not v or not str(v).strip():
+            return None
+        return validate_indian_mobile(v, "Emergency contact")
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -42,6 +165,20 @@ class UserUpdate(BaseModel):
     emergency_contact: Optional[str] = None
     address: Optional[str] = None
 
+    @field_validator('phone', mode='before')
+    @classmethod
+    def validate_phone(cls, v):
+        if v is None or not str(v).strip():
+            return v
+        return validate_indian_mobile(v, "Phone number")
+
+    @field_validator('emergency_contact', mode='before')
+    @classmethod
+    def validate_emergency(cls, v):
+        if not v or not str(v).strip():
+            return None
+        return validate_indian_mobile(v, "Emergency contact")
+
 class PasswordChange(BaseModel):
     current_password: str
     new_password: str = Field(..., min_length=6)
@@ -59,25 +196,74 @@ class TokenData(BaseModel):
 class RoomBedResponse(BaseModel):
     id: str
     bed_number: str
+    bed_status: Optional[str] = "AVAILABLE"
     is_occupied: bool
     current_occupant_name: Optional[str] = None
+    current_occupant_id: Optional[str] = None
+    current_resident_code: Optional[str] = None
+    current_allocation_id: Optional[str] = None
+    move_in_date: Optional[str] = None
 
     class Config:
         from_attributes = True
 
+class BedCreate(BaseModel):
+    bed_number: str
+
+class BedUpdate(BaseModel):
+    bed_number: Optional[str] = None
+    bed_status: Optional[str] = None
+
 class RoomBase(BaseModel):
     room_number: str
-    room_type: str  # SINGLE, DOUBLE, TRIPLE, FOUR_SHARING
+    room_type: str = "Non-AC"  # AC or Non-AC
+    capacity: int = Field(2, ge=1, le=20, description="Sharing capacity / Total beds (1 to 20 persons)")
+    sharing_type: Optional[str] = "Double Sharing"
     is_ac: bool = False
     floor: int = 1
-    capacity: int = 2
-    available_beds: int = 2
+    available_beds: Optional[int] = None
     monthly_rent: Optional[float] = None
+    monthly_rent_per_bed: Optional[float] = None
     security_deposit: Optional[float] = None
     description: Optional[str] = None
     amenities: Optional[str] = None
     images: Optional[str] = None
     status: str = "AVAILABLE"
+
+    @field_validator('capacity', mode='before')
+    @classmethod
+    def validate_capacity_val(cls, v):
+        if v is None:
+            return 2
+        if isinstance(v, bool):
+            raise ValueError("Sharing capacity must be a positive whole integer between 1 and 20.")
+        if isinstance(v, str):
+            clean_str = v.strip()
+            if not clean_str.isdigit():
+                raise ValueError("Sharing capacity must be a positive whole number (digits only, no decimals or letters).")
+            val = int(clean_str)
+        elif isinstance(v, (int, float)):
+            if isinstance(v, float) and not v.is_integer():
+                raise ValueError("Sharing capacity cannot contain decimals. Must be a positive whole number.")
+            val = int(v)
+        else:
+            raise ValueError("Sharing capacity must be a valid positive whole number.")
+
+        if val < 1:
+            raise ValueError("Sharing capacity must be a positive whole number (minimum 1 person). Zero and negative numbers are rejected.")
+        if val > 20:
+            raise ValueError("Sharing capacity cannot exceed the maximum limit of 20 beds per room.")
+        return val
+
+    @field_validator('sharing_type', mode='before')
+    @classmethod
+    def validate_sharing_type(cls, v):
+        if not v or not str(v).strip():
+            return None
+        v_str = str(v).strip()
+        if v_str in LEGACY_SHARING_MAP:
+            v_str = LEGACY_SHARING_MAP[v_str]
+        return v_str
 
 class RoomCreate(RoomBase):
     pass
@@ -85,24 +271,204 @@ class RoomCreate(RoomBase):
 class RoomUpdate(BaseModel):
     room_number: Optional[str] = None
     room_type: Optional[str] = None
+    sharing_type: Optional[str] = None
     is_ac: Optional[bool] = None
     floor: Optional[int] = None
-    capacity: Optional[int] = None
+    capacity: Optional[int] = Field(None, ge=1, le=20)
     available_beds: Optional[int] = None
     monthly_rent: Optional[float] = None
+    monthly_rent_per_bed: Optional[float] = None
     security_deposit: Optional[float] = None
     description: Optional[str] = None
     amenities: Optional[str] = None
     images: Optional[str] = None
     status: Optional[str] = None
 
+    @field_validator('capacity', mode='before')
+    @classmethod
+    def validate_capacity_update(cls, v):
+        if v is None:
+            return None
+        if isinstance(v, bool):
+            raise ValueError("Sharing capacity must be a positive whole integer between 1 and 20.")
+        if isinstance(v, str):
+            clean_str = v.strip()
+            if not clean_str.isdigit():
+                raise ValueError("Sharing capacity must be a positive whole number (digits only, no decimals or letters).")
+            val = int(clean_str)
+        elif isinstance(v, (int, float)):
+            if isinstance(v, float) and not v.is_integer():
+                raise ValueError("Sharing capacity cannot contain decimals. Must be a positive whole number.")
+            val = int(v)
+        else:
+            raise ValueError("Sharing capacity must be a valid positive whole number.")
+
+        if val < 1:
+            raise ValueError("Sharing capacity must be a positive whole number (minimum 1 person). Zero and negative numbers are rejected.")
+        if val > 20:
+            raise ValueError("Sharing capacity cannot exceed the maximum limit of 20 beds per room.")
+        return val
+
+    @field_validator('sharing_type', mode='before')
+    @classmethod
+    def validate_sharing_type(cls, v):
+        if not v or not str(v).strip():
+            return None
+        v_str = str(v).strip()
+        if v_str in LEGACY_SHARING_MAP:
+            v_str = LEGACY_SHARING_MAP[v_str]
+        return v_str
+
 class RoomResponse(RoomBase):
     id: str
     created_at: datetime
+    occupied_beds: Optional[int] = None
+    occupancy_percentage: Optional[float] = None
     beds: List[RoomBedResponse] = []
 
     class Config:
         from_attributes = True
+
+# RESIDENT & BED ALLOCATION SCHEMAS
+class ResidentCreate(BaseModel):
+    full_name: str = Field(..., min_length=2, max_length=100)
+    phone: str = Field(..., min_length=10, max_length=10)
+    email: Optional[EmailStr] = None
+    occupation: Optional[str] = None
+    company_or_college: Optional[str] = None
+    emergency_contact: Optional[str] = None
+    address: Optional[str] = None
+    user_id: Optional[str] = None  # Link to existing user if available
+    room_id: Optional[str] = None  # Optional initial room allocation
+    bed_id: Optional[str] = None   # Optional initial bed allocation
+    move_in_date: Optional[str] = None
+    notes: Optional[str] = None
+
+    @field_validator('phone', mode='before')
+    @classmethod
+    def validate_phone(cls, v):
+        return validate_indian_mobile(v, "Phone number")
+
+    @field_validator('emergency_contact', mode='before')
+    @classmethod
+    def validate_emergency(cls, v):
+        if not v or not str(v).strip():
+            return None
+        return validate_indian_mobile(v, "Emergency contact")
+
+class ResidentUpdate(BaseModel):
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[EmailStr] = None
+    occupation: Optional[str] = None
+    emergency_contact: Optional[str] = None
+    address: Optional[str] = None
+    resident_status: Optional[str] = None
+
+    @field_validator('phone', mode='before')
+    @classmethod
+    def validate_phone(cls, v):
+        if v is None or not str(v).strip():
+            return v
+        return validate_indian_mobile(v, "Phone number")
+
+    @field_validator('emergency_contact', mode='before')
+    @classmethod
+    def validate_emergency(cls, v):
+        if not v or not str(v).strip():
+            return None
+        return validate_indian_mobile(v, "Emergency contact")
+
+class BedAllocationCreate(BaseModel):
+    resident_id: str
+    room_id: str
+    bed_id: str
+    move_in_date: str
+    notes: Optional[str] = None
+
+class BedAllocationTransfer(BaseModel):
+    new_room_id: str
+    new_bed_id: str
+    transfer_date: str
+    notes: Optional[str] = None
+
+class BedAllocationCheckout(BaseModel):
+    checkout_date: str
+    notes: Optional[str] = None
+
+class BedAllocationResponse(BaseModel):
+    id: str
+    resident_id: str
+    bed_id: str
+    room_id: str
+    booking_id: Optional[str] = None
+    move_in_date: str
+    move_out_date: Optional[str] = None
+    allocation_status: str
+    notes: Optional[str] = None
+    created_at: datetime
+    room_number: Optional[str] = None
+    bed_number: Optional[str] = None
+    is_ac: Optional[bool] = None
+    room_type: Optional[str] = None
+    monthly_rent: Optional[float] = None
+
+    class Config:
+        from_attributes = True
+
+class ResidentHistoryResponse(BaseModel):
+    id: int
+    resident_id: str
+    event_type: str
+    room_id: Optional[str] = None
+    bed_id: Optional[str] = None
+    from_room_id: Optional[str] = None
+    from_bed_id: Optional[str] = None
+    room_number: Optional[str] = None
+    bed_number: Optional[str] = None
+    from_room_number: Optional[str] = None
+    from_bed_number: Optional[str] = None
+    details: str
+    actor_admin_id: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class ResidentResponse(BaseModel):
+    id: str
+    resident_code: str
+    user_id: Optional[str] = None
+    full_name: str
+    phone: str
+    email: Optional[str] = None
+    occupation: Optional[str] = None
+    emergency_contact: Optional[str] = None
+    address: Optional[str] = None
+    resident_status: str
+    created_at: datetime
+    current_room_id: Optional[str] = None
+    current_room_number: Optional[str] = None
+    current_bed_id: Optional[str] = None
+    current_bed_number: Optional[str] = None
+    current_allocation_id: Optional[str] = None
+    current_move_in_date: Optional[str] = None
+    current_monthly_rent: Optional[float] = None
+    is_ac: Optional[bool] = None
+    room_type: Optional[str] = None
+    sharing_type: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+class ResidentDetailResponse(ResidentResponse):
+    allocations: List[BedAllocationResponse] = []
+    history: List[ResidentHistoryResponse] = []
+    linked_user: Optional[UserResponse] = None
+
+    class Config:
+        from_attributes = True
+
 
 # VISIT SCHEMAS
 class VisitRequestCreate(BaseModel):
@@ -155,8 +521,12 @@ class BookingRequestCreate(BaseModel):
     message: Optional[str] = None
 
 class BookingApprove(BaseModel):
+    room_id: Optional[str] = None
+    bed_id: Optional[str] = None
     allocated_bed: Optional[str] = None
+    move_in_date: Optional[str] = None
     admin_notes: Optional[str] = None
+
 
 class BookingReject(BaseModel):
     admin_notes: Optional[str] = None

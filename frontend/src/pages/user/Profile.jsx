@@ -34,6 +34,16 @@ export default function Profile() {
     setProfileSuccess('');
     setProfileError('');
 
+    if (!profileData.phone || !/^\d{10}$/.test(profileData.phone)) {
+      setProfileError('Mobile number must be exactly 10 numeric digits (0–9 only, e.g. 9876543210).');
+      return;
+    }
+
+    if (profileData.emergency_contact && !/^\d{10}$/.test(profileData.emergency_contact)) {
+      setProfileError('Emergency contact phone must be exactly 10 numeric digits if provided.');
+      return;
+    }
+
     try {
       const res = await api.put('/auth/me', profileData);
       updateUser(res.data);
@@ -116,14 +126,24 @@ export default function Profile() {
             </div>
 
             <div className="col-md-6">
-              <label className="form-label small fw-semibold">Mobile Number</label>
+              <label className="form-label small fw-semibold">
+                Mobile Number <span className="text-muted fw-normal">(10 digits)</span>
+              </label>
               <input
                 type="tel"
+                inputMode="numeric"
+                maxLength={10}
                 required
                 className="form-control"
                 value={profileData.phone}
-                onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                onChange={(e) => {
+                  const clean = e.target.value.replace(/\D/g, '').slice(0, 10);
+                  setProfileData({ ...profileData, phone: clean });
+                }}
               />
+              <span className="text-muted small" style={{ fontSize: '0.72rem' }}>
+                10 numeric digits only.
+              </span>
             </div>
 
             <div className="col-md-6">
@@ -149,14 +169,24 @@ export default function Profile() {
             </div>
 
             <div className="col-md-6">
-              <label className="form-label small fw-semibold">Emergency Contact Phone</label>
+              <label className="form-label small fw-semibold">
+                Emergency Contact Phone <span className="text-muted fw-normal">(10 digits, optional)</span>
+              </label>
               <input
                 type="tel"
-                placeholder="e.g. Father / Brother phone"
+                inputMode="numeric"
+                maxLength={10}
+                placeholder="10-digit mobile number"
                 className="form-control"
                 value={profileData.emergency_contact}
-                onChange={(e) => setProfileData({ ...profileData, emergency_contact: e.target.value })}
+                onChange={(e) => {
+                  const clean = e.target.value.replace(/\D/g, '').slice(0, 10);
+                  setProfileData({ ...profileData, emergency_contact: clean });
+                }}
               />
+              <span className="text-muted small" style={{ fontSize: '0.72rem' }}>
+                10 numeric digits without spaces or symbols.
+              </span>
             </div>
 
             <div className="col-12">

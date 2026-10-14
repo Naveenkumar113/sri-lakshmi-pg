@@ -4,10 +4,12 @@ from sqlalchemy.orm import Session
 from ..auth.security import get_password_hash
 from ..models.models import (
     User, Room, RoomBed, VisitSlot, Facility, PGInformation, GalleryItem,
-    VisitRequest, Booking, Notification, ContactMessage
+    VisitRequest, Booking, Notification, ContactMessage, Resident, BedAllocation, ResidentHistory
 )
+from ..utils.room_occupancy import sync_room_occupancy
 
 def seed_database(db: Session):
+
     # 1. Seed Admin
     admin_user = db.query(User).filter(User.email == "admin@srilakshmipg.com").first()
     if not admin_user:
@@ -298,3 +300,93 @@ def seed_database(db: Session):
         )
         db.add(sample_msg)
         db.commit()
+
+    # 10. Seed Sample Residents and Active Bed Allocations
+    if db.query(Resident).count() == 0:
+        # Resident 1: Arun Kumar
+        res_arun = Resident(
+            resident_code="SLPG-0001",
+            full_name="Arun Kumar",
+            phone="+91 99887 76655",
+            email="arun.kumar@example.com",
+            occupation="Software Developer",
+            emergency_contact="+91 98401 99887",
+            address="Native: Salem, Tamil Nadu",
+            resident_status="ACTIVE"
+        )
+        db.add(res_arun)
+
+        # Resident 2: Karthik Ramanathan (linked to demo user)
+        res_karthik = Resident(
+            resident_code="SLPG-0002",
+            user_id=demo_user.id if demo_user else None,
+            full_name="Karthik Ramanathan",
+            phone="+91 98765 43210",
+            email="karthik.r@example.com",
+            occupation="Software Engineer",
+            emergency_contact="+91 98401 23456",
+            address="Native: Trichy, Tamil Nadu",
+            resident_status="ACTIVE"
+        )
+        db.add(res_karthik)
+        db.flush()
+
+        # History logs
+        db.add(ResidentHistory(
+            resident_id=res_arun.id,
+            event_type="REGISTERED",
+            details="Resident Arun Kumar registered with ID SLPG-0001."
+        ))
+        db.add(ResidentHistory(
+            resident_id=res_karthik.id,
+            event_type="REGISTERED",
+            details="Resident Karthik Ramanathan registered with ID SLPG-0002 (linked to website account)."
+        ))
+
+        # Bed allocations
+        room_101 = db.query(Room).filter(Room.room_number == "101").first()
+        if room_101 and len(room_101.beds) > 0:
+            bed_1 = room_101.beds[0]
+            alloc_arun = BedAllocation(
+                resident_id=res_arun.id,
+                bed_id=bed_1.id,
+                room_id=room_101.id,
+                move_in_date="2026-01-15",
+                allocation_status="ACTIVE",
+                notes="Standard monthly allocation."
+            )
+            db.add(alloc_arun)
+            db.flush()
+            db.add(ResidentHistory(
+                resident_id=res_arun.id,
+                event_type="ALLOCATED",
+                room_id=room_101.id,
+                bed_id=bed_1.id,
+                details=f"Allocated to Room {room_101.room_number}, {bed_1.bed_number}."
+            ))
+            sync_room_occupancy(db, room_101.id)
+
+        room_201 = db.query(Room).filter(Room.room_number == "201").first()
+        if room_201 and len(room_201.beds) > 0:
+            bed_201_1 = room_201.beds[0]
+            alloc_karthik = BedAllocation(
+                resident_id=res_karthik.id,
+                bed_id=bed_201_1.id,
+                room_id=room_201.id,
+                move_in_date="2026-02-01",
+                allocation_status="ACTIVE",
+                notes="Allocated following verified booking request."
+            )
+            db.add(alloc_karthik)
+            db.flush()
+            db.add(ResidentHistory(
+                resident_id=res_karthik.id,
+                event_type="ALLOCATED",
+                room_id=room_201.id,
+                bed_id=bed_201_1.id,
+                details=f"Allocated to Room {room_201.room_number}, {bed_201_1.bed_number}."
+            ))
+            sync_room_occupancy(db, room_201.id)
+
+        db.commit()
+

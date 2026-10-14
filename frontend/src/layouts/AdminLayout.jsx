@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 export default function AdminLayout() {
   const { user, isAuthenticated, isAdmin, loading, logout } = useAuth();
@@ -27,18 +28,20 @@ export default function AdminLayout() {
 
   const navItems = [
     { to: '/admin/dashboard', icon: 'speedometer2', label: 'Dashboard', end: true },
-    { to: '/admin/visits', icon: 'calendar-check', label: 'Visit Requests' },
+    { to: '/admin/rooms', icon: 'building', label: 'Room & Bed Management' },
+    { to: '/admin/residents', icon: 'person-badge', label: 'Residents' },
     { to: '/admin/bookings', icon: 'door-open', label: 'Bookings' },
-    { to: '/admin/rooms', icon: 'building', label: 'Rooms & Beds' },
-    { to: '/admin/users', icon: 'people', label: 'Residents & Users' },
+    { to: '/admin/visits', icon: 'calendar-check', label: 'Visit Requests' },
+    { to: '/admin/users', icon: 'people', label: 'Registered Users' },
     { to: '/admin/facilities', icon: 'stars', label: 'Facilities' },
     { to: '/admin/gallery', icon: 'images', label: 'Gallery' },
     { to: '/admin/pg-details', icon: 'pencil-square', label: 'PG Information' },
     { to: '/admin/messages', icon: 'chat-left-dots', label: 'Contact Inquiries' },
     { to: '/admin/notifications', icon: 'bell', label: 'Notifications' },
-    { to: '/admin/profile', icon: 'person-badge', label: 'Admin Profile' },
+    { to: '/admin/profile', icon: 'person-circle', label: 'Admin Profile' },
     { to: '/admin/settings', icon: 'gear', label: 'Settings & Slots' },
   ];
+
 
   return (
     <div className="d-flex min-vh-100 bg-light">
@@ -146,7 +149,9 @@ export default function AdminLayout() {
 
         {/* Main Routed Page */}
         <main className="p-3 p-md-4 flex-grow-1 overflow-auto">
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
     </div>

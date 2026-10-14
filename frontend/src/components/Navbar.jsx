@@ -1,11 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar() {
   const { user, isAuthenticated, isAdmin, logout, requireAuth } = useAuth();
   const [navOpen, setNavOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
   const navigate = useNavigate();
+
+  // Close dropdown menu when clicking anywhere outside
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, []);
 
   const handleScheduleVisitClick = (e) => {
     e.preventDefault();
@@ -109,82 +124,192 @@ export default function Navbar() {
             </button>
 
             {isAuthenticated ? (
-              <div className="dropdown">
+              <div className="dropdown position-relative" ref={userMenuRef}>
                 <button
-                  className="btn btn-sm btn-pg-secondary dropdown-toggle d-flex align-items-center gap-2"
+                  className="btn btn-sm btn-pg-secondary dropdown-toggle d-flex align-items-center gap-2 shadow-xs"
                   type="button"
-                  data-bs-toggle="dropdown"
-                  aria-expanded="false"
+                  aria-expanded={userMenuOpen}
                   onClick={(e) => {
-                    const menu = e.currentTarget.nextElementSibling;
-                    if (menu) menu.classList.toggle('show');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setUserMenuOpen((prev) => !prev);
                   }}
                 >
                   <i className="bi bi-person-circle text-primary"></i>
-                  <span className="d-none d-sm-inline">{user.full_name?.split(' ')[0]}</span>
+                  <span className="d-none d-sm-inline fw-semibold">{user.full_name?.split(' ')[0]}</span>
                 </button>
-                <ul className="dropdown-menu dropdown-menu-end shadow-lg border-0 py-2">
-                  <li className="px-3 py-1 text-muted small border-bottom mb-1">
-                    Signed in as <strong className="text-dark">{user.email}</strong>
+                <ul
+                  className={`dropdown-menu dropdown-menu-end shadow-lg border-0 py-2 ${userMenuOpen ? 'show' : ''}`}
+                  style={{
+                    display: userMenuOpen ? 'block' : 'none',
+                    position: 'absolute',
+                    right: 0,
+                    top: '100%',
+                    marginTop: '0.4rem',
+                    zIndex: 1060,
+                    minWidth: '240px',
+                    backgroundColor: '#ffffff',
+                    borderRadius: '12px',
+                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08)',
+                  }}
+                >
+                  <li className="px-3 py-2 border-bottom mb-1 bg-light rounded-top-3">
+                    <div className="text-secondary" style={{ fontSize: '0.72rem' }}>Signed in as</div>
+                    <div className="text-dark fw-bold text-truncate" title={user.email}>{user.email}</div>
+                    <span className={`badge mt-1 ${isAdmin ? 'bg-danger' : 'bg-primary'}`} style={{ fontSize: '0.65rem' }}>
+                      {isAdmin ? 'ADMINISTRATOR' : 'RESIDENT / USER'}
+                    </span>
                   </li>
                   {isAdmin ? (
                     <>
                       <li>
-                        <Link className="dropdown-item py-2 fw-semibold text-primary" to="/admin/dashboard" onClick={() => setNavOpen(false)}>
-                          <i className="bi bi-speedometer2 me-2"></i>Admin Dashboard
+                        <Link
+                          className="dropdown-item py-2 fw-semibold text-primary d-flex align-items-center"
+                          to="/admin/dashboard"
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            setNavOpen(false);
+                          }}
+                        >
+                          <i className="bi bi-speedometer2 me-2 fs-6"></i>
+                          <span>Admin Dashboard</span>
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item py-2" to="/admin/visits" onClick={() => setNavOpen(false)}>
-                          <i className="bi bi-calendar3 me-2"></i>Manage Visits
+                        <Link
+                          className="dropdown-item py-2 d-flex align-items-center"
+                          to="/admin/rooms"
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            setNavOpen(false);
+                          }}
+                        >
+                          <i className="bi bi-building me-2 fs-6 text-secondary"></i>
+                          <span>Room & Bed Management</span>
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item py-2" to="/admin/bookings" onClick={() => setNavOpen(false)}>
-                          <i className="bi bi-door-open me-2"></i>Manage Bookings
+                        <Link
+                          className="dropdown-item py-2 d-flex align-items-center"
+                          to="/admin/residents"
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            setNavOpen(false);
+                          }}
+                        >
+                          <i className="bi bi-person-badge me-2 fs-6 text-secondary"></i>
+                          <span>Manage Residents</span>
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          className="dropdown-item py-2 d-flex align-items-center"
+                          to="/admin/visits"
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            setNavOpen(false);
+                          }}
+                        >
+                          <i className="bi bi-calendar3 me-2 fs-6 text-secondary"></i>
+                          <span>Manage Visits</span>
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          className="dropdown-item py-2 d-flex align-items-center"
+                          to="/admin/bookings"
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            setNavOpen(false);
+                          }}
+                        >
+                          <i className="bi bi-door-open me-2 fs-6 text-secondary"></i>
+                          <span>Manage Bookings</span>
                         </Link>
                       </li>
                     </>
                   ) : (
                     <>
                       <li>
-                        <Link className="dropdown-item py-2 fw-semibold" to="/dashboard" onClick={() => setNavOpen(false)}>
-                          <i className="bi bi-grid me-2"></i>User Dashboard
+                        <Link
+                          className="dropdown-item py-2 fw-semibold text-primary d-flex align-items-center"
+                          to="/dashboard"
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            setNavOpen(false);
+                          }}
+                        >
+                          <i className="bi bi-grid me-2 fs-6"></i>
+                          <span>User Dashboard</span>
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item py-2" to="/my-visits" onClick={() => setNavOpen(false)}>
-                          <i className="bi bi-calendar-check me-2"></i>My Visits
+                        <Link
+                          className="dropdown-item py-2 d-flex align-items-center"
+                          to="/my-visits"
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            setNavOpen(false);
+                          }}
+                        >
+                          <i className="bi bi-calendar-check me-2 fs-6 text-secondary"></i>
+                          <span>My Visits</span>
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item py-2" to="/my-bookings" onClick={() => setNavOpen(false)}>
-                          <i className="bi bi-key me-2"></i>My Bookings
+                        <Link
+                          className="dropdown-item py-2 d-flex align-items-center"
+                          to="/my-bookings"
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            setNavOpen(false);
+                          }}
+                        >
+                          <i className="bi bi-key me-2 fs-6 text-secondary"></i>
+                          <span>My Bookings</span>
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item py-2" to="/notifications" onClick={() => setNavOpen(false)}>
-                          <i className="bi bi-bell me-2"></i>Notifications
+                        <Link
+                          className="dropdown-item py-2 d-flex align-items-center"
+                          to="/notifications"
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            setNavOpen(false);
+                          }}
+                        >
+                          <i className="bi bi-bell me-2 fs-6 text-secondary"></i>
+                          <span>Notifications</span>
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item py-2" to="/profile" onClick={() => setNavOpen(false)}>
-                          <i className="bi bi-person-gear me-2"></i>Profile Settings
+                        <Link
+                          className="dropdown-item py-2 d-flex align-items-center"
+                          to="/profile"
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            setNavOpen(false);
+                          }}
+                        >
+                          <i className="bi bi-person-gear me-2 fs-6 text-secondary"></i>
+                          <span>Profile Settings</span>
                         </Link>
                       </li>
                     </>
                   )}
-                  <li><hr className="dropdown-divider" /></li>
+                  <li><hr className="dropdown-divider my-1" /></li>
                   <li>
                     <button
-                      className="dropdown-item text-danger py-2"
+                      className="dropdown-item text-danger py-2 fw-semibold d-flex align-items-center"
                       onClick={() => {
+                        setUserMenuOpen(false);
+                        setNavOpen(false);
                         logout();
                         navigate('/');
-                        setNavOpen(false);
                       }}
                     >
-                      <i className="bi bi-box-arrow-right me-2"></i>Logout
+                      <i className="bi bi-box-arrow-right me-2 fs-6"></i>
+                      <span>Logout</span>
                     </button>
                   </li>
                 </ul>

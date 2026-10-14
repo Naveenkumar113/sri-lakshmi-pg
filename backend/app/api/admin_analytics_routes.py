@@ -14,12 +14,16 @@ def get_admin_analytics(
     current_admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
+    from ..models.models import Resident, BedAllocation
+
     total_users = db.query(User).filter(User.role == "USER").count()
     total_rooms = db.query(Room).count()
     available_rooms = db.query(Room).filter(Room.status.in_(["AVAILABLE", "PARTIALLY_AVAILABLE"])).count()
     
     total_beds = db.query(RoomBed).count()
-    occupied_beds = db.query(RoomBed).filter(RoomBed.is_occupied == True).count()
+    active_alloc_count = db.query(BedAllocation).filter(BedAllocation.allocation_status == "ACTIVE").count()
+    occupied_beds = active_alloc_count if active_alloc_count > 0 else db.query(RoomBed).filter(RoomBed.is_occupied == True).count()
+    active_residents = db.query(Resident).filter(Resident.resident_status == "ACTIVE").count()
     
     pending_visits = db.query(VisitRequest).filter(VisitRequest.status == "PENDING").count()
     approved_visits = db.query(VisitRequest).filter(VisitRequest.status == "APPROVED").count()
@@ -34,6 +38,7 @@ def get_admin_analytics(
     recent_visits = db.query(VisitRequest).order_by(VisitRequest.created_at.desc()).limit(5).all()
     recent_bookings = db.query(Booking).order_by(Booking.created_at.desc()).limit(5).all()
 
+
     # Room type distribution
     room_types_summary = db.query(Room.room_type, func.count(Room.id)).group_by(Room.room_type).all()
 
@@ -43,7 +48,9 @@ def get_admin_analytics(
         "available_rooms": available_rooms,
         "total_beds": total_beds,
         "occupied_beds": occupied_beds,
+        "active_residents": active_residents,
         "occupancy_rate": occupancy_rate,
+
         "pending_visits": pending_visits,
         "approved_visits": approved_visits,
         "pending_bookings": pending_bookings,

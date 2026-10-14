@@ -42,48 +42,57 @@ export default function AdminDashboard() {
       {/* 8 SaaS Metric Cards */}
       <div className="row g-3">
         <div className="col-sm-6 col-xl-3">
-          <div className="stat-box h-100 border-start border-4 border-primary">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <span className="small text-muted fw-semibold">Total Residents & Users</span>
-              <i className="bi bi-people text-primary fs-5"></i>
+          <Link to="/admin/residents" className="text-decoration-none">
+            <div className="stat-box h-100 border-start border-4 border-primary">
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <span className="small text-muted fw-semibold">Active Residents</span>
+                <i className="bi bi-people text-primary fs-5"></i>
+              </div>
+              <h3 className="fw-bold mb-0 text-dark">{stats?.active_residents || stats?.total_users}</h3>
+              <span className="small text-primary fw-semibold">Manage Residents &rarr;</span>
             </div>
-            <h3 className="fw-bold mb-0 text-dark">{stats?.total_users}</h3>
-            <span className="small text-muted">Registered accounts</span>
-          </div>
+          </Link>
         </div>
 
         <div className="col-sm-6 col-xl-3">
-          <div className="stat-box h-100 border-start border-4 border-info">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <span className="small text-muted fw-semibold">Total Inventory</span>
-              <i className="bi bi-building text-info fs-5"></i>
+          <Link to="/admin/rooms" className="text-decoration-none">
+            <div className="stat-box h-100 border-start border-4 border-info">
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <span className="small text-muted fw-semibold">Room & Bed Inventory</span>
+                <i className="bi bi-building text-info fs-5"></i>
+              </div>
+              <h3 className="fw-bold mb-0 text-dark">{stats?.total_rooms} Rooms</h3>
+              <span className="small text-info fw-semibold">{stats?.total_beds} Total Beds &rarr;</span>
             </div>
-            <h3 className="fw-bold mb-0 text-dark">{stats?.total_rooms} Rooms</h3>
-            <span className="small text-muted">{stats?.total_beds} Total Beds</span>
-          </div>
+          </Link>
         </div>
 
         <div className="col-sm-6 col-xl-3">
-          <div className="stat-box h-100 border-start border-4 border-success">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <span className="small text-muted fw-semibold">Available Rooms</span>
-              <i className="bi bi-door-open text-success fs-5"></i>
+          <Link to="/admin/rooms" className="text-decoration-none">
+            <div className="stat-box h-100 border-start border-4 border-success">
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <span className="small text-muted fw-semibold">Available Rooms</span>
+                <i className="bi bi-door-open text-success fs-5"></i>
+              </div>
+              <h3 className="fw-bold mb-0 text-success">{stats?.available_rooms}</h3>
+              <span className="small text-muted">Ready for occupancy</span>
             </div>
-            <h3 className="fw-bold mb-0 text-success">{stats?.available_rooms}</h3>
-            <span className="small text-muted">Ready for occupancy</span>
-          </div>
+          </Link>
         </div>
 
         <div className="col-sm-6 col-xl-3">
-          <div className="stat-box h-100 border-start border-4 border-warning">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <span className="small text-muted fw-semibold">Occupied Beds</span>
-              <i className="bi bi-person-check text-warning fs-5"></i>
+          <Link to="/admin/rooms" className="text-decoration-none">
+            <div className="stat-box h-100 border-start border-4 border-warning">
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <span className="small text-muted fw-semibold">Occupied Beds</span>
+                <i className="bi bi-person-check text-warning fs-5"></i>
+              </div>
+              <h3 className="fw-bold mb-0 text-warning">{stats?.occupied_beds}</h3>
+              <span className="small text-muted">{stats?.occupancy_rate}% Bed Occupancy</span>
             </div>
-            <h3 className="fw-bold mb-0 text-warning">{stats?.occupied_beds}</h3>
-            <span className="small text-muted">{stats?.occupancy_rate}% Bed Occupancy</span>
-          </div>
+          </Link>
         </div>
+
 
         <div className="col-sm-6 col-xl-3">
           <div className="stat-box h-100">

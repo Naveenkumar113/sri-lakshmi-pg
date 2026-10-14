@@ -27,6 +27,11 @@ export default function Register() {
     e.preventDefault();
     setError('');
 
+    if (!formData.phone || !/^\d{10}$/.test(formData.phone)) {
+      setError('Please enter a valid 10-digit Indian mobile number (numeric digits 0–9 only, e.g. 9876543210).');
+      return;
+    }
+
     if (formData.password !== formData.confirm_password) {
       setError('Passwords do not match. Please re-enter.');
       return;
@@ -98,15 +103,39 @@ export default function Register() {
               </div>
 
               <div className="col-md-6">
-                <label className="form-label small fw-semibold">Mobile Number *</label>
+                <label className="form-label small fw-semibold">
+                  Mobile Number * <span className="text-muted fw-normal">(10 digits)</span>
+                </label>
                 <input
                   type="tel"
+                  inputMode="numeric"
+                  maxLength={10}
                   required
-                  placeholder="e.g. +91 9876543210"
-                  className="form-control"
+                  placeholder="e.g. 9876543210"
+                  className={`form-control ${
+                    formData.phone ? (formData.phone.length === 10 ? 'is-valid' : 'is-invalid') : ''
+                  }`}
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) => {
+                    const clean = e.target.value.replace(/\D/g, '').slice(0, 10);
+                    setFormData({ ...formData, phone: clean });
+                  }}
                 />
+                {formData.phone ? (
+                  formData.phone.length === 10 ? (
+                    <div className="text-success small mt-1" style={{ fontSize: '0.75rem' }}>
+                      <i className="bi bi-check-circle-fill me-1"></i> Valid 10-digit Indian mobile number
+                    </div>
+                  ) : (
+                    <div className="text-danger small mt-1" style={{ fontSize: '0.75rem' }}>
+                      <i className="bi bi-exclamation-triangle-fill me-1"></i> Exactly 10 digits required ({formData.phone.length}/10 digits)
+                    </div>
+                  )
+                ) : (
+                  <div className="text-muted small mt-1" style={{ fontSize: '0.72rem' }}>
+                    Numeric digits 0–9 only. No +91 or spaces.
+                  </div>
+                )}
               </div>
 
               <div className="col-12">
