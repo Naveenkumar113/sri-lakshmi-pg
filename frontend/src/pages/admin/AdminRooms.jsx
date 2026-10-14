@@ -89,16 +89,78 @@ export default function AdminRooms() {
 
   const fetchData = async () => {
     try {
-      const [roomsRes, resRes] = await Promise.all([
-        api.get('/admin/rooms'),
-        api.get('/admin/residents'),
-      ]);
-      setRooms(roomsRes.data);
-      setResidents(resRes.data);
+      let roomsData = [];
+      try {
+        const roomsRes = await api.get('/admin/rooms');
+        roomsData = Array.isArray(roomsRes.data) ? roomsRes.data : [];
+      } catch (adminErr) {
+        console.warn('GET /admin/rooms failed or not supported by backend version, falling back to /rooms:', adminErr);
+        try {
+          const publicRes = await api.get('/rooms');
+          roomsData = Array.isArray(publicRes.data) ? publicRes.data : [];
+        } catch (pubErr) {
+          console.error('Failed to load rooms from /rooms fallback:', pubErr);
+        }
+      }
+
+      // Ensure every room has valid beds and metrics if fallback or legacy server was used
+      const normalizedRooms = roomsData.map((room) => {
+        const capacity = Math.max(1, parseInt(room.capacity, 10) || 1);
+        let beds = room.beds;
+        if (!beds || !Array.isArray(beds) || beds.length === 0) {
+          beds = Array.from({ length: capacity }, (_, i) => ({
+            id: `bed-${room.id || room.room_number}-${i + 1}`,
+            bed_number: `Bed ${i + 1}`,
+            bed_status: 'AVAILABLE',
+            is_occupied: false,
+            current_occupant_name: null,
+          }));
+        } else {
+          // Normalize existing beds if missing properties
+          beds = beds.map((b, idx) => ({
+            ...b,
+            id: b.id || `bed-${room.id || room.room_number}-${idx + 1}`,
+            bed_number: b.bed_number || `Bed ${idx + 1}`,
+            bed_status: b.bed_status || (b.is_occupied ? 'OCCUPIED' : 'AVAILABLE'),
+            is_occupied: !!b.is_occupied,
+          }));
+        }
+
+        const occupiedCount = room.occupied_beds !== undefined
+          ? room.occupied_beds
+          : beds.filter((b) => b.is_occupied).length;
+        const availableBeds = room.available_beds !== undefined
+          ? room.available_beds
+          : Math.max(0, capacity - occupiedCount);
+        const occupancyPct = room.occupancy_percentage !== undefined
+          ? room.occupancy_percentage
+          : (capacity > 0 ? Math.round((occupiedCount / capacity) * 1000) / 10 : 0);
+
+        return {
+          ...room,
+          capacity,
+          sharing_type: room.sharing_type || capacityToSharingType(capacity) || room.room_type,
+          beds,
+          occupied_beds: occupiedCount,
+          available_beds: availableBeds,
+          occupancy_percentage: occupancyPct,
+        };
+      });
+
+      setRooms(normalizedRooms);
+
+      // Fetch residents independently so room inventory never breaks if residents route is unavailable
+      try {
+        const resRes = await api.get('/admin/residents');
+        setResidents(Array.isArray(resRes.data) ? resRes.data : []);
+      } catch (resErr) {
+        console.warn('GET /admin/residents not available on current server deployment:', resErr);
+        setResidents([]);
+      }
 
       // If a room is currently open in Manage modal, refresh it
       if (selectedManageRoom) {
-        const updated = roomsRes.data.find((r) => r.id === selectedManageRoom.id);
+        const updated = normalizedRooms.find((r) => r.id === selectedManageRoom.id);
         if (updated) setSelectedManageRoom(updated);
       }
     } catch (err) {
@@ -241,13 +303,45 @@ export default function AdminRooms() {
         security_deposit: parseFloat(roomForm.security_deposit || 0),
       };
 
+      let savedRoom = null;
       if (editRoom) {
-        await api.put(`/admin/rooms/${editRoom.id}`, payload);
+        const res = await api.put(`/admin/rooms/${editRoom.id}`, payload);
+        savedRoom = res.data;
       } else {
-        await api.post('/admin/rooms', payload);
+        const res = await api.post('/admin/rooms', payload);
+        savedRoom = res.data;
       }
       setShowRoomFormModal(false);
-      fetchData();
+
+      if (savedRoom && savedRoom.room_number) {
+        const cap = Math.max(1, parseInt(savedRoom.capacity, 10) || capNum);
+        const normSaved = {
+          ...savedRoom,
+          capacity: cap,
+          sharing_type: savedRoom.sharing_type || capacityToSharingType(cap),
+          beds: (savedRoom.beds && savedRoom.beds.length > 0)
+            ? savedRoom.beds
+            : Array.from({ length: cap }, (_, i) => ({
+                id: `bed-${savedRoom.id || savedRoom.room_number}-${i + 1}`,
+                bed_number: `Bed ${i + 1}`,
+                bed_status: 'AVAILABLE',
+                is_occupied: false,
+                current_occupant_name: null,
+              })),
+          occupied_beds: savedRoom.occupied_beds || 0,
+          available_beds: savedRoom.available_beds !== undefined ? savedRoom.available_beds : cap,
+          occupancy_percentage: savedRoom.occupancy_percentage || 0,
+        };
+        setRooms((prev) => {
+          const exists = prev.some((r) => r.id === normSaved.id || r.room_number === normSaved.room_number);
+          if (exists) {
+            return prev.map((r) => (r.id === normSaved.id || r.room_number === normSaved.room_number ? normSaved : r));
+          }
+          return [normSaved, ...prev];
+        });
+      }
+
+      await fetchData();
     } catch (err) {
       alert(err.response?.data?.detail || 'Error saving room details.');
     } finally {

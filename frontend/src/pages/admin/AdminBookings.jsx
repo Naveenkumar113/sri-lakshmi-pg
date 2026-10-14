@@ -20,12 +20,30 @@ export default function AdminBookings() {
 
   const fetchData = async () => {
     try {
-      const [bookRes, roomRes] = await Promise.all([
-        api.get('/admin/bookings'),
-        api.get('/admin/rooms'),
-      ]);
-      setBookings(bookRes.data);
-      setRooms(roomRes.data);
+      let bookList = [];
+      let roomList = [];
+
+      try {
+        const bookRes = await api.get('/admin/bookings');
+        bookList = Array.isArray(bookRes.data) ? bookRes.data : [];
+      } catch (err) {
+        console.warn('GET /admin/bookings failed:', err);
+      }
+
+      try {
+        const roomRes = await api.get('/admin/rooms');
+        roomList = Array.isArray(roomRes.data) ? roomRes.data : [];
+      } catch (err) {
+        try {
+          const pubRes = await api.get('/rooms');
+          roomList = Array.isArray(pubRes.data) ? pubRes.data : [];
+        } catch (pubErr) {
+          console.error('Failed to load rooms fallback in bookings:', pubErr);
+        }
+      }
+
+      setBookings(bookList);
+      setRooms(roomList);
     } catch (err) {
       console.error('Failed to load admin bookings', err);
     } finally {

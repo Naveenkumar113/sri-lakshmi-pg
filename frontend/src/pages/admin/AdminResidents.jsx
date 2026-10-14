@@ -65,12 +65,30 @@ export default function AdminResidents() {
 
   const fetchData = async () => {
     try {
-      const [resData, roomsData] = await Promise.all([
-        api.get('/admin/residents'),
-        api.get('/admin/rooms'),
-      ]);
-      setResidents(resData.data);
-      setRooms(roomsData.data);
+      let resList = [];
+      let roomsList = [];
+
+      try {
+        const resData = await api.get('/admin/residents');
+        resList = Array.isArray(resData.data) ? resData.data : [];
+      } catch (resErr) {
+        console.warn('GET /admin/residents not available yet on server:', resErr);
+      }
+
+      try {
+        const roomsData = await api.get('/admin/rooms');
+        roomsList = Array.isArray(roomsData.data) ? roomsData.data : [];
+      } catch (adminErr) {
+        try {
+          const pubRooms = await api.get('/rooms');
+          roomsList = Array.isArray(pubRooms.data) ? pubRooms.data : [];
+        } catch (pubErr) {
+          console.error('Failed to load rooms:', pubErr);
+        }
+      }
+
+      setResidents(resList);
+      setRooms(roomsList);
     } catch (err) {
       console.error('Failed to load resident data', err);
     } finally {
