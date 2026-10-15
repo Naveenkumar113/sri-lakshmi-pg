@@ -176,7 +176,9 @@ def approve_booking(
             room = db.query(Room).filter(
                 Room.is_ac == booking.is_ac,
                 Room.status.in_(["AVAILABLE", "PARTIALLY_AVAILABLE"])
-            ).first()
+            ).with_for_update().first()
+        else:
+            room = db.query(Room).filter(Room.id == room.id).with_for_update().first()
 
     if not room or room.status in ["MAINTENANCE", "INACTIVE"]:
         raise HTTPException(status_code=400, detail="Target room is either not found, under maintenance, or inactive.")

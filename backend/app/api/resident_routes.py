@@ -227,10 +227,11 @@ def create_resident(
     )
     db.add(hist)
 
-    # Optional initial bed allocation
+    # Optional initial bed allocation with pessimistic concurrency lock
     if resident_in.room_id and resident_in.bed_id:
-        room = db.query(Room).filter(Room.id == resident_in.room_id).first()
-        bed = db.query(RoomBed).filter(RoomBed.id == resident_in.bed_id, RoomBed.room_id == resident_in.room_id).first()
+        # Row-level lock on the room and target bed to prevent simultaneous double-booking
+        room = db.query(Room).filter(Room.id == resident_in.room_id).with_for_update().first()
+        bed = db.query(RoomBed).filter(RoomBed.id == resident_in.bed_id, RoomBed.room_id == resident_in.room_id).with_for_update().first()
 
         if not room:
             raise HTTPException(status_code=404, detail="Selected room does not exist.")
