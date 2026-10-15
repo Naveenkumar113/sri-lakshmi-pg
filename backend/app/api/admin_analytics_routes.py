@@ -187,6 +187,13 @@ def toggle_user_status(
     if not user:
         raise HTTPException(status_code=404, detail="User not found.")
 
+    # Prevent admin account lockout / self-deactivation
+    if user.id == current_admin.id and not bool(data.get("is_active", True)):
+        raise HTTPException(
+            status_code=400,
+            detail="Administrators cannot deactivate their own active administrative account."
+        )
+
     user.is_active = bool(data.get("is_active", True))
     
     audit = AuditLog(

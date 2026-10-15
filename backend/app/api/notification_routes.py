@@ -33,6 +33,11 @@ def mark_notification_as_read(
     notif = db.query(Notification).filter(Notification.id == notif_id).first()
     if not notif:
         raise HTTPException(status_code=404, detail="Notification not found.")
+
+    # Authorization / IDOR Protection: regular user can only mark their own notifications
+    if current_user.role != "ADMIN" and notif.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You do not have permission to modify this notification.")
+
     notif.is_read = True
     db.commit()
     return {"message": "Notification marked as read."}
