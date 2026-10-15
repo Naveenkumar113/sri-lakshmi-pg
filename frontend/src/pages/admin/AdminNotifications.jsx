@@ -86,6 +86,8 @@ export default function AdminNotifications() {
                         ? 'bg-warning text-dark'
                         : notif.notification_type === 'USER'
                         ? 'bg-success text-white'
+                        : notif.notification_type === 'REPORT'
+                        ? 'bg-danger text-white'
                         : 'bg-info text-white'
                     }`}
                     style={{ width: '40px', height: '40px' }}
@@ -98,6 +100,8 @@ export default function AdminNotifications() {
                           ? 'door-open'
                           : notif.notification_type === 'USER'
                           ? 'person-check'
+                          : notif.notification_type === 'REPORT'
+                          ? 'exclamation-octagon'
                           : 'envelope-paper'
                       } fs-6`}
                     ></i>
@@ -110,7 +114,13 @@ export default function AdminNotifications() {
                         {new Date(notif.created_at).toLocaleString('en-IN')}
                       </span>
                       {notif.link && (
-                        <Link to={notif.link} className="small text-decoration-none fw-semibold text-primary">
+                        <Link
+                          to={notif.link}
+                          onClick={() => {
+                            if (!notif.is_read) handleMarkAsRead(notif.id);
+                          }}
+                          className="small text-decoration-none fw-semibold text-primary"
+                        >
                           Review in ERP <i className="bi bi-arrow-right"></i>
                         </Link>
                       )}

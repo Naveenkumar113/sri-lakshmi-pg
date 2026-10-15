@@ -88,6 +88,8 @@ export default function Notifications() {
                         ? 'bg-primary text-white'
                         : notif.notification_type === 'BOOKING'
                         ? 'bg-warning text-dark'
+                        : notif.notification_type === 'REPORT'
+                        ? 'bg-danger text-white'
                         : 'bg-info text-white'
                     }`}
                     style={{ width: '38px', height: '38px' }}
@@ -98,6 +100,8 @@ export default function Notifications() {
                           ? 'calendar-check'
                           : notif.notification_type === 'BOOKING'
                           ? 'key-fill'
+                          : notif.notification_type === 'REPORT'
+                          ? 'exclamation-octagon'
                           : 'info-circle'
                       }`}
                     ></i>
@@ -116,7 +120,13 @@ export default function Notifications() {
                         })}
                       </span>
                       {notif.link && (
-                        <Link to={notif.link} className="small text-decoration-none fw-semibold text-primary">
+                        <Link
+                          to={notif.link}
+                          onClick={() => {
+                            if (!notif.is_read) handleMarkAsRead(notif.id);
+                          }}
+                          className="small text-decoration-none fw-semibold text-primary"
+                        >
                           View Details <i className="bi bi-arrow-right"></i>
                         </Link>
                       )}

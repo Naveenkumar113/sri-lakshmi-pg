@@ -658,10 +658,14 @@ class ContactMessageResponse(BaseModel):
 # NOTIFICATION SCHEMAS
 class NotificationResponse(BaseModel):
     id: str
+    user_id: Optional[str] = None
+    for_admin: bool = False
     title: str
     message: str
     notification_type: str
+    report_id: Optional[str] = None
     is_read: bool
+    read_at: Optional[datetime] = None
     link: Optional[str] = None
     created_at: datetime
 
@@ -873,9 +877,9 @@ class IssueReportResponse(BaseModel):
     resolution_notes: Optional[str] = None
     resolved_by_admin_id: Optional[str] = None
     resolved_at: Optional[datetime] = None
-    admin_whatsapp_status: str
+    admin_whatsapp_status: Optional[str] = "NOT_SENT"
     admin_whatsapp_timestamp: Optional[datetime] = None
-    resident_whatsapp_status: str
+    resident_whatsapp_status: Optional[str] = "NOT_SENT"
     resident_whatsapp_timestamp: Optional[datetime] = None
     whatsapp_error_details: Optional[str] = None
     created_at: datetime

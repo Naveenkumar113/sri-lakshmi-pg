@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
@@ -22,6 +23,8 @@ const ISSUE_CATEGORIES = [
 
 export default function UserReport() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const directReportId = searchParams.get('report_id');
 
   // Resident info state
   const [residentInfo, setResidentInfo] = useState(null);
@@ -65,10 +68,10 @@ export default function UserReport() {
     fetchResidentDetails();
     fetchMyReports();
 
-    // Subtle background polling every 25 seconds for live status updates from admin
+    // Subtle background polling every 20 seconds for live status updates from admin
     const timer = setInterval(() => {
       fetchMyReports();
-    }, 25000);
+    }, 20000);
 
     return () => clearInterval(timer);
   }, []);
@@ -376,7 +379,10 @@ export default function UserReport() {
               </thead>
               <tbody className="small">
                 {reports.map((rep) => (
-                  <tr key={rep.id}>
+                  <tr
+                    key={rep.id}
+                    className={directReportId === rep.id ? 'table-warning border-start border-3 border-warning' : ''}
+                  >
                     <td>
                       <span className="fw-bold text-dark font-monospace">{rep.report_code}</span>
                       {rep.room_number && (

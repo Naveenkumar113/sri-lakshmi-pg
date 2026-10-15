@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
 
 const ISSUE_CATEGORIES = [
@@ -20,6 +21,9 @@ const ISSUE_CATEGORIES = [
 ];
 
 export default function AdminReports() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const directReportId = searchParams.get('report_id');
+
   const [reports, setReports] = useState([]);
   const [counts, setCounts] = useState({ open: 0, in_progress: 0, resolved: 0, total: 0 });
   const [loading, setLoading] = useState(true);
@@ -47,13 +51,30 @@ export default function AdminReports() {
       if (sortBy) params.sort_by = sortBy;
 
       const res = await api.get('/admin/reports', { params });
-      setReports(res.data.items || []);
+      const items = res.data.items || [];
+      setReports(items);
       setCounts({
         open: res.data.open_count,
         in_progress: res.data.in_progress_count,
         resolved: res.data.resolved_count,
         total: res.data.total,
       });
+
+      // If opened via notification link with ?report_id=...
+      if (directReportId) {
+        const found = items.find((r) => r.id === directReportId);
+        if (found) {
+          openDetailModal(found);
+        } else {
+          // Fetch directly from API
+          try {
+            const single = await api.get(`/admin/reports/${directReportId}`);
+            openDetailModal(single.data);
+          } catch (e) {
+            console.warn('Direct report not found', e);
+          }
+        }
+      }
     } catch (err) {
       console.error('Failed to load admin reports', err);
     } finally {
@@ -63,7 +84,13 @@ export default function AdminReports() {
 
   useEffect(() => {
     fetchReports();
-  }, [statusFilter, categoryFilter, sortBy]);
+
+    // Background polling every 20 seconds so admin sees incoming resident reports automatically
+    const timer = setInterval(() => {
+      fetchReports();
+    }, 20000);
+    return () => clearInterval(timer);
+  }, [statusFilter, categoryFilter, sortBy, directReportId]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -77,6 +104,14 @@ export default function AdminReports() {
     setStatusFeedback(null);
   };
 
+  const closeDetailModal = () => {
+    setSelectedReport(null);
+    if (directReportId) {
+      searchParams.delete('report_id');
+      setSearchParams(searchParams);
+    }
+  };
+
   const handleSaveResolution = async () => {
     if (!selectedReport) return;
     setSavingStatus(true);
@@ -88,7 +123,7 @@ export default function AdminReports() {
         resolution_notes: modalNotes.trim() || null,
       });
 
-      setStatusFeedback({ type: 'success', message: 'Report status successfully updated!' });
+      setStatusFeedback({ type: 'success', message: 'Report status updated & in-app notification sent to resident!' });
       setSelectedReport(res.data);
       // Refresh list
       fetchReports();
@@ -110,18 +145,6 @@ export default function AdminReports() {
         return <span className="badge bg-success px-2.5 py-1.5 fw-semibold"><i className="bi bi-check-circle-fill me-1"></i>Resolved</span>;
       default:
         return <span className="badge bg-secondary px-2.5 py-1.5">{status}</span>;
-    }
-  };
-
-  const getWhatsAppBadge = (status) => {
-    switch (status) {
-      case 'SENT':
-        return <span className="badge bg-success-subtle text-success border border-success-subtle small"><i className="bi bi-whatsapp me-1"></i>Sent</span>;
-      case 'FAILED':
-        return <span className="badge bg-danger-subtle text-danger border border-danger-subtle small"><i className="bi bi-exclamation-circle me-1"></i>Failed</span>;
-      case 'NOT_SENT':
-      default:
-        return <span className="badge bg-secondary-subtle text-secondary small">Not Sent</span>;
     }
   };
 
@@ -295,13 +318,15 @@ export default function AdminReports() {
                   <th scope="col" style={{ letterSpacing: '0.04em' }}>Category</th>
                   <th scope="col" style={{ letterSpacing: '0.04em' }}>Reported At</th>
                   <th scope="col" style={{ letterSpacing: '0.04em' }}>Status</th>
-                  <th scope="col" style={{ letterSpacing: '0.04em' }}>WhatsApp</th>
                   <th scope="col" className="text-end" style={{ letterSpacing: '0.04em' }}>Actions</th>
                 </tr>
               </thead>
               <tbody className="small">
                 {reports.map((rep) => (
-                  <tr key={rep.id}>
+                  <tr
+                    key={rep.id}
+                    className={selectedReport?.id === rep.id ? 'table-warning' : ''}
+                  >
                     <td>
                       <span className="fw-bold text-dark font-monospace">{rep.report_code}</span>
                     </td>
@@ -328,7 +353,7 @@ export default function AdminReports() {
                     <td>
                       <div className="fw-semibold text-dark">{rep.issue_category}</div>
                       {rep.description && (
-                        <div className="text-muted truncate" style={{ maxWidth: '240px', fontSize: '0.78rem' }} title={rep.description}>
+                        <div className="text-muted truncate" style={{ maxWidth: '260px', fontSize: '0.78rem' }} title={rep.description}>
                           {rep.description}
                         </div>
                       )}
@@ -343,14 +368,6 @@ export default function AdminReports() {
                       })}
                     </td>
                     <td>{getStatusBadge(rep.status)}</td>
-                    <td>
-                      <div>{getWhatsAppBadge(rep.admin_whatsapp_status)}</div>
-                      {rep.resident_whatsapp_status === 'SENT' && (
-                        <div className="mt-1" style={{ fontSize: '0.7rem' }}>
-                          <span className="text-success"><i className="bi bi-check-all"></i> Resident Notified</span>
-                        </div>
-                      )}
-                    </td>
                     <td className="text-end text-nowrap">
                       <button
                         className="btn btn-sm btn-outline-primary fw-semibold px-2.5 py-1"
@@ -390,7 +407,7 @@ export default function AdminReports() {
                 <button
                   type="button"
                   className="btn-close"
-                  onClick={() => setSelectedReport(null)}
+                  onClick={closeDetailModal}
                   aria-label="Close"
                 ></button>
               </div>
@@ -461,9 +478,9 @@ export default function AdminReports() {
                   </div>
 
                   <div className="col-md-6">
-                    <label className="form-label small fw-semibold text-dark">Notification Note</label>
+                    <label className="form-label small fw-semibold text-dark">In-App Notification</label>
                     <div className="form-text small mt-0 text-muted">
-                      When marked as <strong>Resolved</strong>, a WhatsApp message is sent to the resident with these resolution notes.
+                      When marked as <strong>Resolved</strong> or <strong>In Progress</strong>, an in-app notification is automatically delivered to the resident.
                     </div>
                   </div>
 
@@ -492,7 +509,7 @@ export default function AdminReports() {
                 <button
                   type="button"
                   className="btn btn-light border"
-                  onClick={() => setSelectedReport(null)}
+                  onClick={closeDetailModal}
                 >
                   Close
                 </button>
@@ -510,7 +527,7 @@ export default function AdminReports() {
                   ) : (
                     <>
                       <i className="bi bi-check-lg"></i>
-                      <span>Save Status & Notify</span>
+                      <span>Save Status & Notify Resident</span>
                     </>
                   )}
                 </button>

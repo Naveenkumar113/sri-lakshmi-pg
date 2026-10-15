@@ -1,12 +1,12 @@
 import logging
 from datetime import datetime
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, desc, text
 
-from ..database.connection import get_db, SessionLocal
-from ..models.models import IssueReport, User, Resident, BedAllocation, Room, RoomBed, Notification, RentSettings
+from ..database.connection import get_db
+from ..models.models import IssueReport, User, Resident, BedAllocation, Room, RoomBed, Notification
 from ..schemas.schemas import (
     ResidentReportInfo,
     IssueReportCreate,
@@ -16,7 +16,6 @@ from ..schemas.schemas import (
     ISSUE_CATEGORIES
 )
 from ..auth.security import get_current_user, get_current_admin
-from ..utils.whatsapp_service import send_whatsapp_message, normalize_whatsapp_phone, get_whatsapp_env_config
 
 logger = logging.getLogger(__name__)
 
@@ -68,85 +67,6 @@ def _get_active_resident_allocation(user: User, db: Session):
 
     return resident, allocation, room, bed
 
-# ==========================================
-# Background WhatsApp Handlers
-# ==========================================
-
-def _send_admin_new_report_whatsapp(report_id: str):
-    """Dispatches WhatsApp alert to PG admin upon report creation (non-blocking)."""
-    db = SessionLocal()
-    try:
-        report = db.query(IssueReport).filter(IssueReport.id == report_id).first()
-        if not report:
-            return
-
-        rent_settings = db.query(RentSettings).first()
-        admin_phone = rent_settings.admin_whatsapp_number if (rent_settings and rent_settings.admin_whatsapp_number) else "7893744206"
-
-        formatted_time = report.created_at.strftime("%d %b %Y, %I:%M %p")
-        message_body = (
-            f"🚨 *New PG Issue Report Received*\n\n"
-            f"*Report ID:* {report.report_code}\n"
-            f"*Resident:* {report.resident_name}\n"
-            f"*Resident ID:* {report.resident_code or 'N/A'}\n"
-            f"*Phone:* {report.resident_phone}\n"
-            f"*Room:* {report.room_number or 'Unallocated'}\n"
-            f"*Floor:* {f'Floor {report.floor_number}' if report.floor_number is not None else 'N/A'}\n"
-            f"*Bed:* {report.bed_number or 'N/A'}\n"
-            f"*Issue:* {report.issue_category}\n"
-            f"*Description:* {report.description or 'No extra details provided'}\n"
-            f"*Reported At:* {formatted_time} UTC\n\n"
-            f"Please review and resolve this issue in the Sri Lakshmi PG Admin ERP panel."
-        )
-
-        res = send_whatsapp_message(admin_phone, message_body)
-        if res.get("success"):
-            report.admin_whatsapp_status = "SENT"
-        else:
-            report.admin_whatsapp_status = "FAILED"
-            report.whatsapp_error_details = res.get("error_details")
-        report.admin_whatsapp_timestamp = datetime.utcnow()
-        db.commit()
-    except Exception as e:
-        logger.error(f"Error sending admin WhatsApp notification for report {report_id}: {e}")
-    finally:
-        db.close()
-
-def _send_resident_resolution_whatsapp(report_id: str):
-    """Dispatches WhatsApp alert to resident when issue is resolved (non-blocking)."""
-    db = SessionLocal()
-    try:
-        report = db.query(IssueReport).filter(IssueReport.id == report_id).first()
-        if not report or not report.resident_phone:
-            return
-
-        res_notes = report.resolution_notes or "The issue has been checked and addressed by the PG maintenance team."
-        room_info = f"Room {report.room_number}" if report.room_number else "PG Accommodation"
-
-        message_body = (
-            f"Hello {report.resident_name},\n\n"
-            f"Your issue report (*{report.report_code}*) regarding '*{report.issue_category}*' has been marked as *Resolved* by the PG administration.\n\n"
-            f"*Accommodation:* {room_info}\n"
-            f"*Resolution Notes:* {res_notes}\n\n"
-            f"If the issue persists or if you require further assistance, please contact the PG management directly.\n\n"
-            f"Thank you,\n"
-            f"Sri Lakshmi Srinivasa Gents PG Management\n"
-            f"Velachery, Chennai."
-        )
-
-        res = send_whatsapp_message(report.resident_phone, message_body)
-        if res.get("success"):
-            report.resident_whatsapp_status = "SENT"
-        else:
-            report.resident_whatsapp_status = "FAILED"
-            report.whatsapp_error_details = res.get("error_details")
-        report.resident_whatsapp_timestamp = datetime.utcnow()
-        db.commit()
-    except Exception as e:
-        logger.error(f"Error sending resident WhatsApp resolution for report {report_id}: {e}")
-    finally:
-        db.close()
-
 
 # ==========================================
 # User Endpoints
@@ -185,66 +105,77 @@ def get_resident_report_info(
 @router.post("", response_model=IssueReportResponse, status_code=status.HTTP_201_CREATED)
 def submit_issue_report(
     report_in: IssueReportCreate,
-    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Resident submits an issue report.
     Resident and room details are automatically populated from the server-side database.
-    Triggers an in-app notification and a background WhatsApp alert to PG admin.
+    Atomically saves the report and creates an in-app administrative notification.
     """
     resident, allocation, room, bed = _get_active_resident_allocation(current_user, db)
 
     report_code = _generate_report_code(db)
 
-    new_report = IssueReport(
-        report_code=report_code,
-        user_id=current_user.id,
-        resident_id=resident.id if resident else None,
-        resident_name=current_user.full_name,
-        resident_code=resident.resident_code if resident else None,
-        resident_phone=current_user.phone,
-        room_number=room.room_number if room else None,
-        floor_number=room.floor if room else None,
-        bed_number=bed.bed_number if bed else None,
-        issue_category=report_in.issue_category,
-        description=report_in.description,
-        status="OPEN"
-    )
+    try:
+        new_report = IssueReport(
+            report_code=report_code,
+            user_id=current_user.id,
+            resident_id=resident.id if resident else None,
+            resident_name=current_user.full_name,
+            resident_code=resident.resident_code if resident else None,
+            resident_phone=current_user.phone,
+            room_number=room.room_number if room else None,
+            floor_number=room.floor if room else None,
+            bed_number=bed.bed_number if bed else None,
+            issue_category=report_in.issue_category,
+            description=report_in.description,
+            status="OPEN"
+        )
+        db.add(new_report)
+        db.flush()  # Generates new_report.id within the current transaction
 
-    db.add(new_report)
+        # Format room descriptor
+        room_str = f"Room {room.room_number}" if room else "No active bed"
+        bed_str = f"Bed {bed.bed_number}" if bed else ""
+        location_str = f"{room_str} ({bed_str})" if bed_str else room_str
 
-    # In-app notification for admin
-    room_str = f"Room {room.room_number}" if room else "Unallocated"
-    admin_notif = Notification(
-        user_id=None,
-        for_admin=True,
-        title=f"New Issue Reported: {report_code}",
-        message=f"{current_user.full_name} ({room_str}) reported: {report_in.issue_category}.",
-        notification_type="REPORT",
-        link="/admin/reports"
-    )
-    db.add(admin_notif)
+        # 1. In-app notification for admin: clickable directly to report in admin dashboard
+        admin_notif = Notification(
+            user_id=None,
+            for_admin=True,
+            title=f"New Issue Report — #{report_code}",
+            message=f"Resident: {current_user.full_name} | {location_str} | Issue: {report_in.issue_category} | Status: Open",
+            notification_type="REPORT",
+            report_id=new_report.id,
+            link=f"/admin/reports?report_id={new_report.id}"
+        )
+        db.add(admin_notif)
 
-    # In-app notification for resident
-    user_notif = Notification(
-        user_id=current_user.id,
-        for_admin=False,
-        title=f"Report Submitted: {report_code}",
-        message=f"Your issue report ({report_in.issue_category}) has been received and assigned to PG staff.",
-        notification_type="REPORT",
-        link="/report"
-    )
-    db.add(user_notif)
+        # 2. In-app notification for resident: confirmation in user portal
+        user_notif = Notification(
+            user_id=current_user.id,
+            for_admin=False,
+            title=f"Issue Report Submitted — #{report_code}",
+            message=f"Your report regarding '{report_in.issue_category}' has been submitted and assigned to PG staff.",
+            notification_type="REPORT",
+            report_id=new_report.id,
+            link=f"/report?report_id={new_report.id}"
+        )
+        db.add(user_notif)
 
-    db.commit()
-    db.refresh(new_report)
+        # Atomic commit of both report and notifications
+        db.commit()
+        db.refresh(new_report)
 
-    # Dispatch non-blocking WhatsApp alert to Admin
-    background_tasks.add_task(_send_admin_new_report_whatsapp, new_report.id)
-
-    return new_report
+        return new_report
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Failed to submit issue report and create notifications: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to save issue report. Please try again."
+        )
 
 @router.get("/my", response_model=IssueReportListResponse)
 def get_my_issue_reports(
@@ -267,6 +198,21 @@ def get_my_issue_reports(
         in_progress_count=in_p,
         resolved_count=res_c
     )
+
+@router.get("/my/{report_id}", response_model=IssueReportResponse)
+def get_my_single_report(
+    report_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Returns a specific report belonging to the authenticated resident."""
+    report = db.query(IssueReport).filter(
+        IssueReport.id == report_id,
+        IssueReport.user_id == current_user.id
+    ).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Issue report not found.")
+    return report
 
 
 # ==========================================
@@ -350,14 +296,12 @@ def get_report_details(
 def update_report_status(
     report_id: str,
     status_in: IssueReportStatusUpdate,
-    background_tasks: BackgroundTasks,
     current_admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     """
     Updates status of an issue report (OPEN, IN_PROGRESS, RESOLVED) and resolution notes.
-    If transitioned to RESOLVED, sets resolved_at and notifies resident via WhatsApp (non-blocking).
-    Avoids duplicate resolution WhatsApp messages.
+    Creates an in-app notification for the resident. No WhatsApp or external services used.
     """
     report = db.query(IssueReport).filter(IssueReport.id == report_id).first()
     if not report:
@@ -370,31 +314,42 @@ def update_report_status(
     if status_in.resolution_notes is not None:
         report.resolution_notes = status_in.resolution_notes
 
-    # If transitioning to RESOLVED
+    room_info = f"Room {report.room_number}" if report.room_number else "PG Accommodation"
+
     if new_status == "RESOLVED":
         if not report.resolved_at:
             report.resolved_at = datetime.utcnow()
         report.resolved_by_admin_id = current_admin.id
 
         # In-app notification to resident
+        notes_snippet = f"Admin Notes: {report.resolution_notes}" if report.resolution_notes else "Issue has been resolved by maintenance."
         user_notif = Notification(
             user_id=report.user_id,
             for_admin=False,
-            title=f"Issue Resolved: {report.report_code}",
-            message=f"Your issue ({report.issue_category}) has been marked as RESOLVED by the management.",
+            title=f"Your Issue Has Been Resolved — #{report.report_code}",
+            message=f"Your report regarding '{report.issue_category}' has been marked as resolved by the PG administration. {room_info} | Status: Resolved | {notes_snippet}",
             notification_type="REPORT",
-            link="/report"
+            report_id=report.id,
+            link=f"/report?report_id={report.id}"
         )
         db.add(user_notif)
 
-        # Trigger WhatsApp notification only if not already sent for this resolution
-        if old_status != "RESOLVED" or report.resident_whatsapp_status != "SENT":
-            background_tasks.add_task(_send_resident_resolution_whatsapp, report.id)
+    elif new_status == "IN_PROGRESS" and old_status != "IN_PROGRESS":
+        # Notify resident that maintenance is actively underway
+        notes_snippet = f"Admin Notes: {report.resolution_notes}" if report.resolution_notes else "Maintenance staff has been assigned to attend."
+        user_notif = Notification(
+            user_id=report.user_id,
+            for_admin=False,
+            title=f"Issue In Progress — #{report.report_code}",
+            message=f"Your report regarding '{report.issue_category}' is now In Progress. {room_info} | {notes_snippet}",
+            notification_type="REPORT",
+            report_id=report.id,
+            link=f"/report?report_id={report.id}"
+        )
+        db.add(user_notif)
 
-    elif new_status in ("OPEN", "IN_PROGRESS"):
-        # If reopening
-        if old_status == "RESOLVED":
-            report.resolved_at = None
+    elif new_status == "OPEN" and old_status == "RESOLVED":
+        report.resolved_at = None
 
     db.commit()
     db.refresh(report)

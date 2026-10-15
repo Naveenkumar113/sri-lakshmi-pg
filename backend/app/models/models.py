@@ -248,16 +248,19 @@ class Notification(Base):
     __tablename__ = "notifications"
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
-    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
-    for_admin = Column(Boolean, default=False)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
+    for_admin = Column(Boolean, default=False, index=True)
     title = Column(String(150), nullable=False)
     message = Column(Text, nullable=False)
-    notification_type = Column(String(30), default="INFO")  # VISIT, BOOKING, USER, SYSTEM
-    is_read = Column(Boolean, default=False)
+    notification_type = Column(String(30), default="INFO", index=True)  # VISIT, BOOKING, USER, SYSTEM, REPORT
+    report_id = Column(String(36), ForeignKey("issue_reports.id", ondelete="SET NULL"), nullable=True, index=True)
+    is_read = Column(Boolean, default=False, index=True)
+    read_at = Column(DateTime, nullable=True)
     link = Column(String(255), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
     user = relationship("User", back_populates="notifications")
+    report = relationship("IssueReport", foreign_keys=[report_id])
 
 
 class ContactMessage(Base):

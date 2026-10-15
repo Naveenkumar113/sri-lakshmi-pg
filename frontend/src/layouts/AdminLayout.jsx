@@ -1,12 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ErrorBoundary from '../components/ErrorBoundary';
+import api from '../services/api';
 
 export default function AdminLayout() {
   const { user, isAuthenticated, isAdmin, loading, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAuthenticated || !isAdmin) return;
+
+    const fetchUnread = async () => {
+      try {
+        const res = await api.get('/notifications/unread-count');
+        setUnreadCount(res.data.unread_count || 0);
+      } catch (err) {
+        // silent fail
+      }
+    };
+
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 15000); // 15-second polling for admin alerts
+    return () => clearInterval(interval);
+  }, [isAuthenticated, isAdmin]);
 
   if (loading) {
     return (
@@ -93,15 +112,22 @@ export default function AdminLayout() {
                 end={item.end}
                 onClick={() => setSidebarOpen(false)}
                 className={({ isActive }) =>
-                  `d-flex align-items-center gap-2 px-3 py-2 rounded-3 text-decoration-none small transition-all ${
+                  `d-flex align-items-center justify-content-between px-3 py-2 rounded-3 text-decoration-none small transition-all ${
                     isActive
                       ? 'bg-warning text-dark fw-bold shadow-sm'
                       : 'text-light opacity-75 hover-bg-dark hover-opacity-100'
                   }`
                 }
               >
-                <i className={`bi bi-${item.icon} fs-6`}></i>
-                <span>{item.label}</span>
+                <div className="d-flex align-items-center gap-2">
+                  <i className={`bi bi-${item.icon} fs-6`}></i>
+                  <span>{item.label}</span>
+                </div>
+                {item.to === '/admin/notifications' && unreadCount > 0 && (
+                  <span className="badge rounded-pill bg-danger" style={{ fontSize: '0.65rem' }}>
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
               </NavLink>
             ))}
           </nav>

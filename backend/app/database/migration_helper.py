@@ -68,8 +68,16 @@ def apply_auto_migrations(engine):
             if "outstanding_amount" not in wl_cols:
                 conn.execute(text("ALTER TABLE whatsapp_reminder_logs ADD COLUMN outstanding_amount FLOAT"))
 
+        # 6. Check and extend 'notifications' table
+        if "notifications" in tables:
+            notif_cols = [c["name"] for c in inspector.get_columns("notifications")]
+            if "report_id" not in notif_cols:
+                conn.execute(text("ALTER TABLE notifications ADD COLUMN report_id VARCHAR(36) REFERENCES issue_reports(id) ON DELETE SET NULL"))
+            if "read_at" not in notif_cols:
+                conn.execute(text("ALTER TABLE notifications ADD COLUMN read_at TIMESTAMP"))
 
-        # 6. For PostgreSQL, create sequence and partial unique index if supported
+
+        # 7. For PostgreSQL, create sequence and partial unique index if supported
         dialect_name = engine.dialect.name
         if dialect_name == "postgresql":
             conn.execute(text("CREATE SEQUENCE IF NOT EXISTS resident_code_seq START WITH 1 INCREMENT BY 1;"))

@@ -1,9 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 
 export default function UserLayout() {
   const { user, isAuthenticated, loading } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const fetchUnread = async () => {
+      try {
+        const res = await api.get('/notifications/unread-count');
+        setUnreadCount(res.data.unread_count || 0);
+      } catch (err) {
+        // silent fail on network glitch
+      }
+    };
+
+    fetchUnread();
+    // Poll unread notification count every 20 seconds
+    const interval = setInterval(fetchUnread, 20000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
 
   if (loading) {
     return (
@@ -89,8 +109,18 @@ export default function UserLayout() {
                   to="/notifications"
                   className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
                 >
-                  <i className="bi bi-bell fs-5"></i>
-                  <span>Notifications</span>
+                  <div className="position-relative d-inline-flex align-items-center">
+                    <i className="bi bi-bell fs-5"></i>
+                    {unreadCount > 0 && (
+                      <span
+                        className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                        style={{ fontSize: '0.65rem' }}
+                      >
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </div>
+                  <span className="ms-1">Notifications</span>
                 </NavLink>
 
                 <NavLink
