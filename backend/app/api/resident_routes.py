@@ -104,7 +104,62 @@ def get_residents(
         query = query.filter(Resident.occupation.ilike(f"%{occupation}%"))
 
     residents = query.order_by(Resident.created_at.desc()).all()
-    results = [enrich_resident_response(r, db) for r in residents]
+    if not residents:
+        return []
+
+    res_ids = [r.id for r in residents]
+    # Single batch query with joinedload for room and bed to eliminate N+1 queries
+    from sqlalchemy.orm import joinedload
+    active_allocs = db.query(BedAllocation).options(
+        joinedload(BedAllocation.room),
+        joinedload(BedAllocation.bed)
+    ).filter(
+        BedAllocation.resident_id.in_(res_ids),
+        BedAllocation.allocation_status == "ACTIVE"
+    ).all()
+
+    alloc_by_resident = {a.resident_id: a for a in active_allocs}
+
+    results = []
+    for resident in residents:
+        active_alloc = alloc_by_resident.get(resident.id)
+        data = {
+            "id": resident.id,
+            "resident_code": resident.resident_code,
+            "user_id": resident.user_id,
+            "full_name": resident.full_name,
+            "phone": resident.phone,
+            "email": resident.email,
+            "occupation": resident.occupation,
+            "emergency_contact": resident.emergency_contact,
+            "address": resident.address,
+            "resident_status": resident.resident_status,
+            "created_at": resident.created_at,
+            "current_room_id": None,
+            "current_room_number": None,
+            "current_bed_id": None,
+            "current_bed_number": None,
+            "current_allocation_id": None,
+            "current_move_in_date": None,
+            "current_monthly_rent": None,
+            "is_ac": None,
+            "room_type": None,
+            "sharing_type": None
+        }
+        if active_alloc and active_alloc.room and active_alloc.bed:
+            data.update({
+                "current_room_id": active_alloc.room_id,
+                "current_room_number": active_alloc.room.room_number,
+                "current_bed_id": active_alloc.bed_id,
+                "current_bed_number": active_alloc.bed.bed_number,
+                "current_allocation_id": active_alloc.id,
+                "current_move_in_date": active_alloc.move_in_date,
+                "current_monthly_rent": active_alloc.room.monthly_rent_per_bed or active_alloc.room.monthly_rent,
+                "is_ac": active_alloc.room.is_ac,
+                "room_type": active_alloc.room.room_type,
+                "sharing_type": active_alloc.room.sharing_type
+            })
+        results.append(data)
 
     # Post-filter by room_number or is_ac if requested
     if room_number:
@@ -340,11 +395,14 @@ def create_allocation(
     if not resident:
         raise HTTPException(status_code=404, detail="Resident not found.")
 
-    room = db.query(Room).filter(Room.id == alloc_in.room_id).first()
+    from sqlalchemy.exc import IntegrityError
+
+    # Row-level pessimistic locking on room and bed to serialize simultaneous concurrent allocations
+    room = db.query(Room).filter(Room.id == alloc_in.room_id).with_for_update().first()
     if not room:
         raise HTTPException(status_code=404, detail="Room not found.")
 
-    bed = db.query(RoomBed).filter(RoomBed.id == alloc_in.bed_id, RoomBed.room_id == alloc_in.room_id).first()
+    bed = db.query(RoomBed).filter(RoomBed.id == alloc_in.bed_id, RoomBed.room_id == alloc_in.room_id).with_for_update().first()
     if not bed:
         raise HTTPException(status_code=404, detail="Bed not found in the specified room.")
 
@@ -390,7 +448,12 @@ def create_allocation(
     )
     db.add(new_alloc)
     resident.resident_status = "ACTIVE"
-    db.flush()
+    
+    try:
+        db.flush()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"Bed {bed.bed_number} in Room {room.room_number} is already occupied or assigned.")
 
     # History log
     hist = ResidentHistory(
@@ -413,7 +476,12 @@ def create_allocation(
     )
     db.add(audit)
 
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"Bed {bed.bed_number} in Room {room.room_number} is already occupied or assigned.")
+
     db.refresh(new_alloc)
 
     return {

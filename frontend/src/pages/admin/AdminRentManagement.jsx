@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import api from '../../services/api';
+import api, { cachedGet, invalidateClientCache } from '../../services/api';
 
 export default function AdminRentManagement() {
   const [activeTab, setActiveTab] = useState('records'); // 'records', 'logs', 'settings'
@@ -66,17 +66,18 @@ export default function AdminRentManagement() {
   const [confirmingSend, setConfirmingSend] = useState(false);
 
   // Fetch Dashboard Summary Stats
-  const fetchStats = async () => {
+  const fetchStats = async (force = false) => {
     try {
-      const res = await api.get(`/admin/rent/dashboard-stats?month=${selectedMonth}`);
-      setStats(res.data);
+      const ttl = force ? 0 : 20000;
+      const data = await cachedGet(`/admin/rent/dashboard-stats?month=${selectedMonth}`, {}, ttl);
+      setStats(data);
     } catch (err) {
       console.error('Failed to load rent dashboard statistics', err);
     }
   };
 
   // Fetch Records with filters
-  const fetchRecords = async () => {
+  const fetchRecords = async (force = false) => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -88,9 +89,10 @@ export default function AdminRentManagement() {
       if (roomFilter) params.append('room_number', roomFilter);
       if (search.trim()) params.append('search', search.trim());
 
-      const res = await api.get(`/admin/rent/records?${params.toString()}`);
-      setRecords(res.data.records || []);
-      setTotalRecords(res.data.total || 0);
+      const ttl = force ? 0 : 20000;
+      const data = await cachedGet(`/admin/rent/records?${params.toString()}`, {}, ttl);
+      setRecords(data.records || []);
+      setTotalRecords(data.total || 0);
     } catch (err) {
       console.error('Failed to load rent records', err);
     } finally {
@@ -122,8 +124,8 @@ export default function AdminRentManagement() {
   // Fetch Rooms for room filter dropdown
   const fetchRooms = async () => {
     try {
-      const res = await api.get('/admin/rooms');
-      setRooms(Array.isArray(res.data) ? res.data : []);
+      const data = await cachedGet('/admin/rooms', {}, 30000);
+      setRooms(Array.isArray(data) ? data : []);
     } catch (err) {
       console.warn('Failed to load room list for filters');
     }
@@ -132,18 +134,21 @@ export default function AdminRentManagement() {
   // Fetch Settings
   const fetchSettings = async () => {
     try {
-      const res = await api.get('/admin/rent/settings');
-      if (res.data) setSettings(res.data);
+      const data = await cachedGet('/admin/rent/settings', {}, 60000);
+      if (data) setSettings(data);
     } catch (err) {
       console.warn('Failed to load rent settings');
     }
   };
 
   useEffect(() => {
-    fetchStats();
-    fetchRecords();
-    fetchRooms();
-    fetchSettings();
+    // Parallel execute independent requests
+    Promise.all([
+      fetchStats(),
+      fetchRecords(),
+      fetchRooms(),
+      fetchSettings()
+    ]);
   }, [selectedMonth]);
 
   useEffect(() => {
@@ -205,9 +210,11 @@ export default function AdminRentManagement() {
         message: `Payment of ₹${amountNum.toLocaleString()} recorded successfully for ${selectedRecord.resident_name}! Balance is now ₹${res.data.balance_due.toLocaleString()} (${res.data.payment_status}).`
       });
 
+      invalidateClientCache('/admin/rent');
+      invalidateClientCache('/admin/analytics');
       setShowPaymentModal(false);
-      fetchStats();
-      fetchRecords();
+      fetchStats(true);
+      fetchRecords(true);
     } catch (err) {
       const errMsg = err.response?.data?.detail || 'Failed to record payment. Please check details.';
       setPaymentError(errMsg);

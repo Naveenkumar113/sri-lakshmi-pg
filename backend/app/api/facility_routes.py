@@ -5,13 +5,21 @@ from ..database.connection import get_db
 from ..models.models import Facility, User
 from ..schemas.schemas import FacilityResponse, FacilityCreate, FacilityUpdate
 from ..auth.security import get_current_admin
+from ..utils.fast_cache import app_cache
 
 router = APIRouter(prefix="/api/facilities", tags=["Facilities"])
 admin_router = APIRouter(prefix="/api/admin/facilities", tags=["Admin Facilities"])
 
 @router.get("", response_model=List[FacilityResponse])
 def get_facilities(db: Session = Depends(get_db)):
-    return db.query(Facility).filter(Facility.is_active == True).order_by(Facility.display_order, Facility.id).all()
+    cached = app_cache.get("facilities:public")
+    if cached is not None:
+        return cached
+    data = db.query(Facility).filter(Facility.is_active == True).order_by(Facility.display_order, Facility.id).all()
+    # Cache serialization dictionary
+    res = [FacilityResponse.model_validate(f).model_dump() for f in data]
+    app_cache.set("facilities:public", res, ttl_seconds=60)
+    return res
 
 @admin_router.get("", response_model=List[FacilityResponse])
 def admin_get_all_facilities(current_admin: User = Depends(get_current_admin), db: Session = Depends(get_db)):
@@ -27,6 +35,7 @@ def create_facility(
     db.add(new_fac)
     db.commit()
     db.refresh(new_fac)
+    app_cache.invalidate("facilities")
     return new_fac
 
 @admin_router.put("/{fac_id}", response_model=FacilityResponse)
@@ -45,6 +54,7 @@ def update_facility(
 
     db.commit()
     db.refresh(fac)
+    app_cache.invalidate("facilities")
     return fac
 
 @admin_router.delete("/{fac_id}")
@@ -59,4 +69,5 @@ def delete_facility(
 
     db.delete(fac)
     db.commit()
+    app_cache.invalidate("facilities")
     return {"message": "Facility deleted successfully."}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../../services/api';
+import api, { cachedGet } from '../../services/api';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
@@ -9,8 +9,8 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const res = await api.get('/admin/analytics');
-        setStats(res.data);
+        const data = await cachedGet('/admin/analytics', {}, 15000);
+        setStats(data);
       } catch (err) {
         console.error('Failed to load admin analytics', err);
       } finally {

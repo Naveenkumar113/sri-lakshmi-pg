@@ -261,7 +261,14 @@ def get_rent_records(
 
     total_count = query.count()
 
-    records = query.order_by(
+    from sqlalchemy.orm import joinedload
+    records = query.options(
+        joinedload(RentRecord.resident),
+        joinedload(RentRecord.allocation).joinedload(BedAllocation.room),
+        joinedload(RentRecord.allocation).joinedload(BedAllocation.bed),
+        joinedload(RentRecord.payments),
+        joinedload(RentRecord.reminders)
+    ).order_by(
         desc(RentRecord.due_date),
         desc(RentRecord.created_at)
     ).offset((page - 1) * limit).limit(limit).all()

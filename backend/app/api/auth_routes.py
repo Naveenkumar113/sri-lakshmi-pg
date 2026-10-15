@@ -1,3 +1,4 @@
+import os
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from ..database.connection import get_db
@@ -73,28 +74,78 @@ def register(request: Request, user_in: UserRegister, db: Session = Depends(get_
     }
 
 @router.post("/login", response_model=Token)
-def login(request: Request, login_data: UserLogin, db: Session = Depends(get_db)):
-    # Rate limit login attempts per IP (max 15 attempts/minute)
-    enforce_rate_limit(request, key_prefix="login", max_requests=15, window_seconds=60)
+async def login(request: Request, login_data: UserLogin, db: Session = Depends(get_db)):
+    from starlette.concurrency import run_in_threadpool
 
-    user = db.query(User).filter(User.email == login_data.email.lower().strip()).first()
-    if not user or not verify_password(login_data.password, user.hashed_password):
+    # Rate limit login attempts per IP
+    max_login_rate = int(os.getenv("AUTH_LOGIN_RATE_LIMIT", "60"))
+    enforce_rate_limit(request, key_prefix="login", max_requests=max_login_rate, window_seconds=60)
+
+    clean_email = login_data.email.lower().strip()
+    
+    # Fast query fetching user record and detaching it immediately from DB connection
+    user_record = (
+        db.query(
+            User.id,
+            User.full_name,
+            User.email,
+            User.phone,
+            User.hashed_password,
+            User.role,
+            User.occupation,
+            User.company_or_college,
+            User.emergency_contact,
+            User.address,
+            User.profile_photo,
+            User.is_active,
+            User.created_at
+        )
+        .filter(User.email == clean_email)
+        .first()
+    )
+    
+    # Close session immediately back to connection pool so concurrent requests aren't starved of DB connections
+    db.close()
+
+    if not user_record:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password. Please verify your credentials."
         )
 
-    if not user.is_active:
+    # Offload CPU-intensive bcrypt checkpw to worker threadpool without holding any DB connection
+    is_valid_pwd = await run_in_threadpool(verify_password, login_data.password, user_record.hashed_password)
+
+    if not is_valid_pwd:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password. Please verify your credentials."
+        )
+
+    if not user_record.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Your account has been deactivated. Please contact the PG management."
         )
 
-    access_token = create_access_token({"sub": user.id, "role": user.role, "email": user.email})
+    access_token = create_access_token({"sub": user_record.id, "role": user_record.role, "email": user_record.email})
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "user": user
+        "user": {
+            "id": user_record.id,
+            "full_name": user_record.full_name,
+            "email": user_record.email,
+            "phone": user_record.phone,
+            "role": user_record.role,
+            "occupation": user_record.occupation,
+            "company_or_college": user_record.company_or_college,
+            "emergency_contact": user_record.emergency_contact,
+            "address": user_record.address,
+            "profile_photo": user_record.profile_photo,
+            "is_active": user_record.is_active,
+            "created_at": user_record.created_at
+        }
     }
 
 @router.post("/logout")

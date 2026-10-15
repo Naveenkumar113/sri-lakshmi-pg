@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../services/api';
+import api, { cachedGet, invalidateClientCache } from '../../services/api';
 import VisualRoomLayout from '../../components/VisualRoomLayout';
 import BusSeatMap, {
   CAPACITY_WORDS,
@@ -87,21 +87,18 @@ export default function AdminRooms() {
     notes: '',
   });
 
-  const fetchData = async () => {
+  const fetchData = async (force = false) => {
     try {
-      let roomsData = [];
-      try {
-        const roomsRes = await api.get('/admin/rooms');
-        roomsData = Array.isArray(roomsRes.data) ? roomsRes.data : [];
-      } catch (adminErr) {
-        console.warn('GET /admin/rooms failed or not supported by backend version, falling back to /rooms:', adminErr);
-        try {
-          const publicRes = await api.get('/rooms');
-          roomsData = Array.isArray(publicRes.data) ? publicRes.data : [];
-        } catch (pubErr) {
-          console.error('Failed to load rooms from /rooms fallback:', pubErr);
-        }
-      }
+      const ttl = force ? 0 : 30000;
+      const [roomsDataRaw, resDataRaw] = await Promise.all([
+        cachedGet('/admin/rooms', {}, ttl).catch(async () => {
+          return cachedGet('/rooms', {}, ttl).catch(() => []);
+        }),
+        cachedGet('/admin/residents', {}, ttl).catch(() => [])
+      ]);
+
+      const roomsData = Array.isArray(roomsDataRaw) ? roomsDataRaw : [];
+      const resList = Array.isArray(resDataRaw) ? resDataRaw : [];
 
       // Ensure every room has valid beds and metrics if fallback or legacy server was used
       const normalizedRooms = roomsData.map((room) => {
@@ -148,15 +145,7 @@ export default function AdminRooms() {
       });
 
       setRooms(normalizedRooms);
-
-      // Fetch residents independently so room inventory never breaks if residents route is unavailable
-      try {
-        const resRes = await api.get('/admin/residents');
-        setResidents(Array.isArray(resRes.data) ? resRes.data : []);
-      } catch (resErr) {
-        console.warn('GET /admin/residents not available on current server deployment:', resErr);
-        setResidents([]);
-      }
+      setResidents(resList);
 
       // If a room is currently open in Manage modal, refresh it
       if (selectedManageRoom) {
@@ -311,6 +300,9 @@ export default function AdminRooms() {
         const res = await api.post('/admin/rooms', payload);
         savedRoom = res.data;
       }
+      invalidateClientCache('/admin/rooms');
+      invalidateClientCache('/rooms');
+      invalidateClientCache('/admin/analytics');
       setShowRoomFormModal(false);
 
       if (savedRoom && savedRoom.room_number) {
@@ -435,7 +427,11 @@ export default function AdminRooms() {
         });
       }
       setShowAssignModal(false);
-      fetchData();
+      invalidateClientCache('/admin/rooms');
+      invalidateClientCache('/rooms');
+      invalidateClientCache('/admin/residents');
+      invalidateClientCache('/admin/analytics');
+      fetchData(true);
       alert('Bed allocation completed successfully!');
     } catch (err) {
       alert(err.response?.data?.detail || 'Failed to allocate bed.');
@@ -469,8 +465,12 @@ export default function AdminRooms() {
     setSubmitting(true);
     try {
       await api.put(`/admin/allocations/${transferTarget.allocation_id}/transfer`, transferForm);
+      invalidateClientCache('/admin/rooms');
+      invalidateClientCache('/rooms');
+      invalidateClientCache('/admin/residents');
+      invalidateClientCache('/admin/analytics');
       setShowTransferModal(false);
-      fetchData();
+      fetchData(true);
       alert('Resident transferred successfully!');
     } catch (err) {
       alert(err.response?.data?.detail || 'Failed to transfer resident.');
@@ -501,8 +501,12 @@ export default function AdminRooms() {
     setSubmitting(true);
     try {
       await api.put(`/admin/allocations/${checkoutTarget.allocation_id}/checkout`, checkoutForm);
+      invalidateClientCache('/admin/rooms');
+      invalidateClientCache('/rooms');
+      invalidateClientCache('/admin/residents');
+      invalidateClientCache('/admin/analytics');
       setShowCheckoutModal(false);
-      fetchData();
+      fetchData(true);
       alert(`Resident ${checkoutTarget.resident_code} successfully checked out. Bed is now free!`);
     } catch (err) {
       alert(err.response?.data?.detail || 'Failed to check out resident.');

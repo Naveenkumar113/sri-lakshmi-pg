@@ -6,6 +6,7 @@ from ..database.connection import get_db
 from ..models.models import GalleryItem, User
 from ..schemas.schemas import GalleryResponse, GalleryCreate
 from ..auth.security import get_current_admin
+from ..utils.fast_cache import app_cache
 
 router = APIRouter(prefix="/api/gallery", tags=["Gallery"])
 admin_router = APIRouter(prefix="/api/admin/gallery", tags=["Admin Gallery"])
@@ -18,12 +19,20 @@ def get_gallery(
     authentic_only: Optional[bool] = None,
     db: Session = Depends(get_db)
 ):
+    cache_key = f"gallery:{category or 'all'}:{authentic_only}"
+    cached = app_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     query = db.query(GalleryItem)
     if category and category != "All":
         query = query.filter(GalleryItem.category == category)
     if authentic_only is not None:
         query = query.filter(GalleryItem.is_authentic == authentic_only)
-    return query.order_by(GalleryItem.display_order, GalleryItem.id).all()
+    items = query.order_by(GalleryItem.display_order, GalleryItem.id).all()
+    res = [GalleryResponse.model_validate(it).model_dump() for it in items]
+    app_cache.set(cache_key, res, ttl_seconds=60)
+    return res
 
 @admin_router.post("", response_model=GalleryResponse)
 def add_gallery_item(
@@ -35,6 +44,7 @@ def add_gallery_item(
     db.add(new_item)
     db.commit()
     db.refresh(new_item)
+    app_cache.invalidate("gallery")
     return new_item
 
 @admin_router.post("/upload")

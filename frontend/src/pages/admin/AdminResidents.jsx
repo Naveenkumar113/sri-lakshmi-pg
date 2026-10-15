@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../services/api';
+import api, { cachedGet, invalidateClientCache } from '../../services/api';
 
 export default function AdminResidents() {
   const [residents, setResidents] = useState([]);
@@ -63,32 +63,19 @@ export default function AdminResidents() {
   // Success alert banner with newly generated resident ID
   const [recentGeneratedCode, setRecentGeneratedCode] = useState(null);
 
-  const fetchData = async () => {
+  const fetchData = async (force = false) => {
     try {
-      let resList = [];
-      let roomsList = [];
+      const ttl = force ? 0 : 30000;
+      // Parallel execution for residents and rooms
+      const [resData, roomsData] = await Promise.all([
+        cachedGet('/admin/residents', {}, ttl).catch(() => []),
+        cachedGet('/admin/rooms', {}, ttl).catch(async () => {
+          return cachedGet('/rooms', {}, ttl).catch(() => []);
+        })
+      ]);
 
-      try {
-        const resData = await api.get('/admin/residents');
-        resList = Array.isArray(resData.data) ? resData.data : [];
-      } catch (resErr) {
-        console.warn('GET /admin/residents not available yet on server:', resErr);
-      }
-
-      try {
-        const roomsData = await api.get('/admin/rooms');
-        roomsList = Array.isArray(roomsData.data) ? roomsData.data : [];
-      } catch (adminErr) {
-        try {
-          const pubRooms = await api.get('/rooms');
-          roomsList = Array.isArray(pubRooms.data) ? pubRooms.data : [];
-        } catch (pubErr) {
-          console.error('Failed to load rooms:', pubErr);
-        }
-      }
-
-      setResidents(resList);
-      setRooms(roomsList);
+      setResidents(Array.isArray(resData) ? resData : []);
+      setRooms(Array.isArray(roomsData) ? roomsData : []);
     } catch (err) {
       console.error('Failed to load resident data', err);
     } finally {
@@ -219,6 +206,9 @@ export default function AdminResidents() {
         bed_id: addForm.bed_id || null,
       };
       const res = await api.post('/admin/residents', payload);
+      invalidateClientCache('/admin/residents');
+      invalidateClientCache('/admin/rooms');
+      invalidateClientCache('/admin/analytics');
       setShowAddModal(false);
       setRecentGeneratedCode({
         code: res.data.resident_code,
@@ -226,7 +216,7 @@ export default function AdminResidents() {
         room: res.data.current_room_number,
         bed: res.data.current_bed_number,
       });
-      fetchData();
+      fetchData(true);
     } catch (err) {
       alert(err.response?.data?.detail || 'Failed to register resident.');
     } finally {
@@ -256,8 +246,11 @@ export default function AdminResidents() {
     setSubmitting(true);
     try {
       await api.put(`/admin/allocations/${selectedResident.current_allocation_id}/transfer`, transferForm);
+      invalidateClientCache('/admin/residents');
+      invalidateClientCache('/admin/rooms');
+      invalidateClientCache('/admin/analytics');
       setShowTransferModal(false);
-      fetchData();
+      fetchData(true);
       alert(`Resident ${selectedResident.resident_code} successfully transferred!`);
     } catch (err) {
       alert(err.response?.data?.detail || 'Failed to transfer resident.');
@@ -286,8 +279,11 @@ export default function AdminResidents() {
     setSubmitting(true);
     try {
       await api.put(`/admin/allocations/${selectedResident.current_allocation_id}/checkout`, checkoutForm);
+      invalidateClientCache('/admin/residents');
+      invalidateClientCache('/admin/rooms');
+      invalidateClientCache('/admin/analytics');
       setShowCheckoutModal(false);
-      fetchData();
+      fetchData(true);
       alert(`Resident ${selectedResident.resident_code} (${selectedResident.full_name}) successfully checked out. Bed is now vacant.`);
     } catch (err) {
       alert(err.response?.data?.detail || 'Failed to check out resident.');

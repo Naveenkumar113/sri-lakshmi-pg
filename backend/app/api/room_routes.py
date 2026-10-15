@@ -12,6 +12,7 @@ from ..schemas.schemas import (
 )
 from ..auth.security import get_current_admin
 from ..utils.room_occupancy import sync_room_occupancy
+from ..utils.fast_cache import app_cache
 
 router = APIRouter(prefix="/api/rooms", tags=["Rooms"])
 admin_router = APIRouter(prefix="/api/admin/rooms", tags=["Admin Rooms"])
@@ -75,6 +76,11 @@ def get_rooms(
     status: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
+    cache_key = f"rooms:{room_type}:{sharing_type}:{is_ac}:{floor}:{status}"
+    cached = app_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     query = db.query(Room)
     if room_type:
         query = query.filter(Room.room_type.ilike(f"%{room_type}%"))
@@ -148,6 +154,7 @@ def get_rooms(
             "beds": beds_data
         })
 
+    app_cache.set(cache_key, results, ttl_seconds=15)
     return results
 
 @router.get("/{room_id}", response_model=RoomResponse)

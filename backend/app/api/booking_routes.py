@@ -122,7 +122,11 @@ def get_all_bookings(
     current_admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    query = db.query(Booking)
+    from sqlalchemy.orm import joinedload
+    query = db.query(Booking).options(
+        joinedload(Booking.user),
+        joinedload(Booking.room)
+    )
     if status:
         query = query.filter(Booking.status == status)
     return query.order_by(Booking.created_at.desc()).all()

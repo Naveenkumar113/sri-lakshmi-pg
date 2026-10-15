@@ -22,9 +22,9 @@ connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite")
 pool_kwargs = {}
 if not DATABASE_URL.startswith("sqlite"):
     pool_kwargs = {
-        "pool_size": int(os.getenv("DB_POOL_SIZE", "20")),
-        "max_overflow": int(os.getenv("DB_MAX_OVERFLOW", "30")),
-        "pool_timeout": int(os.getenv("DB_POOL_TIMEOUT", "30")),
+        "pool_size": int(os.getenv("DB_POOL_SIZE", "40")),
+        "max_overflow": int(os.getenv("DB_MAX_OVERFLOW", "40")),
+        "pool_timeout": int(os.getenv("DB_POOL_TIMEOUT", "15")),
         "pool_recycle": int(os.getenv("DB_POOL_RECYCLE", "1800")),
     }
 

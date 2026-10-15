@@ -14,7 +14,9 @@ def get_admin_analytics(
     current_admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    from ..models.models import Resident, BedAllocation
+    from ..models.models import Resident, BedAllocation, RentRecord, WhatsAppReminderLog
+    from ..utils.rent_calculator import get_ist_today
+    from sqlalchemy.orm import joinedload
 
     total_users = db.query(User).filter(User.role == "USER").count()
     total_rooms = db.query(Room).count()
@@ -36,21 +38,25 @@ def get_admin_analytics(
     occupancy_rate = round((occupied_beds / total_beds * 100), 1) if total_beds > 0 else 0
 
     recent_visits = db.query(VisitRequest).order_by(VisitRequest.created_at.desc()).limit(5).all()
-    recent_bookings = db.query(Booking).order_by(Booking.created_at.desc()).limit(5).all()
-
+    recent_bookings = db.query(Booking).options(joinedload(Booking.user)).order_by(Booking.created_at.desc()).limit(5).all()
 
     # Room type distribution
     room_types_summary = db.query(Room.room_type, func.count(Room.id)).group_by(Room.room_type).all()
 
-    from ..models.models import Resident, BedAllocation, RentRecord, WhatsAppReminderLog
-    from ..utils.rent_calculator import get_ist_today
-
     today = get_ist_today()
     current_period = today.strftime("%Y-%m")
-    current_records = db.query(RentRecord).filter(RentRecord.rent_period == current_period).all()
-    expected_rent = sum(r.rent_amount for r in current_records)
-    collected_rent = sum(r.amount_paid for r in current_records)
-    outstanding_rent = sum(r.balance_due for r in current_records)
+    
+    # Efficient SQL aggregation
+    rent_agg = db.query(
+        func.coalesce(func.sum(RentRecord.rent_amount), 0.0),
+        func.coalesce(func.sum(RentRecord.amount_paid), 0.0),
+        func.coalesce(func.sum(RentRecord.balance_due), 0.0)
+    ).filter(RentRecord.rent_period == current_period).first()
+    
+    expected_rent = rent_agg[0] if rent_agg else 0.0
+    collected_rent = rent_agg[1] if rent_agg else 0.0
+    outstanding_rent = rent_agg[2] if rent_agg else 0.0
+
     overdue_count = db.query(RentRecord).filter(RentRecord.payment_status == "OVERDUE").count()
     reminders_sent_count = db.query(WhatsAppReminderLog).filter(WhatsAppReminderLog.delivery_status.in_(["SENT", "DELIVERED"])).count()
 

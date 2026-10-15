@@ -45,4 +45,11 @@ def sync_room_occupancy(db: Session, room_id: str) -> Room:
         else:
             room.status = "AVAILABLE"
 
+    try:
+        from .fast_cache import app_cache
+        app_cache.invalidate("rooms")
+    except Exception:
+        pass
+
     return room
+
