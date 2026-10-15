@@ -47,12 +47,28 @@ async def upload_gallery_image(
     current_admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
+    ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "gif"}
+    ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+
+    ext = file.filename.split(".")[-1].lower() if "." in (file.filename or "") else ""
+    if ext not in ALLOWED_EXTENSIONS or file.content_type not in ALLOWED_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid image format. Allowed formats are: JPG, JPEG, PNG, WEBP, GIF."
+        )
+
     os.makedirs(UPLOAD_DIR, exist_ok=True)
-    ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
-    filename = f"pg_upload_{uuid.uuid4().hex[:8]}.{ext}"
+    filename = f"pg_upload_{uuid.uuid4().hex[:12]}.{ext}"
     file_path = os.path.join(UPLOAD_DIR, filename)
 
     contents = await file.read()
+    if len(contents) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail="File size exceeds maximum allowed limit of 10 MB."
+        )
+
     with open(file_path, "wb") as f:
         f.write(contents)
 

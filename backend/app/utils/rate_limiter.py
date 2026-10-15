@@ -57,6 +57,10 @@ class InMemoryRateLimiter:
             if key in self._records:
                 del self._records[key]
 
+    def clear(self):
+        with self._lock:
+            self._records.clear()
+
 
 auth_rate_limiter = InMemoryRateLimiter(max_requests=10, window_seconds=60)
 
@@ -76,7 +80,12 @@ def enforce_rate_limit(
 ):
     """
     Enforces a rate limit for the given request and raises HTTP 429 when exceeded.
+    Disabled when running automated tests (TESTING=True).
     """
+    import os
+    if os.getenv("TESTING", "").lower() in ["true", "1"]:
+        return
+
     ip = get_client_ip(request)
     key = f"{key_prefix}:{ip}"
     allowed, retry_after = auth_rate_limiter.check(key, max_requests, window_seconds)

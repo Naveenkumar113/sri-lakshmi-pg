@@ -1,16 +1,20 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from ..database.connection import get_db
 from ..models.models import ContactMessage, Notification, User
 from ..schemas.schemas import ContactMessageCreate, ContactMessageResponse
 from ..auth.security import get_current_admin
+from ..utils.rate_limiter import enforce_rate_limit
 
 router = APIRouter(prefix="/api/contact", tags=["Contact"])
 admin_router = APIRouter(prefix="/api/admin/contact", tags=["Admin Contact"])
 
 @router.post("", response_model=ContactMessageResponse)
-def submit_contact_form(contact_in: ContactMessageCreate, db: Session = Depends(get_db)):
+def submit_contact_form(request: Request, contact_in: ContactMessageCreate, db: Session = Depends(get_db)):
+    # Rate limit public contact form submissions (max 5 per minute per IP)
+    enforce_rate_limit(request, key_prefix="contact_form", max_requests=5, window_seconds=60)
+
     new_msg = ContactMessage(**contact_in.model_dump())
     db.add(new_msg)
 

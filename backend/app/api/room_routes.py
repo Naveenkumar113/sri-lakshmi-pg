@@ -327,7 +327,7 @@ def delete_room(
     if not room:
         raise HTTPException(status_code=404, detail="Room not found.")
 
-    # RULE 8 & Safe deletion: Check active resident allocations
+    # Prevent deletion if there are active resident allocations
     active_count = db.query(BedAllocation).filter(
         BedAllocation.room_id == room_id,
         BedAllocation.allocation_status == "ACTIVE"
@@ -336,6 +336,14 @@ def delete_room(
         raise HTTPException(
             status_code=400,
             detail=f"Cannot delete Room {room.room_number} because it has {active_count} active resident allocation(s). Please transfer or check out residents first."
+        )
+
+    # Protect historical data: check if there are historical allocations
+    historical_count = db.query(BedAllocation).filter(BedAllocation.room_id == room_id).count()
+    if historical_count > 0:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot delete Room {room.room_number} because it has {historical_count} past resident allocation/audit record(s). To preserve historical data, please set the room status to 'INACTIVE' or 'MAINTENANCE' instead."
         )
 
     room_num = room.room_number
