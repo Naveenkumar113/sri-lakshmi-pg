@@ -67,6 +67,31 @@ a {
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border-color);
   transition: all 0.3s ease;
+  z-index: 1040;
+}
+
+@media (max-width: 991.98px) {
+  .navbar-glass .navbar-collapse {
+    background: #FFFFFF;
+    border-radius: var(--radius-md);
+    box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.12);
+    padding: 16px;
+    margin-top: 10px;
+    border: 1px solid var(--border-color);
+    max-height: 82vh;
+    overflow-y: auto;
+  }
+  
+  .navbar-glass .nav-link {
+    border-radius: 8px;
+    font-weight: 600;
+  }
+
+  .navbar-glass .nav-link:hover,
+  .navbar-glass .nav-link.active {
+    background-color: var(--accent-light);
+    color: var(--accent) !important;
+  }
 }
 
 /* Authentic Photo Badge */
