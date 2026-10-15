@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { smartScrollTo, scrollToFirstError } from '../../utils/scrollHelper';
 
 const ISSUE_CATEGORIES = [
   'Room cleaning not completed today',
@@ -80,6 +81,7 @@ export default function UserReport() {
     e.preventDefault();
     if (!issueCategory) {
       setErrorMsg('Please select an issue type.');
+      scrollToFirstError('#report-form-section');
       return;
     }
 
@@ -99,11 +101,14 @@ export default function UserReport() {
       });
       setIssueCategory('');
       setDescription('');
+      // Smoothly scroll to success message
+      smartScrollTo('#report-success-banner', { offset: 90, delay: 100 });
       // Refresh list
       fetchMyReports();
     } catch (err) {
       const msg = err.response?.data?.detail || 'Failed to submit report. Please try again.';
       setErrorMsg(typeof msg === 'string' ? msg : JSON.stringify(msg));
+      smartScrollTo('#report-error-banner', { offset: 90, delay: 100 });
     } finally {
       setSubmitting(false);
     }
@@ -150,7 +155,7 @@ export default function UserReport() {
       </div>
 
       {/* Report Form Card */}
-      <div className="bg-white p-4 rounded-4 border shadow-sm">
+      <div id="report-form-section" className="bg-white p-4 rounded-4 border shadow-sm">
         <h5 className="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
           <i className="bi bi-pencil-square text-primary"></i>
           <span>Create New Issue Report</span>
@@ -250,7 +255,7 @@ export default function UserReport() {
 
         {/* Success Alert */}
         {successMsg && (
-          <div className="alert alert-success alert-dismissible fade show d-flex align-items-start gap-2 shadow-sm" role="alert">
+          <div id="report-success-banner" className="alert alert-success alert-dismissible fade show d-flex align-items-start gap-2 shadow-sm" role="alert">
             <i className="bi bi-check-circle-fill fs-5 mt-0.5 text-success"></i>
             <div>
               <div className="fw-bold">Report Submitted Successfully!</div>
@@ -265,7 +270,7 @@ export default function UserReport() {
 
         {/* Error Alert */}
         {errorMsg && (
-          <div className="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 shadow-sm" role="alert">
+          <div id="report-error-banner" className="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 shadow-sm" role="alert">
             <i className="bi bi-exclamation-triangle-fill fs-5 text-danger"></i>
             <div className="small">{errorMsg}</div>
             <button type="button" className="btn-close" onClick={() => setErrorMsg(null)} aria-label="Close"></button>

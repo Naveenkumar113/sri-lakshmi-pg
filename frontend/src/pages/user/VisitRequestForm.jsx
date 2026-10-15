@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { smartScrollTo, scrollToFirstError } from '../../utils/scrollHelper';
 
 export default function VisitRequestForm() {
   const { user } = useAuth();
@@ -45,11 +46,14 @@ export default function VisitRequestForm() {
       await api.post('/visits', formData);
       setSuccess(true);
       confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+      smartScrollTo('#visit-success-alert', { offset: 90, delay: 80 });
       setTimeout(() => {
         navigate('/my-visits');
       }, 1800);
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to submit visit request. Please select a different slot or date.');
+      smartScrollTo('#visit-error-alert', { offset: 90, delay: 80 });
+      scrollToFirstError('#visit-form');
     } finally {
       setLoading(false);
     }
@@ -58,7 +62,7 @@ export default function VisitRequestForm() {
   const todayStr = new Date().toISOString().split('T')[0];
 
   return (
-    <div className="bg-white p-4 p-md-5 rounded-4 border shadow-sm">
+    <div id="visit-form-container" className="bg-white p-4 p-md-5 rounded-4 border shadow-sm">
       <div className="mb-4">
         <span className="pill-badge pill-badge-accent mb-2">Schedule An Appointment</span>
         <h3 className="fw-bold mb-1">Book Your PG Visit</h3>
@@ -68,7 +72,7 @@ export default function VisitRequestForm() {
       </div>
 
       {success && (
-        <div className="alert alert-success border-0 rounded-3 mb-4 d-flex align-items-center gap-2">
+        <div id="visit-success-alert" className="alert alert-success border-0 rounded-3 mb-4 d-flex align-items-center gap-2">
           <i className="bi bi-check-circle-fill fs-4"></i>
           <div>
             <strong>Visit request submitted successfully!</strong> Status is PENDING admin review. Redirecting to your visits...
@@ -77,13 +81,13 @@ export default function VisitRequestForm() {
       )}
 
       {error && (
-        <div className="alert alert-danger border-0 rounded-3 mb-4 d-flex align-items-center gap-2">
+        <div id="visit-error-alert" className="alert alert-danger border-0 rounded-3 mb-4 d-flex align-items-center gap-2">
           <i className="bi bi-exclamation-triangle-fill fs-4"></i>
           <div>{error}</div>
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
+      <form id="visit-form" onSubmit={handleSubmit}>
         <div className="row g-3">
           {/* Readonly User Info */}
           <div className="col-md-4">

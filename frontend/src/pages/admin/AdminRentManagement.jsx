@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import api, { cachedGet, invalidateClientCache } from '../../services/api';
+import { smartScrollTo } from '../../utils/scrollHelper';
 
 export default function AdminRentManagement() {
   const [activeTab, setActiveTab] = useState('records'); // 'records', 'logs', 'settings'
@@ -526,7 +527,10 @@ export default function AdminRentManagement() {
 
         <div className="d-flex align-items-center gap-2 flex-shrink-0">
           <button
-            onClick={() => setActiveTab('settings')}
+            onClick={() => {
+              setActiveTab('settings');
+              smartScrollTo('#rent-automation-settings', { offset: 90, delay: 100, focusFirstInput: true });
+            }}
             className="btn btn-xs btn-outline-dark bg-light shadow-xs small px-3 py-1 rounded-2"
           >
             <i className="bi bi-gear me-1"></i>Configure Settings
@@ -640,10 +644,13 @@ export default function AdminRentManagement() {
       </div>
 
       {/* Tabs Navigation */}
-      <div className="bg-white rounded-4 border shadow-sm overflow-hidden">
+      <div id="rent-tabs-section" className="bg-white rounded-4 border shadow-sm overflow-hidden">
         <div className="d-flex border-bottom bg-light px-3 pt-2 gap-2">
           <button
-            onClick={() => setActiveTab('records')}
+            onClick={() => {
+              setActiveTab('records');
+              smartScrollTo('#rent-tabs-section', { offset: 90 });
+            }}
             className={`btn btn-sm border-0 rounded-top-3 px-3 py-2 fw-semibold ${
               activeTab === 'records'
                 ? 'bg-white text-primary border-top border-start border-end shadow-xs'
@@ -654,7 +661,10 @@ export default function AdminRentManagement() {
           </button>
 
           <button
-            onClick={() => setActiveTab('logs')}
+            onClick={() => {
+              setActiveTab('logs');
+              smartScrollTo('#rent-tabs-section', { offset: 90 });
+            }}
             className={`btn btn-sm border-0 rounded-top-3 px-3 py-2 fw-semibold ${
               activeTab === 'logs'
                 ? 'bg-white text-primary border-top border-start border-end shadow-xs'
@@ -665,7 +675,10 @@ export default function AdminRentManagement() {
           </button>
 
           <button
-            onClick={() => setActiveTab('settings')}
+            onClick={() => {
+              setActiveTab('settings');
+              smartScrollTo('#rent-automation-settings', { offset: 90, delay: 100 });
+            }}
             className={`btn btn-sm border-0 rounded-top-3 px-3 py-2 fw-semibold ${
               activeTab === 'settings'
                 ? 'bg-white text-primary border-top border-start border-end shadow-xs'
@@ -1051,7 +1064,7 @@ export default function AdminRentManagement() {
 
         {/* TAB 3: Automation Settings */}
         {activeTab === 'settings' && (
-          <div className="p-4" style={{ maxWidth: '750px' }}>
+          <div id="rent-automation-settings" className="p-4" style={{ maxWidth: '750px' }}>
             <h6 className="fw-bold mb-3">Automated Monthly Rent & WhatsApp Configuration</h6>
             <form onSubmit={handleSaveSettings} className="d-flex flex-column gap-3">
               {/* Admin WhatsApp Number Field */}

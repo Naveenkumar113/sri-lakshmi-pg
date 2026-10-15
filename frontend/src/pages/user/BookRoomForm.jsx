@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { smartScrollTo, scrollToFirstError } from '../../utils/scrollHelper';
 
 export default function BookRoomForm() {
   const { user } = useAuth();
@@ -62,11 +63,14 @@ export default function BookRoomForm() {
       await api.post('/bookings', formData);
       setSuccess(true);
       confetti({ particleCount: 75, spread: 70, origin: { y: 0.6 } });
+      smartScrollTo('#booking-success-alert', { offset: 90, delay: 80 });
       setTimeout(() => {
         navigate('/my-bookings');
       }, 1800);
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to submit room booking request. Please check room availability.');
+      smartScrollTo('#booking-error-alert', { offset: 90, delay: 80 });
+      scrollToFirstError('#booking-form');
     } finally {
       setLoading(false);
     }
@@ -75,7 +79,7 @@ export default function BookRoomForm() {
   const todayStr = new Date().toISOString().split('T')[0];
 
   return (
-    <div className="bg-white p-4 p-md-5 rounded-4 border shadow-sm">
+    <div id="booking-form-container" className="bg-white p-4 p-md-5 rounded-4 border shadow-sm">
       <div className="mb-4">
         <span className="pill-badge pill-badge-accent mb-2">Room Reservation</span>
         <h3 className="fw-bold mb-1">Request a Room Booking</h3>
@@ -85,7 +89,7 @@ export default function BookRoomForm() {
       </div>
 
       {success && (
-        <div className="alert alert-success border-0 rounded-3 mb-4 d-flex align-items-center gap-2">
+        <div id="booking-success-alert" className="alert alert-success border-0 rounded-3 mb-4 d-flex align-items-center gap-2">
           <i className="bi bi-check-circle-fill fs-4"></i>
           <div>
             <strong>Booking request submitted!</strong> Status is PENDING admin verification. Redirecting to your bookings...
@@ -94,13 +98,13 @@ export default function BookRoomForm() {
       )}
 
       {error && (
-        <div className="alert alert-danger border-0 rounded-3 mb-4 d-flex align-items-center gap-2">
+        <div id="booking-error-alert" className="alert alert-danger border-0 rounded-3 mb-4 d-flex align-items-center gap-2">
           <i className="bi bi-exclamation-triangle-fill fs-4"></i>
           <div>{error}</div>
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
+      <form id="booking-form" onSubmit={handleSubmit}>
         <div className="row g-3">
           {/* Readonly User Info */}
           <div className="col-md-4">

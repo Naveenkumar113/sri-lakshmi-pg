@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api, { cachedGet, invalidateClientCache } from '../../services/api';
+import { smartScrollTo, scrollToFirstError } from '../../utils/scrollHelper';
 
 export default function AdminResidents() {
   const [residents, setResidents] = useState([]);
@@ -217,8 +218,10 @@ export default function AdminResidents() {
         bed: res.data.current_bed_number,
       });
       fetchData(true);
+      smartScrollTo('#resident-success-banner', { offset: 90, delay: 120 });
     } catch (err) {
       alert(err.response?.data?.detail || 'Failed to register resident.');
+      scrollToFirstError('#add-resident-form');
     } finally {
       setSubmitting(false);
     }
@@ -317,7 +320,7 @@ export default function AdminResidents() {
 
       {/* Success banner if new resident was just created */}
       {recentGeneratedCode && (
-        <div className="alert alert-success alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-3 mb-0" role="alert">
+        <div id="resident-success-banner" className="alert alert-success alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-3 mb-0" role="alert">
           <div className="rounded-circle bg-success text-white p-2 d-flex align-items-center justify-content-center">
             <i className="bi bi-check2-circle fs-4"></i>
           </div>
@@ -614,7 +617,7 @@ export default function AdminResidents() {
                 <button type="button" className="btn-close" onClick={() => setShowAddModal(false)}></button>
               </div>
 
-              <form onSubmit={handleAddSubmit}>
+              <form id="add-resident-form" onSubmit={handleAddSubmit}>
                 <div className="modal-body p-4">
                   <h6 className="fw-bold text-primary mb-3">1. Personal & Contact Information</h6>
                   <div className="row g-3 mb-4">

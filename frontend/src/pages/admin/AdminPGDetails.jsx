@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
+import { smartScrollTo, scrollToFirstError } from '../../utils/scrollHelper';
 
 export default function AdminPGDetails() {
   const [formData, setFormData] = useState({
@@ -41,8 +42,10 @@ export default function AdminPGDetails() {
     try {
       await api.put('/admin/pg-details', formData);
       setSuccess('PG Information updated live successfully!');
+      smartScrollTo('#pg-details-success', { offset: 90, delay: 80 });
     } catch (err) {
       alert('Failed to update PG details.');
+      scrollToFirstError('#pg-details-form');
     } finally {
       setSaving(false);
     }
@@ -60,7 +63,7 @@ export default function AdminPGDetails() {
       </div>
 
       {success && (
-        <div className="alert alert-success border-0 small py-2 mb-4 d-flex align-items-center gap-2">
+        <div id="pg-details-success" className="alert alert-success border-0 small py-2 mb-4 d-flex align-items-center gap-2">
           <i className="bi bi-check-circle-fill"></i>
           <div>{success}</div>
         </div>
@@ -71,7 +74,7 @@ export default function AdminPGDetails() {
           <div className="spinner-border text-primary"></div>
         </div>
       ) : (
-        <form onSubmit={handleSubmit}>
+        <form id="pg-details-form" onSubmit={handleSubmit}>
           <div className="row g-3">
             <div className="col-md-6">
               <label className="form-label small fw-semibold">PG Business Name *</label>

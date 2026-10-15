@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api, { cachedGet, invalidateClientCache } from '../../services/api';
+import { smartScrollTo, scrollToFirstError } from '../../utils/scrollHelper';
 import VisualRoomLayout from '../../components/VisualRoomLayout';
 import BusSeatMap, {
   CAPACITY_WORDS,
