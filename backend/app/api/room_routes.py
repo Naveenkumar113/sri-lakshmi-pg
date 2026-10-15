@@ -88,7 +88,67 @@ def get_rooms(
         query = query.filter(Room.status == status)
 
     rooms = query.order_by(Room.floor, Room.room_number).all()
-    return [populate_room_response(r, db) for r in rooms]
+    if not rooms:
+        return []
+
+    room_ids = [r.id for r in rooms]
+    # Single batch query for all active allocations across all queried rooms
+    active_allocations = db.query(BedAllocation).filter(
+        BedAllocation.room_id.in_(room_ids),
+        BedAllocation.allocation_status == "ACTIVE"
+    ).all()
+
+    # Pre-group allocations by room_id and bed_id
+    alloc_by_room = {}
+    for alloc in active_allocations:
+        if alloc.room_id not in alloc_by_room:
+            alloc_by_room[alloc.room_id] = {}
+        alloc_by_room[alloc.room_id][alloc.bed_id] = alloc
+
+    results = []
+    for room in rooms:
+        room_alloc_map = alloc_by_room.get(room.id, {})
+        beds_data = []
+        for b in room.beds:
+            alloc = room_alloc_map.get(b.id)
+            beds_data.append({
+                "id": b.id,
+                "bed_number": b.bed_number,
+                "bed_status": "OCCUPIED" if alloc else (b.bed_status or "AVAILABLE"),
+                "is_occupied": alloc is not None,
+                "current_occupant_name": alloc.resident.full_name if alloc and alloc.resident else b.current_occupant_name,
+                "current_occupant_id": alloc.resident_id if alloc else None,
+                "current_resident_code": alloc.resident.resident_code if alloc and alloc.resident else None,
+                "current_allocation_id": alloc.id if alloc else None,
+                "move_in_date": alloc.move_in_date if alloc else None
+            })
+
+        occupied_count = len(room_alloc_map)
+        available_count = max(0, room.capacity - occupied_count)
+        occupancy_pct = round((occupied_count / room.capacity * 100), 1) if room.capacity > 0 else 0.0
+
+        results.append({
+            "id": room.id,
+            "room_number": room.room_number,
+            "room_type": room.room_type,
+            "sharing_type": room.sharing_type or room.room_type,
+            "is_ac": room.is_ac,
+            "floor": room.floor,
+            "capacity": room.capacity,
+            "available_beds": available_count,
+            "monthly_rent": room.monthly_rent,
+            "monthly_rent_per_bed": room.monthly_rent_per_bed or room.monthly_rent,
+            "security_deposit": room.security_deposit,
+            "description": room.description,
+            "amenities": room.amenities,
+            "images": room.images,
+            "status": room.status,
+            "created_at": room.created_at,
+            "occupancy_percentage": occupancy_pct,
+            "beds": beds_data
+        })
+
+    return results
 
 @router.get("/{room_id}", response_model=RoomResponse)
 def get_room_by_id(room_id: str, db: Session = Depends(get_db)):
