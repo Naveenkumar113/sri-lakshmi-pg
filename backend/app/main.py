@@ -50,33 +50,12 @@ app = FastAPI(
 )
 
 # CORS Configuration
-# Include localhost, frontend environment variables, and any vercel preview / production URLs
-default_origins = [
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://localhost:3000",
-    "http://localhost:8000",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:5174",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:8000",
-]
-
-env_origins = os.getenv("ALLOWED_ORIGINS", "")
-frontend_url = os.getenv("FRONTEND_URL", "")
-
-origins = list(default_origins)
-if env_origins:
-    origins.extend([orig.strip() for orig in env_origins.split(",") if orig.strip()])
-if frontend_url and frontend_url.strip() not in origins:
-    origins.append(frontend_url.strip())
-
+# Allow any Vercel domain, localhost, and incoming web client origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_origin_regex=r"https://.*\.vercel\.app|https://.*\.onrender\.com",
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
