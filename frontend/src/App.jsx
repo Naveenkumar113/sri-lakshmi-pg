@@ -29,6 +29,7 @@ const VisitRequestForm = lazy(() => import('./pages/user/VisitRequestForm'));
 const BookRoomForm = lazy(() => import('./pages/user/BookRoomForm'));
 const Profile = lazy(() => import('./pages/user/Profile'));
 const Notifications = lazy(() => import('./pages/user/Notifications'));
+const UserReport = lazy(() => import('./pages/user/UserReport'));
 
 // Admin Portal (Lazy loaded to drastically shrink initial bundle and make dashboard navigation instant)
 import AdminLayout from './layouts/AdminLayout';
@@ -43,6 +44,7 @@ const AdminFacilities = lazy(() => import('./pages/admin/AdminFacilities'));
 const AdminGallery = lazy(() => import('./pages/admin/AdminGallery'));
 const AdminPGDetails = lazy(() => import('./pages/admin/AdminPGDetails'));
 const AdminMessages = lazy(() => import('./pages/admin/AdminMessages'));
+const AdminReports = lazy(() => import('./pages/admin/AdminReports'));
 const AdminNotifications = lazy(() => import('./pages/admin/AdminNotifications'));
 const AdminProfile = lazy(() => import('./pages/admin/AdminProfile'));
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
@@ -107,6 +109,7 @@ export default function App() {
               <Route path="/book-room" element={<BookRoomForm />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/notifications" element={<Notifications />} />
+              <Route path="/report" element={<UserReport />} />
             </Route>
 
             {/* Admin Portal Routes */}
@@ -124,6 +127,7 @@ export default function App() {
               <Route path="gallery" element={<AdminGallery />} />
               <Route path="pg-details" element={<AdminPGDetails />} />
               <Route path="messages" element={<AdminMessages />} />
+              <Route path="reports" element={<AdminReports />} />
               <Route path="notifications" element={<AdminNotifications />} />
               <Route path="profile" element={<AdminProfile />} />
               <Route path="settings" element={<AdminSettings />} />

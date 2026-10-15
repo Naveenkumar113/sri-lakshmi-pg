@@ -24,6 +24,7 @@ from .api.contact_routes import router as contact_router, admin_router as contac
 from .api.notification_routes import router as notification_router
 from .api.admin_analytics_routes import router as admin_analytics_router
 from .api.rent_routes import router as rent_admin_router
+from .api.report_routes import router as report_router, admin_router as admin_report_router
 from .scheduler.rent_scheduler import start_rent_scheduler, stop_rent_scheduler
 
 @asynccontextmanager
@@ -97,6 +98,8 @@ app.include_router(contact_admin_router)
 app.include_router(notification_router)
 app.include_router(admin_analytics_router)
 app.include_router(rent_admin_router)
+app.include_router(report_router)
+app.include_router(admin_report_router)
 
 @app.get("/")
 def root():

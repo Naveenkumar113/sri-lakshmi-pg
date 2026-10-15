@@ -38,6 +38,7 @@ export default function AdminLayout() {
     { to: '/admin/gallery', icon: 'images', label: 'Gallery' },
     { to: '/admin/pg-details', icon: 'pencil-square', label: 'PG Information' },
     { to: '/admin/messages', icon: 'chat-left-dots', label: 'Contact Inquiries' },
+    { to: '/admin/reports', icon: 'exclamation-octagon', label: 'Issue Reports' },
     { to: '/admin/notifications', icon: 'bell', label: 'Notifications' },
     { to: '/admin/profile', icon: 'person-circle', label: 'Admin Profile' },
     { to: '/admin/settings', icon: 'gear', label: 'Settings & Slots' },

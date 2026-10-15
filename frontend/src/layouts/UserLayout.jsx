@@ -94,6 +94,14 @@ export default function UserLayout() {
                 </NavLink>
 
                 <NavLink
+                  to="/report"
+                  className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
+                >
+                  <i className="bi bi-exclamation-octagon fs-5"></i>
+                  <span>Report</span>
+                </NavLink>
+
+                <NavLink
                   to="/profile"
                   className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
                 >

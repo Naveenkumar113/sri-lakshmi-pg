@@ -73,6 +73,7 @@ def apply_auto_migrations(engine):
         dialect_name = engine.dialect.name
         if dialect_name == "postgresql":
             conn.execute(text("CREATE SEQUENCE IF NOT EXISTS resident_code_seq START WITH 1 INCREMENT BY 1;"))
+            conn.execute(text("CREATE SEQUENCE IF NOT EXISTS report_code_seq START WITH 1 INCREMENT BY 1;"))
             conn.execute(text("""
                 CREATE UNIQUE INDEX IF NOT EXISTS uq_active_bed_allocation
                 ON bed_allocations (bed_id)

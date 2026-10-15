@@ -367,3 +367,47 @@ class RentSettings(Base):
     whatsapp_template_name = Column(String(100), default="pg_rent_due_reminder", nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+
+class IssueReport(Base):
+    __tablename__ = "issue_reports"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    report_code = Column(String(30), unique=True, index=True, nullable=False) # e.g. "REP-202610-001"
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    resident_id = Column(String(36), ForeignKey("residents.id", ondelete="SET NULL"), nullable=True, index=True)
+    
+    # Snapshot details at the time of reporting
+    resident_name = Column(String(100), nullable=False)
+    resident_code = Column(String(30), nullable=True)
+    resident_phone = Column(String(20), nullable=False, index=True)
+    room_number = Column(String(20), nullable=True, index=True)
+    floor_number = Column(Integer, nullable=True)
+    bed_number = Column(String(20), nullable=True)
+    
+    # Issue content
+    issue_category = Column(String(100), nullable=False, index=True)
+    description = Column(Text, nullable=True)
+    
+    # Status: OPEN, IN_PROGRESS, RESOLVED
+    status = Column(String(30), default="OPEN", nullable=False, index=True)
+    
+    # Admin resolution
+    resolution_notes = Column(Text, nullable=True)
+    resolved_by_admin_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    resolved_at = Column(DateTime, nullable=True)
+    
+    # WhatsApp delivery metadata
+    admin_whatsapp_status = Column(String(30), default="NOT_SENT", nullable=False) # SENT, FAILED, NOT_CONFIGURED
+    admin_whatsapp_timestamp = Column(DateTime, nullable=True)
+    resident_whatsapp_status = Column(String(30), default="NOT_SENT", nullable=False) # SENT, FAILED, NOT_CONFIGURED
+    resident_whatsapp_timestamp = Column(DateTime, nullable=True)
+    whatsapp_error_details = Column(Text, nullable=True)
+    
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", foreign_keys=[user_id])
+    resident = relationship("Resident", foreign_keys=[resident_id])
+    resolved_by_admin = relationship("User", foreign_keys=[resolved_by_admin_id])
+

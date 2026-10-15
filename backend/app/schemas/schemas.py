@@ -798,4 +798,98 @@ class RentSettingsUpdate(BaseModel):
             raise ValueError(f"Admin WhatsApp number must be exactly 10 digits for Indian mobile numbers (received {len(s)} digits).")
         return s
 
+# ==========================================
+# Issue Report Schemas
+# ==========================================
+
+ISSUE_CATEGORIES = [
+    "Room cleaning not completed today",
+    "Bathroom or toilet cleaning issue",
+    "Water supply problem",
+    "Electrical problem",
+    "Fan or AC not working",
+    "Bed or mattress problem",
+    "Door, lock, or key problem",
+    "Wi-Fi or internet problem",
+    "Washing machine problem",
+    "Plumbing or leakage problem",
+    "Room maintenance required",
+    "Pest or mosquito problem",
+    "Security concern",
+    "Noise disturbance",
+    "Other issue"
+]
+
+class ResidentReportInfo(BaseModel):
+    resident_id: Optional[str] = None
+    resident_code: Optional[str] = None
+    resident_name: str
+    phone: str
+    has_active_bed: bool = False
+    room_number: Optional[str] = None
+    floor_number: Optional[int] = None
+    bed_number: Optional[str] = None
+    room_name: Optional[str] = None
+    sharing_type: Optional[str] = None
+
+class IssueReportCreate(BaseModel):
+    issue_category: str = Field(..., min_length=2, max_length=150)
+    description: Optional[str] = Field(None, max_length=2000)
+
+    @field_validator('issue_category')
+    @classmethod
+    def validate_category(cls, v):
+        clean = (v or "").strip()
+        if not clean:
+            raise ValueError("Issue category is required.")
+        return clean
+
+    @field_validator('description')
+    @classmethod
+    def clean_description(cls, v):
+        if v is None:
+            return None
+        clean = v.strip()
+        return clean if clean else None
+
+class IssueReportStatusUpdate(BaseModel):
+    status: str = Field(..., pattern=r"^(OPEN|IN_PROGRESS|RESOLVED)$")
+    resolution_notes: Optional[str] = Field(None, max_length=2000)
+
+class IssueReportResponse(BaseModel):
+    id: str
+    report_code: str
+    user_id: str
+    resident_id: Optional[str] = None
+    resident_name: str
+    resident_code: Optional[str] = None
+    resident_phone: str
+    room_number: Optional[str] = None
+    floor_number: Optional[int] = None
+    bed_number: Optional[str] = None
+    issue_category: str
+    description: Optional[str] = None
+    status: str
+    resolution_notes: Optional[str] = None
+    resolved_by_admin_id: Optional[str] = None
+    resolved_at: Optional[datetime] = None
+    admin_whatsapp_status: str
+    admin_whatsapp_timestamp: Optional[datetime] = None
+    resident_whatsapp_status: str
+    resident_whatsapp_timestamp: Optional[datetime] = None
+    whatsapp_error_details: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class IssueReportListResponse(BaseModel):
+    items: List[IssueReportResponse]
+    total: int
+    open_count: int
+    in_progress_count: int
+    resolved_count: int
+
+
 
