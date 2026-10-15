@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
+import NotificationPermissionBanner from '../../components/NotificationPermissionBanner';
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
@@ -60,6 +61,9 @@ export default function Notifications() {
           </button>
         )}
       </div>
+
+      {/* Windows Desktop Notifications Settings Banner */}
+      <NotificationPermissionBanner />
 
       {loading ? (
         <div className="text-center py-5">

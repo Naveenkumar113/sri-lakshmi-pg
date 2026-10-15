@@ -3,6 +3,7 @@ import { NavLink, Outlet, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ErrorBoundary from '../components/ErrorBoundary';
 import api from '../services/api';
+import { processIncomingNotificationsForDesktop, registerServiceWorker } from '../services/desktopNotificationService';
 
 export default function AdminLayout() {
   const { user, isAuthenticated, isAdmin, loading, logout } = useAuth();
@@ -13,17 +14,24 @@ export default function AdminLayout() {
   useEffect(() => {
     if (!isAuthenticated || !isAdmin) return;
 
-    const fetchUnread = async () => {
+    registerServiceWorker();
+
+    const fetchNotificationsAndSync = async () => {
       try {
-        const res = await api.get('/notifications/unread-count');
-        setUnreadCount(res.data.unread_count || 0);
+        const [countRes, listRes] = await Promise.all([
+          api.get('/notifications/unread-count'),
+          api.get('/notifications'),
+        ]);
+        setUnreadCount(countRes.data.unread_count || 0);
+        // Sync with Windows Desktop Notification API
+        processIncomingNotificationsForDesktop(listRes.data || []);
       } catch (err) {
         // silent fail
       }
     };
 
-    fetchUnread();
-    const interval = setInterval(fetchUnread, 15000); // 15-second polling for admin alerts
+    fetchNotificationsAndSync();
+    const interval = setInterval(fetchNotificationsAndSync, 15000); // 15-second polling for admin alerts
     return () => clearInterval(interval);
   }, [isAuthenticated, isAdmin]);
 

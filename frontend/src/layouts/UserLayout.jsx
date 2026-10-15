@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import { processIncomingNotificationsForDesktop, registerServiceWorker } from '../services/desktopNotificationService';
 
 export default function UserLayout() {
   const { user, isAuthenticated, loading } = useAuth();
@@ -10,18 +11,25 @@ export default function UserLayout() {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    const fetchUnread = async () => {
+    registerServiceWorker();
+
+    const fetchNotificationsAndSync = async () => {
       try {
-        const res = await api.get('/notifications/unread-count');
-        setUnreadCount(res.data.unread_count || 0);
+        const [countRes, listRes] = await Promise.all([
+          api.get('/notifications/unread-count'),
+          api.get('/notifications'),
+        ]);
+        setUnreadCount(countRes.data.unread_count || 0);
+        // Sync with Windows Desktop Notification API
+        processIncomingNotificationsForDesktop(listRes.data || []);
       } catch (err) {
         // silent fail on network glitch
       }
     };
 
-    fetchUnread();
-    // Poll unread notification count every 20 seconds
-    const interval = setInterval(fetchUnread, 20000);
+    fetchNotificationsAndSync();
+    // Poll unread notification count & desktop sync every 20 seconds
+    const interval = setInterval(fetchNotificationsAndSync, 20000);
     return () => clearInterval(interval);
   }, [isAuthenticated]);
 
