@@ -104,15 +104,15 @@ class BedAllocation(Base):
     __tablename__ = "bed_allocations"
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
-    resident_id = Column(String(36), ForeignKey("residents.id", ondelete="CASCADE"), nullable=False)
-    bed_id = Column(String(36), ForeignKey("room_beds.id", ondelete="CASCADE"), nullable=False)
-    room_id = Column(String(36), ForeignKey("rooms.id", ondelete="CASCADE"), nullable=False)
-    booking_id = Column(String(36), ForeignKey("bookings.id", ondelete="SET NULL"), nullable=True)
+    resident_id = Column(String(36), ForeignKey("residents.id", ondelete="CASCADE"), nullable=False, index=True)
+    bed_id = Column(String(36), ForeignKey("room_beds.id", ondelete="CASCADE"), nullable=False, index=True)
+    room_id = Column(String(36), ForeignKey("rooms.id", ondelete="CASCADE"), nullable=False, index=True)
+    booking_id = Column(String(36), ForeignKey("bookings.id", ondelete="SET NULL"), nullable=True, index=True)
     move_in_date = Column(String(30), nullable=False)
     move_out_date = Column(String(30), nullable=True)
     billing_day = Column(Integer, nullable=True)
     monthly_rent = Column(Float, nullable=True)
-    allocation_status = Column(String(30), default="ACTIVE", nullable=False)  # ACTIVE, TRANSFERRED, CHECKED_OUT, CANCELLED
+    allocation_status = Column(String(30), default="ACTIVE", nullable=False, index=True)  # ACTIVE, TRANSFERRED, CHECKED_OUT, CANCELLED
     created_by_admin_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

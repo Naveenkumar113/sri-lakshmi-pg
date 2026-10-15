@@ -17,14 +17,23 @@ if DATABASE_URL.startswith("postgres://"):
 elif DATABASE_URL.startswith("postgresql://") and not DATABASE_URL.startswith("postgresql+"):
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
 
-# SQLite needs check_same_thread=False
+# Production-tuned Connection Pool for high concurrency (e.g. 1000 concurrent users)
 connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+pool_kwargs = {}
+if not DATABASE_URL.startswith("sqlite"):
+    pool_kwargs = {
+        "pool_size": int(os.getenv("DB_POOL_SIZE", "20")),
+        "max_overflow": int(os.getenv("DB_MAX_OVERFLOW", "30")),
+        "pool_timeout": int(os.getenv("DB_POOL_TIMEOUT", "30")),
+        "pool_recycle": int(os.getenv("DB_POOL_RECYCLE", "1800")),
+    }
 
 engine = create_engine(
     DATABASE_URL,
     connect_args=connect_args,
     echo=False,
-    pool_pre_ping=True
+    pool_pre_ping=True,
+    **pool_kwargs
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
