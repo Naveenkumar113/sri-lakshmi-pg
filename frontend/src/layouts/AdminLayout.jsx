@@ -30,6 +30,7 @@ export default function AdminLayout() {
     { to: '/admin/dashboard', icon: 'speedometer2', label: 'Dashboard', end: true },
     { to: '/admin/rooms', icon: 'building', label: 'Room & Bed Management' },
     { to: '/admin/residents', icon: 'person-badge', label: 'Residents' },
+    { to: '/admin/rent', icon: 'currency-rupee', label: 'Rent Management' },
     { to: '/admin/bookings', icon: 'door-open', label: 'Bookings' },
     { to: '/admin/visits', icon: 'calendar-check', label: 'Visit Requests' },
     { to: '/admin/users', icon: 'people', label: 'Registered Users' },

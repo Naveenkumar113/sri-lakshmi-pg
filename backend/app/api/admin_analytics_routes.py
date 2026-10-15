@@ -42,6 +42,18 @@ def get_admin_analytics(
     # Room type distribution
     room_types_summary = db.query(Room.room_type, func.count(Room.id)).group_by(Room.room_type).all()
 
+    from ..models.models import Resident, BedAllocation, RentRecord, WhatsAppReminderLog
+    from ..utils.rent_calculator import get_ist_today
+
+    today = get_ist_today()
+    current_period = today.strftime("%Y-%m")
+    current_records = db.query(RentRecord).filter(RentRecord.rent_period == current_period).all()
+    expected_rent = sum(r.rent_amount for r in current_records)
+    collected_rent = sum(r.amount_paid for r in current_records)
+    outstanding_rent = sum(r.balance_due for r in current_records)
+    overdue_count = db.query(RentRecord).filter(RentRecord.payment_status == "OVERDUE").count()
+    reminders_sent_count = db.query(WhatsAppReminderLog).filter(WhatsAppReminderLog.delivery_status.in_(["SENT", "DELIVERED"])).count()
+
     return {
         "total_users": total_users,
         "total_rooms": total_rooms,
@@ -50,6 +62,12 @@ def get_admin_analytics(
         "occupied_beds": occupied_beds,
         "active_residents": active_residents,
         "occupancy_rate": occupancy_rate,
+
+        "expected_rent": expected_rent,
+        "collected_rent": collected_rent,
+        "outstanding_rent": outstanding_rent,
+        "overdue_count": overdue_count,
+        "reminders_sent_count": reminders_sent_count,
 
         "pending_visits": pending_visits,
         "approved_visits": approved_visits,

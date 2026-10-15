@@ -42,7 +42,34 @@ def apply_auto_migrations(engine):
             if "updated_at" not in bed_cols:
                 conn.execute(text("ALTER TABLE room_beds ADD COLUMN updated_at TIMESTAMP"))
 
-        # 4. For PostgreSQL, create sequence and partial unique index if supported
+        # 4. Check and extend 'bed_allocations' table
+        if "bed_allocations" in tables:
+            alloc_cols = [c["name"] for c in inspector.get_columns("bed_allocations")]
+            if "billing_day" not in alloc_cols:
+                conn.execute(text("ALTER TABLE bed_allocations ADD COLUMN billing_day INTEGER"))
+            if "monthly_rent" not in alloc_cols:
+                conn.execute(text("ALTER TABLE bed_allocations ADD COLUMN monthly_rent FLOAT"))
+
+        # 5. Check and extend 'rent_settings' and 'whatsapp_reminder_logs'
+        if "rent_settings" in tables:
+            rs_cols = [c["name"] for c in inspector.get_columns("rent_settings")]
+            if "admin_whatsapp_number" not in rs_cols:
+                conn.execute(text("ALTER TABLE rent_settings ADD COLUMN admin_whatsapp_number VARCHAR(20) DEFAULT '7893744206'"))
+
+            rs_count = conn.execute(text("SELECT count(*) FROM rent_settings")).scalar()
+            if rs_count == 0:
+                conn.execute(text("""
+                    INSERT INTO rent_settings (id, admin_whatsapp_number, reminder_frequency_days, auto_send_on_due_date, send_hour_ist, whatsapp_enabled, whatsapp_template_name)
+                    VALUES (1, '7893744206', 1, TRUE, 9, TRUE, 'pg_rent_due_reminder')
+                """))
+
+        if "whatsapp_reminder_logs" in tables:
+            wl_cols = [c["name"] for c in inspector.get_columns("whatsapp_reminder_logs")]
+            if "outstanding_amount" not in wl_cols:
+                conn.execute(text("ALTER TABLE whatsapp_reminder_logs ADD COLUMN outstanding_amount FLOAT"))
+
+
+        # 6. For PostgreSQL, create sequence and partial unique index if supported
         dialect_name = engine.dialect.name
         if dialect_name == "postgresql":
             conn.execute(text("CREATE SEQUENCE IF NOT EXISTS resident_code_seq START WITH 1 INCREMENT BY 1;"))
@@ -55,4 +82,8 @@ def apply_auto_migrations(engine):
                 CREATE UNIQUE INDEX IF NOT EXISTS uq_active_resident_allocation
                 ON bed_allocations (resident_id)
                 WHERE allocation_status = 'ACTIVE';
+            """))
+            conn.execute(text("""
+                CREATE UNIQUE INDEX IF NOT EXISTS uq_resident_rent_period_idx
+                ON rent_records (resident_id, rent_period);
             """))

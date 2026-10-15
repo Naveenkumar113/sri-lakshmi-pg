@@ -1,14 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from ..database.connection import get_db
 from ..models.models import User, Notification, AuditLog
 from ..schemas.schemas import UserRegister, UserLogin, UserResponse, UserUpdate, PasswordChange, Token
 from ..auth.security import get_password_hash, verify_password, create_access_token, get_current_user
+from ..utils.rate_limiter import enforce_rate_limit
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
 @router.post("/register", response_model=Token)
-def register(user_in: UserRegister, db: Session = Depends(get_db)):
+def register(request: Request, user_in: UserRegister, db: Session = Depends(get_db)):
+    # Rate limit registration attempts per IP
+    enforce_rate_limit(request, key_prefix="register", max_requests=10, window_seconds=60)
+
     # Check duplicate email
     if db.query(User).filter(User.email == user_in.email.lower()).first():
         raise HTTPException(
@@ -69,7 +73,10 @@ def register(user_in: UserRegister, db: Session = Depends(get_db)):
     }
 
 @router.post("/login", response_model=Token)
-def login(login_data: UserLogin, db: Session = Depends(get_db)):
+def login(request: Request, login_data: UserLogin, db: Session = Depends(get_db)):
+    # Rate limit login attempts per IP (max 15 attempts/minute)
+    enforce_rate_limit(request, key_prefix="login", max_requests=15, window_seconds=60)
+
     user = db.query(User).filter(User.email == login_data.email.lower().strip()).first()
     if not user or not verify_password(login_data.password, user.hashed_password):
         raise HTTPException(
@@ -95,7 +102,10 @@ def logout():
     return {"message": "Logged out successfully"}
 
 @router.post("/forgot-password")
-def forgot_password(email_data: dict, db: Session = Depends(get_db)):
+def forgot_password(request: Request, email_data: dict, db: Session = Depends(get_db)):
+    # Rate limit password reset requests per IP (max 5 requests/minute)
+    enforce_rate_limit(request, key_prefix="forgot_pwd", max_requests=5, window_seconds=60)
+
     email = email_data.get("email", "").lower().strip()
     user = db.query(User).filter(User.email == email).first()
     # Return user-friendly response even if not found to prevent user enumeration

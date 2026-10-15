@@ -667,3 +667,135 @@ class NotificationResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# RENT & PAYMENT MANAGEMENT SCHEMAS
+class PaymentCreate(BaseModel):
+    amount: float = Field(..., gt=0, description="Payment amount in INR")
+    payment_date: str = Field(..., description="Payment date (YYYY-MM-DD)")
+    payment_method: str = Field("UPI", description="Payment method: Cash, UPI, Bank Transfer, Other")
+    transaction_reference: Optional[str] = Field(None, description="Optional transaction reference or UTR")
+    notes: Optional[str] = None
+
+class PaymentResponse(BaseModel):
+    id: str
+    rent_record_id: str
+    resident_id: str
+    amount: float
+    payment_date: str
+    payment_method: str
+    transaction_reference: Optional[str] = None
+    recorded_by_admin_id: Optional[str] = None
+    recorded_by_admin_email: Optional[str] = None
+    notes: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class RentRecordResponse(BaseModel):
+    id: str
+    resident_id: str
+    resident_code: str
+    resident_name: str
+    resident_phone: str
+    allocation_id: Optional[str] = None
+    room_number: Optional[str] = None
+    bed_number: Optional[str] = None
+    is_ac: Optional[bool] = None
+    rent_month: str
+    rent_period: str
+    due_date: str
+    due_date_formatted: str
+    billing_cycle_start: Optional[str] = None
+    billing_cycle_end: Optional[str] = None
+    rent_amount: float
+    amount_paid: float
+    balance_due: float
+    payment_status: str
+    days_overdue: int = 0
+    last_reminder_sent_at: Optional[datetime] = None
+    reminder_count: int = 0
+    latest_reminder_status: Optional[str] = None
+    payments: List[PaymentResponse] = []
+    notes: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class WhatsAppLogResponse(BaseModel):
+    id: str
+    resident_id: str
+    resident_code: Optional[str] = None
+    resident_name: Optional[str] = None
+    rent_record_id: Optional[str] = None
+    phone_number: str
+    rent_month: str
+    outstanding_amount: Optional[float] = None
+    message_text: str
+    template_name: Optional[str] = None
+    provider_message_id: Optional[str] = None
+    delivery_status: str
+    attempted_at: datetime
+    delivery_timestamp: Optional[datetime] = None
+    error_details: Optional[str] = None
+    retry_count: int = 0
+
+    class Config:
+        from_attributes = True
+
+class RentDashboardStatsResponse(BaseModel):
+    month: str
+    month_name: str
+    total_active_residents: int
+    expected_rent: float
+    collected_rent: float
+    outstanding_rent: float
+    paid_residents: int
+    partially_paid_residents: int
+    pending_residents: int
+    overdue_residents: int
+    overdue_amount: float
+    reminders_sent: int
+    reminders_failed: int
+    whatsapp_status: dict
+
+class RentSettingsResponse(BaseModel):
+    id: int
+    admin_whatsapp_number: Optional[str] = "7893744206"
+    reminder_frequency_days: int
+    auto_send_on_due_date: bool
+    send_hour_ist: int
+    whatsapp_enabled: bool
+    whatsapp_template_name: str
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class RentSettingsUpdate(BaseModel):
+    admin_whatsapp_number: Optional[str] = None
+    reminder_frequency_days: Optional[int] = Field(None, ge=1, le=30)
+    auto_send_on_due_date: Optional[bool] = None
+    send_hour_ist: Optional[int] = Field(None, ge=0, le=23)
+    whatsapp_enabled: Optional[bool] = None
+    whatsapp_template_name: Optional[str] = None
+
+    @field_validator('admin_whatsapp_number', mode='before')
+    @classmethod
+    def validate_admin_phone(cls, v):
+        if v is None:
+            return v
+        s = re.sub(r"\D", "", str(v))
+        if not s:
+            return None
+        if len(s) == 12 and s.startswith("91"):
+            s = s[2:]
+        if len(s) == 11 and s.startswith("0"):
+            s = s[1:]
+        if len(s) != 10:
+            raise ValueError(f"Admin WhatsApp number must be exactly 10 digits for Indian mobile numbers (received {len(s)} digits).")
+        return s
+
+

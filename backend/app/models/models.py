@@ -95,6 +95,9 @@ class Resident(Base):
     user = relationship("User", back_populates="resident")
     allocations = relationship("BedAllocation", back_populates="resident", cascade="all, delete-orphan", order_by="desc(BedAllocation.created_at)")
     history = relationship("ResidentHistory", back_populates="resident", cascade="all, delete-orphan", order_by="desc(ResidentHistory.created_at)")
+    rent_records = relationship("RentRecord", back_populates="resident", cascade="all, delete-orphan", order_by="desc(RentRecord.due_date)")
+    payment_transactions = relationship("PaymentTransaction", back_populates="resident", cascade="all, delete-orphan", order_by="desc(PaymentTransaction.payment_date)")
+    whatsapp_logs = relationship("WhatsAppReminderLog", back_populates="resident", cascade="all, delete-orphan", order_by="desc(WhatsAppReminderLog.attempted_at)")
 
 
 class BedAllocation(Base):
@@ -107,6 +110,8 @@ class BedAllocation(Base):
     booking_id = Column(String(36), ForeignKey("bookings.id", ondelete="SET NULL"), nullable=True)
     move_in_date = Column(String(30), nullable=False)
     move_out_date = Column(String(30), nullable=True)
+    billing_day = Column(Integer, nullable=True)
+    monthly_rent = Column(Float, nullable=True)
     allocation_status = Column(String(30), default="ACTIVE", nullable=False)  # ACTIVE, TRANSFERRED, CHECKED_OUT, CANCELLED
     created_by_admin_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     notes = Column(Text, nullable=True)
@@ -117,6 +122,7 @@ class BedAllocation(Base):
     bed = relationship("RoomBed", back_populates="allocations")
     room = relationship("Room", back_populates="allocations")
     booking = relationship("Booking", back_populates="bed_allocation")
+    rent_records = relationship("RentRecord", back_populates="allocation")
 
 
 class ResidentHistory(Base):
@@ -275,3 +281,89 @@ class AuditLog(Base):
     details = Column(Text, nullable=False)
     ip_address = Column(String(50), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class RentRecord(Base):
+    __tablename__ = "rent_records"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    resident_id = Column(String(36), ForeignKey("residents.id", ondelete="CASCADE"), nullable=False, index=True)
+    allocation_id = Column(String(36), ForeignKey("bed_allocations.id", ondelete="SET NULL"), nullable=True)
+    rent_month = Column(String(30), nullable=False)                    # e.g. "October 2026"
+    rent_period = Column(String(10), nullable=False, index=True)        # e.g. "2026-10"
+    due_date = Column(String(20), nullable=False, index=True)           # e.g. "2026-10-09"
+    billing_cycle_start = Column(String(20), nullable=True)             # e.g. "2026-09-09"
+    billing_cycle_end = Column(String(20), nullable=True)               # e.g. "2026-10-08"
+    rent_amount = Column(Float, nullable=False)                         # e.g. 6000.0
+    amount_paid = Column(Float, default=0.0, nullable=False)            # e.g. 0.0, 2000.0, 6000.0
+    balance_due = Column(Float, nullable=False)                         # e.g. 6000.0, 4000.0, 0.0
+    payment_status = Column(String(30), default="PENDING", nullable=False, index=True) # PENDING, PARTIALLY_PAID, PAID, OVERDUE
+    last_reminder_sent_at = Column(DateTime, nullable=True)
+    reminder_count = Column(Integer, default=0, nullable=False)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    resident = relationship("Resident", back_populates="rent_records")
+    allocation = relationship("BedAllocation", back_populates="rent_records")
+    payments = relationship("PaymentTransaction", back_populates="rent_record", cascade="all, delete-orphan", order_by="desc(PaymentTransaction.created_at)")
+    reminders = relationship("WhatsAppReminderLog", back_populates="rent_record", cascade="all, delete-orphan", order_by="desc(WhatsAppReminderLog.attempted_at)")
+
+
+class PaymentTransaction(Base):
+    __tablename__ = "payment_transactions"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    rent_record_id = Column(String(36), ForeignKey("rent_records.id", ondelete="CASCADE"), nullable=False, index=True)
+    resident_id = Column(String(36), ForeignKey("residents.id", ondelete="CASCADE"), nullable=False, index=True)
+    amount = Column(Float, nullable=False)
+    payment_date = Column(String(20), nullable=False, index=True)       # e.g. "2026-10-15"
+    payment_method = Column(String(50), nullable=False)                 # Cash, UPI, Bank Transfer, Other
+    transaction_reference = Column(String(100), nullable=True)          # UPI Ref / UTR / Cheque / Bank Txn ID
+    recorded_by_admin_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    rent_record = relationship("RentRecord", back_populates="payments")
+    resident = relationship("Resident", back_populates="payment_transactions")
+    recorded_by_admin = relationship("User")
+
+
+class WhatsAppReminderLog(Base):
+    __tablename__ = "whatsapp_reminder_logs"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    resident_id = Column(String(36), ForeignKey("residents.id", ondelete="CASCADE"), nullable=False, index=True)
+    rent_record_id = Column(String(36), ForeignKey("rent_records.id", ondelete="SET NULL"), nullable=True, index=True)
+    phone_number = Column(String(30), nullable=False)
+    rent_month = Column(String(30), nullable=False)
+    message_text = Column(Text, nullable=False)
+    template_name = Column(String(100), nullable=True)
+    provider_message_id = Column(String(100), nullable=True, index=True)
+    delivery_status = Column(String(30), default="QUEUED", nullable=False, index=True) # QUEUED, SENT, DELIVERED, FAILED
+    attempted_at = Column(DateTime, default=datetime.utcnow)
+    delivery_timestamp = Column(DateTime, nullable=True)
+    error_details = Column(Text, nullable=True)
+    outstanding_amount = Column(Float, nullable=True)
+    retry_count = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    resident = relationship("Resident", back_populates="whatsapp_logs")
+    rent_record = relationship("RentRecord", back_populates="reminders")
+
+
+class RentSettings(Base):
+    __tablename__ = "rent_settings"
+
+    id = Column(Integer, primary_key=True, default=1)
+    admin_whatsapp_number = Column(String(20), default="7893744206", nullable=True)
+    reminder_frequency_days = Column(Integer, default=1, nullable=False)
+    auto_send_on_due_date = Column(Boolean, default=True, nullable=False)
+    send_hour_ist = Column(Integer, default=9, nullable=False)
+    whatsapp_enabled = Column(Boolean, default=True, nullable=False)
+    whatsapp_template_name = Column(String(100), default="pg_rent_due_reminder", nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+

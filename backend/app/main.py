@@ -1,11 +1,15 @@
 import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from fastapi.exceptions import RequestValidationError
 
-from .database.connection import engine, Base, SessionLocal
+from .database.connection import engine, SessionLocal
 from .database.seed_data import seed_database
+from .database.migration_helper import apply_auto_migrations
 
 # Import routers
 from .api.auth_routes import router as auth_router
@@ -19,34 +23,69 @@ from .api.pg_routes import router as pg_router, admin_router as pg_admin_router
 from .api.contact_routes import router as contact_router, admin_router as contact_admin_router
 from .api.notification_routes import router as notification_router
 from .api.admin_analytics_routes import router as admin_analytics_router
+from .api.rent_routes import router as rent_admin_router
+from .scheduler.rent_scheduler import start_rent_scheduler, stop_rent_scheduler
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Run schema migrations, seed default data, and start rent scheduler
+    apply_auto_migrations(engine)
+    db = SessionLocal()
+    try:
+        seed_database(db)
+    finally:
+        db.close()
+    start_rent_scheduler()
+    yield
+    # Shutdown: Cleanly stop background scheduler
+    stop_rent_scheduler()
 
 app = FastAPI(
     title="Sri Lakshmi Srinivasa Gents PG API",
     description="Enterprise REST API for Sri Lakshmi Srinivasa Gents PG (Velachery, Chennai). Manages room bookings, visit schedules, facilities, gallery, and administration.",
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan
 )
 
-# CORS Middleware
-origins = [
+# CORS Configuration
+# Standard secure origins list without wildcard when credentials are enabled
+default_origins = [
     "http://localhost:5173",
     "http://localhost:5174",
     "http://localhost:3000",
+    "http://localhost:8000",
     "http://127.0.0.1:5173",
     "http://127.0.0.1:5174",
     "http://127.0.0.1:3000",
-    "*"
+    "http://127.0.0.1:8000",
 ]
+
+env_origins = os.getenv("ALLOWED_ORIGINS", "")
+if env_origins:
+    origins = [orig.strip() for orig in env_origins.split(",") if orig.strip()]
+else:
+    origins = default_origins
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
 )
+
+# Security Response Headers Middleware
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    return response
 
 # Static Uploads directory
 uploads_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "uploads"))
@@ -74,22 +113,7 @@ app.include_router(contact_router)
 app.include_router(contact_admin_router)
 app.include_router(notification_router)
 app.include_router(admin_analytics_router)
-
-from .database.migration_helper import apply_auto_migrations
-
-# Run migration check on startup/import
-apply_auto_migrations(engine)
-
-@app.on_event("startup")
-def on_startup():
-    # Initialize & non-destructively migrate DB tables
-    apply_auto_migrations(engine)
-    # Seed default data
-    db = SessionLocal()
-    try:
-        seed_database(db)
-    finally:
-        db.close()
+app.include_router(rent_admin_router)
 
 @app.get("/")
 def root():
@@ -105,16 +129,15 @@ def root():
 def health_check():
     return {"status": "healthy", "service": "sri-lakshmi-pg-api"}
 
-from starlette.exceptions import HTTPException as StarletteHTTPException
-from fastapi.exceptions import RequestValidationError
-
 # Global Exception handler to return clean user-friendly JSON without swallowing HTTP errors
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     if isinstance(exc, StarletteHTTPException):
+        headers = getattr(exc, "headers", None)
         return JSONResponse(
             status_code=exc.status_code,
-            content={"detail": exc.detail}
+            content={"detail": exc.detail},
+            headers=headers
         )
     if isinstance(exc, RequestValidationError):
         return JSONResponse(
@@ -125,4 +148,3 @@ async def global_exception_handler(request: Request, exc: Exception):
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"detail": "An unexpected server error occurred. Please try again or contact support."}
     )
-

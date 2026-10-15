@@ -143,6 +143,50 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {/* Monthly Rent & WhatsApp Overview */}
+      <div className="bg-white p-4 rounded-4 border shadow-sm">
+        <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+          <div>
+            <div className="d-flex align-items-center gap-2">
+              <h6 className="fw-bold mb-0 text-dark">Monthly Rent & Automated WhatsApp Overview</h6>
+              <span className="badge bg-success-subtle text-success border border-success-subtle">PostgreSQL 18</span>
+            </div>
+            <p className="text-secondary small mb-0 mt-1">Current month dues, collections, and automated WhatsApp reminder logs.</p>
+          </div>
+          <Link to="/admin/rent" className="btn btn-sm btn-primary d-flex align-items-center gap-1 shadow-xs px-3">
+            <i className="bi bi-currency-rupee"></i>
+            <span>Open Rent Management &rarr;</span>
+          </Link>
+        </div>
+
+        <div className="row g-3">
+          <div className="col-6 col-md-3">
+            <div className="p-3 bg-light rounded-3 border">
+              <span className="small text-muted fw-semibold d-block mb-1">Expected Rent</span>
+              <h5 className="fw-bold mb-0 text-dark">₹{(stats?.expected_rent || 0).toLocaleString()}</h5>
+            </div>
+          </div>
+          <div className="col-6 col-md-3">
+            <div className="p-3 bg-light rounded-3 border">
+              <span className="small text-muted fw-semibold d-block mb-1">Collected Rent</span>
+              <h5 className="fw-bold mb-0 text-success">₹{(stats?.collected_rent || 0).toLocaleString()}</h5>
+            </div>
+          </div>
+          <div className="col-6 col-md-3">
+            <div className="p-3 bg-light rounded-3 border">
+              <span className="small text-muted fw-semibold d-block mb-1">Outstanding Rent</span>
+              <h5 className="fw-bold mb-0 text-danger">₹{(stats?.outstanding_rent || 0).toLocaleString()}</h5>
+            </div>
+          </div>
+          <div className="col-6 col-md-3">
+            <div className="p-3 bg-light rounded-3 border">
+              <span className="small text-muted fw-semibold d-block mb-1">Overdue Payments</span>
+              <h5 className="fw-bold mb-0 text-danger">{stats?.overdue_count || 0} residents</h5>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Occupancy Rate Bar & Distribution */}
       <div className="bg-white p-4 rounded-4 border shadow-sm">
         <div className="d-flex justify-content-between align-items-center mb-2">

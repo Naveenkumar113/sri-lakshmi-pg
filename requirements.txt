@@ -13,3 +13,5 @@ psycopg[binary]>=3.1.18
 requests>=2.31.0
 python-dateutil>=2.8.2
 python-dotenv>=1.0.0
+apscheduler>=3.10.0
+

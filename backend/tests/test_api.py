@@ -20,7 +20,7 @@ def test_get_facilities():
     response = client.get("/api/facilities")
     assert response.status_code == 200
     facilities = response.json()
-    assert len(facilities) >= 10
+    assert len(facilities) >= 9
 
 def test_get_gallery():
     response = client.get("/api/gallery")

@@ -386,7 +386,74 @@ def seed_database(db: Session):
                 bed_id=bed_201_1.id,
                 details=f"Allocated to Room {room_201.room_number}, {bed_201_1.bed_number}."
             ))
-            sync_room_occupancy(db, room_201.id)
-
         db.commit()
+
+    # 11. Ensure Room S-2 and Arun Kumar (SLPG-0001) matching specification example
+    room_s2 = db.query(Room).filter(Room.room_number == "S-2").first()
+    if not room_s2:
+        room_s2 = Room(
+            room_number="S-2",
+            room_type="DOUBLE",
+            sharing_type="Double Sharing",
+            is_ac=True,
+            floor=1,
+            capacity=2,
+            available_beds=1,
+            monthly_rent=6000.0,
+            monthly_rent_per_bed=6000.0,
+            security_deposit=5000.0,
+            description="Double Sharing AC room with attached washroom, individual lockers, and natural light.",
+            amenities="Split AC, Free Wi-Fi, Attached Bathroom, Individual Cupboard, Hot Water",
+            status="PARTIALLY_AVAILABLE"
+        )
+        db.add(room_s2)
+        db.flush()
+        bed_b1 = RoomBed(room_id=room_s2.id, bed_number="B1", bed_status="OCCUPIED", is_occupied=True, current_occupant_name="Arun Kumar")
+        bed_b2 = RoomBed(room_id=room_s2.id, bed_number="B2", bed_status="AVAILABLE", is_occupied=False)
+        db.add(bed_b1)
+        db.add(bed_b2)
+        db.commit()
+
+    arun = db.query(Resident).filter(Resident.resident_code == "SLPG-0001").first()
+    if arun:
+        arun.phone = "9876543210"
+        # Check active allocation
+        s2_b1 = db.query(RoomBed).filter(RoomBed.room_id == room_s2.id, RoomBed.bed_number == "B1").first()
+        active_arun_alloc = db.query(BedAllocation).filter(
+            BedAllocation.resident_id == arun.id,
+            BedAllocation.allocation_status == "ACTIVE"
+        ).first()
+
+        if active_arun_alloc:
+            active_arun_alloc.room_id = room_s2.id
+            if s2_b1:
+                active_arun_alloc.bed_id = s2_b1.id
+            active_arun_alloc.move_in_date = "2026-09-09"
+            active_arun_alloc.monthly_rent = 6000.0
+            active_arun_alloc.billing_day = 9
+        elif s2_b1:
+            new_alloc = BedAllocation(
+                resident_id=arun.id,
+                room_id=room_s2.id,
+                bed_id=s2_b1.id,
+                move_in_date="2026-09-09",
+                monthly_rent=6000.0,
+                billing_day=9,
+                allocation_status="ACTIVE",
+                notes="Allocated to Room S-2 Bed B1"
+            )
+            db.add(new_alloc)
+
+        sync_room_occupancy(db, room_s2.id)
+        db.commit()
+
+        # Generate rent records for Arun
+        from ..scheduler.rent_scheduler import ensure_rent_records_for_allocation
+        alloc_to_sync = db.query(BedAllocation).filter(
+            BedAllocation.resident_id == arun.id,
+            BedAllocation.allocation_status == "ACTIVE"
+        ).first()
+        if alloc_to_sync:
+            ensure_rent_records_for_allocation(db, alloc_to_sync)
+            db.commit()
 

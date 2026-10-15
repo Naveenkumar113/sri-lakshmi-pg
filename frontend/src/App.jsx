@@ -37,6 +37,7 @@ import AdminVisits from './pages/admin/AdminVisits';
 import AdminBookings from './pages/admin/AdminBookings';
 import AdminRooms from './pages/admin/AdminRooms';
 import AdminResidents from './pages/admin/AdminResidents';
+import AdminRentManagement from './pages/admin/AdminRentManagement';
 import AdminUsers from './pages/admin/AdminUsers';
 
 
@@ -108,6 +109,7 @@ export default function App() {
             <Route path="bookings" element={<AdminBookings />} />
             <Route path="rooms" element={<AdminRooms />} />
             <Route path="residents" element={<AdminResidents />} />
+            <Route path="rent" element={<AdminRentManagement />} />
             <Route path="users" element={<AdminUsers />} />
 
             <Route path="facilities" element={<AdminFacilities />} />
