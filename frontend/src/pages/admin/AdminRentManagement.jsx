@@ -538,9 +538,9 @@ export default function AdminRentManagement() {
         </div>
       </div>
 
-      {/* SaaS Summary KPI Cards (8 Metrics) */}
-      <div className="row g-3">
-        <div className="col-sm-6 col-xl-3">
+      {/* SaaS Summary KPI Cards (Responsive on Mobile) */}
+      <div className="row g-2 g-md-3">
+        <div className="col-6 col-md-4 col-xl-3">
           <div className="stat-box h-100 border-start border-4 border-primary bg-white p-3 rounded-4 border shadow-sm">
             <div className="d-flex justify-content-between align-items-center mb-1">
               <span className="small text-muted fw-semibold">Active Residents</span>
@@ -551,7 +551,7 @@ export default function AdminRentManagement() {
           </div>
         </div>
 
-        <div className="col-sm-6 col-xl-3">
+        <div className="col-6 col-md-4 col-xl-3">
           <div className="stat-box h-100 border-start border-4 border-info bg-white p-3 rounded-4 border shadow-sm">
             <div className="d-flex justify-content-between align-items-center mb-1">
               <span className="small text-muted fw-semibold">Rent Expected</span>
@@ -562,7 +562,7 @@ export default function AdminRentManagement() {
           </div>
         </div>
 
-        <div className="col-sm-6 col-xl-3">
+        <div className="col-6 col-md-4 col-xl-3">
           <div className="stat-box h-100 border-start border-4 border-success bg-white p-3 rounded-4 border shadow-sm">
             <div className="d-flex justify-content-between align-items-center mb-1">
               <span className="small text-muted fw-semibold">Rent Collected</span>
@@ -577,7 +577,7 @@ export default function AdminRentManagement() {
           </div>
         </div>
 
-        <div className="col-sm-6 col-xl-3">
+        <div className="col-6 col-md-4 col-xl-3">
           <div className="stat-box h-100 border-start border-4 border-danger bg-white p-3 rounded-4 border shadow-sm">
             <div className="d-flex justify-content-between align-items-center mb-1">
               <span className="small text-muted fw-semibold">Outstanding Rent</span>
@@ -588,7 +588,7 @@ export default function AdminRentManagement() {
           </div>
         </div>
 
-        <div className="col-sm-6 col-xl-3">
+        <div className="col-6 col-md-4 col-xl-3">
           <div className="stat-box h-100 bg-white p-3 rounded-4 border shadow-sm">
             <div className="d-flex justify-content-between align-items-center mb-1">
               <span className="small text-muted fw-semibold">Paid Residents</span>
@@ -599,7 +599,7 @@ export default function AdminRentManagement() {
           </div>
         </div>
 
-        <div className="col-sm-6 col-xl-3">
+        <div className="col-6 col-md-4 col-xl-3">
           <div className="stat-box h-100 bg-white p-3 rounded-4 border shadow-sm">
             <div className="d-flex justify-content-between align-items-center mb-1">
               <span className="small text-muted fw-semibold">Pending / Partial</span>
@@ -616,7 +616,7 @@ export default function AdminRentManagement() {
           </div>
         </div>
 
-        <div className="col-sm-6 col-xl-3">
+        <div className="col-6 col-md-4 col-xl-3">
           <div className="stat-box h-100 bg-white p-3 rounded-4 border shadow-sm">
             <div className="d-flex justify-content-between align-items-center mb-1">
               <span className="small text-muted fw-semibold text-danger">Overdue Payments</span>
@@ -627,7 +627,7 @@ export default function AdminRentManagement() {
           </div>
         </div>
 
-        <div className="col-sm-6 col-xl-3">
+        <div className="col-12 col-md-4 col-xl-3">
           <div className="stat-box h-100 bg-white p-3 rounded-4 border shadow-sm">
             <div className="d-flex justify-content-between align-items-center mb-1">
               <span className="small text-muted fw-semibold">WhatsApp Reminders</span>
@@ -859,37 +859,40 @@ export default function AdminRentManagement() {
                         </td>
 
                         <td>
-                          <div className="d-flex justify-content-center align-items-center gap-1">
+                          <div className="d-flex justify-content-center align-items-center gap-1.5" style={{ minWidth: '140px' }}>
                             {/* Record Payment Button */}
                             {r.balance_due > 0 ? (
                               <button
                                 onClick={() => handleOpenPaymentModal(r)}
-                                className="btn btn-sm btn-success d-flex align-items-center gap-1 px-2 py-1 shadow-xs"
+                                className="btn btn-sm btn-success d-flex align-items-center gap-1 px-2.5 py-1.5 shadow-xs fw-semibold"
+                                style={{ minHeight: '38px' }}
                                 title="Record a payment receipt"
                               >
                                 <i className="bi bi-credit-card"></i>
                                 <span>Pay</span>
                               </button>
                             ) : (
-                              <span className="badge bg-success-subtle text-success py-1 px-2">Settled</span>
+                              <span className="badge bg-success-subtle text-success py-1.5 px-2">Settled</span>
                             )}
 
                             {/* Send WhatsApp Reminder Button */}
                             <button
                               onClick={() => handleSendReminder(r)}
-                              className="btn btn-sm btn-outline-success d-flex align-items-center gap-1 px-2 py-1 shadow-xs"
+                              className="btn btn-sm btn-outline-success d-flex align-items-center justify-content-center px-2 py-1.5 shadow-xs"
+                              style={{ minHeight: '38px', minWidth: '38px' }}
                               title="Send or retry WhatsApp reminder"
                             >
-                              <i className="bi bi-whatsapp"></i>
+                              <i className="bi bi-whatsapp fs-6"></i>
                             </button>
 
                             {/* View History & Details Button */}
                             <button
                               onClick={() => handleOpenHistoryModal(r)}
-                              className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 px-2 py-1 shadow-xs"
+                              className="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center px-2 py-1.5 shadow-xs"
+                              style={{ minHeight: '38px', minWidth: '38px' }}
                               title="View payment transactions and reminder history"
                             >
-                              <i className="bi bi-receipt"></i>
+                              <i className="bi bi-receipt fs-6"></i>
                             </button>
                           </div>
                         </td>

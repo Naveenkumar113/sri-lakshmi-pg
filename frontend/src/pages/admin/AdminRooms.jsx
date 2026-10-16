@@ -559,49 +559,49 @@ export default function AdminRooms() {
         </div>
       </div>
 
-      {/* Metric Stat Cards */}
-      <div className="row g-3">
-        <div className="col-sm-6 col-xl-3">
-          <div className="stat-box h-100 border-start border-4 border-primary">
+      {/* Metric Stat Cards (Responsive 2-column mobile, 4-column desktop) */}
+      <div className="row g-2 g-md-3">
+        <div className="col-6 col-md-3">
+          <div className="stat-box h-100 border-start border-4 border-primary p-2.5 p-md-3">
             <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-muted fw-semibold">Total Inventory</span>
-              <i className="bi bi-building text-primary fs-5"></i>
+              <span className="small text-muted fw-semibold" style={{ fontSize: '0.75rem' }}>Total Inventory</span>
+              <i className="bi bi-building text-primary fs-6 d-none d-sm-block"></i>
             </div>
-            <h3 className="fw-bold mb-0 text-dark">{totalRooms} Rooms</h3>
-            <span className="small text-muted">{totalBeds} Total Beds</span>
+            <h4 className="fw-bold mb-0 text-dark">{totalRooms} Rooms</h4>
+            <span className="small text-muted" style={{ fontSize: '0.7rem' }}>{totalBeds} Total Beds</span>
           </div>
         </div>
 
-        <div className="col-sm-6 col-xl-3">
-          <div className="stat-box h-100 border-start border-4 border-danger">
+        <div className="col-6 col-md-3">
+          <div className="stat-box h-100 border-start border-4 border-danger p-2.5 p-md-3">
             <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-muted fw-semibold">Occupied Beds</span>
-              <i className="bi bi-person-fill-lock text-danger fs-5"></i>
+              <span className="small text-muted fw-semibold" style={{ fontSize: '0.75rem' }}>Occupied Beds</span>
+              <i className="bi bi-person-fill-lock text-danger fs-6 d-none d-sm-block"></i>
             </div>
-            <h3 className="fw-bold mb-0 text-danger">{occupiedBeds}</h3>
-            <span className="small text-muted">{occupancyRate}% PG Occupancy</span>
+            <h4 className="fw-bold mb-0 text-danger">{occupiedBeds}</h4>
+            <span className="small text-muted" style={{ fontSize: '0.7rem' }}>{occupancyRate}% PG Occupancy</span>
           </div>
         </div>
 
-        <div className="col-sm-6 col-xl-3">
-          <div className="stat-box h-100 border-start border-4 border-success">
+        <div className="col-6 col-md-3">
+          <div className="stat-box h-100 border-start border-4 border-success p-2.5 p-md-3">
             <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-muted fw-semibold">Available Beds</span>
-              <i className="bi bi-door-open-fill text-success fs-5"></i>
+              <span className="small text-muted fw-semibold" style={{ fontSize: '0.75rem' }}>Available Beds</span>
+              <i className="bi bi-door-open-fill text-success fs-6 d-none d-sm-block"></i>
             </div>
-            <h3 className="fw-bold mb-0 text-success">{availableBeds}</h3>
-            <span className="small text-muted">Vacant & ready for intake</span>
+            <h4 className="fw-bold mb-0 text-success">{availableBeds}</h4>
+            <span className="small text-muted" style={{ fontSize: '0.7rem' }}>Vacant for intake</span>
           </div>
         </div>
 
-        <div className="col-sm-6 col-xl-3">
-          <div className="stat-box h-100 border-start border-4 border-warning">
+        <div className="col-6 col-md-3">
+          <div className="stat-box h-100 border-start border-4 border-warning p-2.5 p-md-3">
             <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-muted fw-semibold">PG Occupancy Rate</span>
-              <i className="bi bi-pie-chart-fill text-warning fs-5"></i>
+              <span className="small text-muted fw-semibold" style={{ fontSize: '0.75rem' }}>Occupancy Rate</span>
+              <i className="bi bi-pie-chart-fill text-warning fs-6 d-none d-sm-block"></i>
             </div>
-            <h3 className="fw-bold mb-0 text-dark">{occupancyRate}%</h3>
-            <div className="progress mt-2" style={{ height: '6px' }}>
+            <h4 className="fw-bold mb-0 text-dark">{occupancyRate}%</h4>
+            <div className="progress mt-1" style={{ height: '5px' }}>
               <div
                 className="progress-bar bg-warning"
                 role="progressbar"
@@ -615,40 +615,43 @@ export default function AdminRooms() {
       {/* Filter and Search Bar */}
       <div className="bg-white p-3 rounded-4 border shadow-sm">
         <div className="row g-2 align-items-center">
-          <div className="col-md-4">
-            <div className="input-group input-group-sm">
+          <div className="col-12 col-md-4">
+            <div className="input-group">
               <span className="input-group-text bg-light border-end-0">
                 <i className="bi bi-search"></i>
               </span>
               <input
                 type="text"
                 className="form-control bg-light border-start-0"
-                placeholder="Search Room (e.g. S-2, 101) or resident..."
+                placeholder="Search Room or resident..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                style={{ minHeight: '44px' }}
               />
             </div>
           </div>
 
-          <div className="col-sm-4 col-md-2">
+          <div className="col-6 col-sm-4 col-md-2">
             <select
-              className="form-select form-select-sm"
+              className="form-select"
               value={acFilter}
               onChange={(e) => setAcFilter(e.target.value)}
+              style={{ minHeight: '44px' }}
             >
-              <option value="ALL">All Cooling</option>
+              <option value="ALL">Cooling: All</option>
               <option value="AC">AC Only</option>
               <option value="NON_AC">Non-AC Only</option>
             </select>
           </div>
 
-          <div className="col-sm-4 col-md-2">
+          <div className="col-6 col-sm-4 col-md-2">
             <select
-              className="form-select form-select-sm"
+              className="form-select"
               value={sharingFilter}
               onChange={(e) => setSharingFilter(e.target.value)}
+              style={{ minHeight: '44px' }}
             >
-              <option value="ALL">All Sharing Types</option>
+              <option value="ALL">Sharing: All</option>
               {distinctSharingTypes.map((st) => (
                 <option key={st} value={st}>
                   {st}
@@ -657,23 +660,24 @@ export default function AdminRooms() {
             </select>
           </div>
 
-          <div className="col-sm-4 col-md-2">
+          <div className="col-6 col-sm-4 col-md-2">
             <select
-              className="form-select form-select-sm"
+              className="form-select"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
+              style={{ minHeight: '44px' }}
             >
-              <option value="ALL">All Room Statuses</option>
+              <option value="ALL">Status: All</option>
               <option value="AVAILABLE">AVAILABLE</option>
-              <option value="PARTIALLY_AVAILABLE">PARTIALLY AVAILABLE</option>
+              <option value="PARTIALLY_AVAILABLE">PARTIAL</option>
               <option value="FULL">FULL</option>
-              <option value="MAINTENANCE">MAINTENANCE</option>
+              <option value="MAINTENANCE">MAINT</option>
             </select>
           </div>
 
-          <div className="col-md-2 text-end">
+          <div className="col-6 col-md-2 text-end">
             <span className="small text-muted">
-              Rooms: <strong>{filteredRooms.length}</strong> of <strong>{rooms.length}</strong>
+              Rooms: <strong>{filteredRooms.length}</strong> / <strong>{rooms.length}</strong>
             </span>
           </div>
         </div>

@@ -38,74 +38,74 @@ export default function UserDashboard() {
 
   return (
     <div className="d-flex flex-column gap-4">
-      {/* 5 Stats Cards */}
-      <div className="row g-3">
-        <div className="col-sm-6 col-xl">
-          <div className="stat-box h-100">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <span className="small text-muted fw-semibold">My Visits</span>
-              <div className="rounded-circle p-2 bg-light text-primary">
+      {/* 5 Stats Cards (Responsive 2-column mobile, 5-column wide) */}
+      <div className="row g-2 g-md-3">
+        <div className="col-6 col-md-4 col-xl">
+          <div className="stat-box h-100 p-2.5 p-md-3">
+            <div className="d-flex justify-content-between align-items-center mb-1">
+              <span className="small text-muted fw-semibold" style={{ fontSize: '0.75rem' }}>My Visits</span>
+              <div className="rounded-circle p-1.5 bg-light text-primary d-none d-sm-block">
                 <i className="bi bi-calendar-check fs-6"></i>
               </div>
             </div>
-            <h3 className="fw-bold mb-0 text-dark">{visits.length}</h3>
-            <span className="small text-success fw-semibold">
-              {approvedVisits} Approved • {pendingVisits} Pending
+            <h4 className="fw-bold mb-0 text-dark">{visits.length}</h4>
+            <span className="small text-success fw-semibold" style={{ fontSize: '0.7rem' }}>
+              {approvedVisits} Confirmed
             </span>
           </div>
         </div>
 
-        <div className="col-sm-6 col-xl">
-          <div className="stat-box h-100">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <span className="small text-muted fw-semibold">My Bookings</span>
-              <div className="rounded-circle p-2 bg-light text-warning">
+        <div className="col-6 col-md-4 col-xl">
+          <div className="stat-box h-100 p-2.5 p-md-3">
+            <div className="d-flex justify-content-between align-items-center mb-1">
+              <span className="small text-muted fw-semibold" style={{ fontSize: '0.75rem' }}>My Bookings</span>
+              <div className="rounded-circle p-1.5 bg-light text-warning d-none d-sm-block">
                 <i className="bi bi-door-open fs-6"></i>
               </div>
             </div>
-            <h3 className="fw-bold mb-0 text-dark">{bookings.length}</h3>
-            <span className="small text-warning fw-semibold">
-              {approvedBookings} Approved • {pendingBookings} Pending
+            <h4 className="fw-bold mb-0 text-dark">{bookings.length}</h4>
+            <span className="small text-warning fw-semibold" style={{ fontSize: '0.7rem' }}>
+              {approvedBookings} Confirmed
             </span>
           </div>
         </div>
 
-        <div className="col-sm-6 col-xl">
-          <div className="stat-box h-100">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <span className="small text-muted fw-semibold">Pending Requests</span>
-              <div className="rounded-circle p-2 bg-light text-secondary">
+        <div className="col-6 col-md-4 col-xl">
+          <div className="stat-box h-100 p-2.5 p-md-3">
+            <div className="d-flex justify-content-between align-items-center mb-1">
+              <span className="small text-muted fw-semibold" style={{ fontSize: '0.75rem' }}>Pending</span>
+              <div className="rounded-circle p-1.5 bg-light text-secondary d-none d-sm-block">
                 <i className="bi bi-hourglass-split fs-6"></i>
               </div>
             </div>
-            <h3 className="fw-bold mb-0 text-dark">{pendingVisits + pendingBookings}</h3>
-            <span className="small text-muted">Awaiting Admin Review</span>
+            <h4 className="fw-bold mb-0 text-dark">{pendingVisits + pendingBookings}</h4>
+            <span className="small text-muted" style={{ fontSize: '0.7rem' }}>Review in progress</span>
           </div>
         </div>
 
-        <div className="col-sm-6 col-xl">
-          <div className="stat-box h-100">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <span className="small text-muted fw-semibold">Approved Requests</span>
-              <div className="rounded-circle p-2 bg-light text-success">
+        <div className="col-6 col-md-4 col-xl">
+          <div className="stat-box h-100 p-2.5 p-md-3">
+            <div className="d-flex justify-content-between align-items-center mb-1">
+              <span className="small text-muted fw-semibold" style={{ fontSize: '0.75rem' }}>Approved</span>
+              <div className="rounded-circle p-1.5 bg-light text-success d-none d-sm-block">
                 <i className="bi bi-check-circle-fill fs-6"></i>
               </div>
             </div>
-            <h3 className="fw-bold mb-0 text-success">{approvedVisits + approvedBookings}</h3>
-            <span className="small text-success">Confirmed by Manager</span>
+            <h4 className="fw-bold mb-0 text-success">{approvedVisits + approvedBookings}</h4>
+            <span className="small text-success" style={{ fontSize: '0.7rem' }}>Ready</span>
           </div>
         </div>
 
-        <div className="col-sm-6 col-xl">
-          <div className="stat-box h-100">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <span className="small text-muted fw-semibold">Notifications</span>
-              <div className="rounded-circle p-2 bg-light text-danger">
+        <div className="col-12 col-md-4 col-xl">
+          <div className="stat-box h-100 p-2.5 p-md-3">
+            <div className="d-flex justify-content-between align-items-center mb-1">
+              <span className="small text-muted fw-semibold" style={{ fontSize: '0.75rem' }}>Alerts</span>
+              <div className="rounded-circle p-1.5 bg-light text-danger d-none d-sm-block">
                 <i className="bi bi-bell-fill fs-6"></i>
               </div>
             </div>
-            <h3 className="fw-bold mb-0 text-dark">{unreadNotifs}</h3>
-            <span className="small text-muted">{notifications.length} Total Alerts</span>
+            <h4 className="fw-bold mb-0 text-dark">{unreadNotifs}</h4>
+            <span className="small text-muted" style={{ fontSize: '0.7rem' }}>{notifications.length} Total Alerts</span>
           </div>
         </div>
       </div>

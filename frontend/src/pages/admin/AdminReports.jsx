@@ -175,74 +175,75 @@ export default function AdminReports() {
         </div>
       </div>
 
-      {/* 4 Summary Stat Cards */}
-      <div className="row g-3">
-        <div className="col-sm-6 col-xl-3">
-          <div className="stat-box h-100 bg-white p-3 rounded-4 border shadow-sm">
+      {/* 4 Summary Stat Cards (Responsive on Mobile) */}
+      <div className="row g-2 g-md-3">
+        <div className="col-6 col-xl-3">
+          <div className="stat-box h-100 bg-white p-2.5 p-md-3 rounded-4 border shadow-sm">
             <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-muted fw-semibold">Total Reports</span>
-              <div className="rounded-circle p-2 bg-light text-dark">
+              <span className="small text-muted fw-semibold" style={{ fontSize: '0.75rem' }}>Total Reports</span>
+              <div className="rounded-circle p-1.5 bg-light text-dark d-none d-sm-block">
                 <i className="bi bi-clipboard-data fs-6"></i>
               </div>
             </div>
-            <h3 className="fw-bold mb-0 text-dark">{counts.total}</h3>
-            <span className="small text-muted">All-time submissions</span>
+            <h4 className="fw-bold mb-0 text-dark">{counts.total}</h4>
+            <span className="small text-muted" style={{ fontSize: '0.7rem' }}>All submissions</span>
           </div>
         </div>
 
-        <div className="col-sm-6 col-xl-3">
-          <div className="stat-box h-100 bg-white p-3 rounded-4 border shadow-sm">
+        <div className="col-6 col-xl-3">
+          <div className="stat-box h-100 bg-white p-2.5 p-md-3 rounded-4 border shadow-sm">
             <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-warning-emphasis fw-semibold">Open & Unresolved</span>
-              <div className="rounded-circle p-2 bg-warning-subtle text-warning">
+              <span className="small text-warning-emphasis fw-semibold" style={{ fontSize: '0.75rem' }}>Open</span>
+              <div className="rounded-circle p-1.5 bg-warning-subtle text-warning d-none d-sm-block">
                 <i className="bi bi-exclamation-circle fs-6"></i>
               </div>
             </div>
-            <h3 className="fw-bold mb-0 text-warning">{counts.open}</h3>
-            <span className="small text-warning fw-semibold">Needs attention</span>
+            <h4 className="fw-bold mb-0 text-warning">{counts.open}</h4>
+            <span className="small text-warning fw-semibold" style={{ fontSize: '0.7rem' }}>Needs attention</span>
           </div>
         </div>
 
-        <div className="col-sm-6 col-xl-3">
-          <div className="stat-box h-100 bg-white p-3 rounded-4 border shadow-sm">
+        <div className="col-6 col-xl-3">
+          <div className="stat-box h-100 bg-white p-2.5 p-md-3 rounded-4 border shadow-sm">
             <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-primary fw-semibold">In Progress</span>
-              <div className="rounded-circle p-2 bg-primary-subtle text-primary">
+              <span className="small text-primary fw-semibold" style={{ fontSize: '0.75rem' }}>In Progress</span>
+              <div className="rounded-circle p-1.5 bg-primary-subtle text-primary d-none d-sm-block">
                 <i className="bi bi-gear-wide-connected fs-6"></i>
               </div>
             </div>
-            <h3 className="fw-bold mb-0 text-primary">{counts.in_progress}</h3>
-            <span className="small text-primary fw-semibold">Currently being fixed</span>
+            <h4 className="fw-bold mb-0 text-primary">{counts.in_progress}</h4>
+            <span className="small text-primary fw-semibold" style={{ fontSize: '0.7rem' }}>Being resolved</span>
           </div>
         </div>
 
-        <div className="col-sm-6 col-xl-3">
-          <div className="stat-box h-100 bg-white p-3 rounded-4 border shadow-sm">
+        <div className="col-6 col-xl-3">
+          <div className="stat-box h-100 bg-white p-2.5 p-md-3 rounded-4 border shadow-sm">
             <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-success fw-semibold">Resolved</span>
-              <div className="rounded-circle p-2 bg-success-subtle text-success">
+              <span className="small text-success fw-semibold" style={{ fontSize: '0.75rem' }}>Resolved</span>
+              <div className="rounded-circle p-1.5 bg-success-subtle text-success d-none d-sm-block">
                 <i className="bi bi-check-circle fs-6"></i>
               </div>
             </div>
-            <h3 className="fw-bold mb-0 text-success">{counts.resolved}</h3>
-            <span className="small text-success fw-semibold">Completed fixes</span>
+            <h4 className="fw-bold mb-0 text-success">{counts.resolved}</h4>
+            <span className="small text-success fw-semibold" style={{ fontSize: '0.7rem' }}>Completed fixes</span>
           </div>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
       <div className="bg-white p-3 p-md-4 rounded-4 border shadow-sm">
-        <div className="row g-3 align-items-center">
+        <div className="row g-2 align-items-center">
           <div className="col-12 col-md-4">
             <form onSubmit={handleSearchSubmit} className="input-group">
               <input
                 type="text"
                 className="form-control"
-                placeholder="Search name, phone, room, code..."
+                placeholder="Search name, room, code..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                style={{ minHeight: '44px' }}
               />
-              <button className="btn btn-dark" type="submit">
+              <button className="btn btn-dark" type="submit" style={{ minHeight: '44px' }}>
                 <i className="bi bi-search"></i>
               </button>
             </form>
@@ -253,11 +254,12 @@ export default function AdminReports() {
               className="form-select"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
+              style={{ minHeight: '44px' }}
             >
-              <option value="ALL">All Statuses</option>
+              <option value="ALL">Status: All</option>
               <option value="OPEN">Open Only</option>
-              <option value="IN_PROGRESS">In Progress Only</option>
-              <option value="RESOLVED">Resolved Only</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="RESOLVED">Resolved</option>
             </select>
           </div>
 
@@ -266,8 +268,9 @@ export default function AdminReports() {
               className="form-select"
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
+              style={{ minHeight: '44px' }}
             >
-              <option value="ALL">All Categories</option>
+              <option value="ALL">Categories: All</option>
               {ISSUE_CATEGORIES.map((c, i) => (
                 <option key={i} value={c}>{c}</option>
               ))}
@@ -279,10 +282,11 @@ export default function AdminReports() {
               className="form-select"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
+              style={{ minHeight: '44px' }}
             >
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
-              <option value="status">Group by Status</option>
+              <option value="status">By Status</option>
             </select>
           </div>
         </div>

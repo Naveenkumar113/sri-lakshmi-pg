@@ -46,43 +46,96 @@ export default function UserLayout() {
   }
 
   return (
-    <div className="bg-light min-vh-100 py-4">
-      <div className="container">
+    <div className="bg-light min-vh-100 py-3 py-md-4 has-bottom-bar-padding">
+      <div className="container px-3 px-md-4">
         {/* User Greeting Bar */}
-        <div className="bg-white p-3 p-md-4 rounded-4 border shadow-sm mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div className="bg-white p-3 p-md-4 rounded-4 border shadow-sm mb-3 mb-md-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
           <div className="d-flex align-items-center gap-3">
             <div
-              className="d-flex align-items-center justify-content-center rounded-circle text-white fw-bold shadow-sm"
+              className="d-flex align-items-center justify-content-center rounded-circle text-white fw-bold shadow-sm flex-shrink-0"
               style={{
-                width: '52px',
-                height: '52px',
+                width: '48px',
+                height: '48px',
                 background: 'linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%)',
-                fontSize: '1.25rem',
+                fontSize: '1.2rem',
               }}
             >
               {user.full_name?.charAt(0).toUpperCase()}
             </div>
             <div>
-              <h5 className="fw-bold text-dark mb-0">{user.full_name}</h5>
+              <h5 className="fw-bold text-dark mb-0" style={{ fontSize: '1.1rem' }}>{user.full_name}</h5>
               <div className="text-muted small">
                 {user.occupation || 'Resident / Guest'} • {user.phone}
               </div>
             </div>
           </div>
 
-          <div className="d-flex gap-2">
-            <NavLink to="/visit-request" className="btn btn-sm btn-outline-dark fw-semibold">
-              <i className="bi bi-calendar2-plus me-1"></i> New Visit
+          <div className="d-flex gap-2 w-100 w-sm-auto justify-content-end">
+            <NavLink to="/visit-request" className="btn btn-sm btn-outline-dark fw-semibold flex-fill flex-sm-grow-0 d-flex align-items-center justify-content-center" style={{ minHeight: '40px' }}>
+              <i className="bi bi-calendar2-plus me-1"></i> Visit
             </NavLink>
-            <NavLink to="/book-room" className="btn btn-sm btn-pg-primary fw-semibold">
+            <NavLink to="/book-room" className="btn btn-sm btn-pg-primary fw-semibold flex-fill flex-sm-grow-0 d-flex align-items-center justify-content-center" style={{ minHeight: '40px' }}>
               <i className="bi bi-key-fill me-1"></i> Book Room
             </NavLink>
           </div>
         </div>
 
-        <div className="row g-4">
-          {/* Sidebar Navigation */}
-          <div className="col-lg-3">
+        {/* Mobile Horizontal Navigation Tabs (< lg screens) */}
+        <div className="d-lg-none mb-3">
+          <div className="user-mobile-nav-pills">
+            <NavLink
+              to="/dashboard"
+              end
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            >
+              <i className="bi bi-grid me-1"></i> Dashboard
+            </NavLink>
+
+            <NavLink
+              to="/my-visits"
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            >
+              <i className="bi bi-calendar-check me-1"></i> Visits
+            </NavLink>
+
+            <NavLink
+              to="/my-bookings"
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            >
+              <i className="bi bi-door-open me-1"></i> Bookings
+            </NavLink>
+
+            <NavLink
+              to="/notifications"
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            >
+              <i className="bi bi-bell me-1"></i> Alerts
+              {unreadCount > 0 && (
+                <span className="badge bg-danger rounded-pill ms-1" style={{ fontSize: '0.65rem' }}>
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </NavLink>
+
+            <NavLink
+              to="/report"
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            >
+              <i className="bi bi-exclamation-octagon me-1"></i> Report Issue
+            </NavLink>
+
+            <NavLink
+              to="/profile"
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            >
+              <i className="bi bi-person-gear me-1"></i> Profile
+            </NavLink>
+          </div>
+        </div>
+
+        <div className="row g-3 g-md-4">
+          {/* Desktop Sidebar Navigation */}
+          <div className="col-lg-3 d-none d-lg-block">
             <div className="bg-white rounded-4 border shadow-sm p-3">
               <div className="text-uppercase small fw-bold text-muted px-3 py-2" style={{ letterSpacing: '0.05em' }}>
                 User Portal

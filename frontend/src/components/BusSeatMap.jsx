@@ -19,10 +19,6 @@ export function BusSeatBerth({
   const isMaintenance = bed.bed_status === 'MAINTENANCE';
   const isReserved = bed.bed_status === 'RESERVED';
 
-  // Dimension sizing
-  const width = compact ? '54px' : '72px';
-  const height = compact ? '92px' : '118px';
-
   // State styling matching RedBus seat selection reference
   let stateStyles = {
     bg: '#FFFFFF',
@@ -89,13 +85,16 @@ export function BusSeatBerth({
     ? `${bed.bed_number}: Reserved Bed`
     : `${bed.bed_number}: Available - Click to Assign Resident`;
 
+  const defaultWidth = compact ? '52px' : '70px';
+  const defaultHeight = compact ? '90px' : '116px';
+
   return (
     <div
       onClick={() => onClick && onClick(bed)}
       className="bus-seat-berth position-relative d-flex flex-column justify-content-between align-items-center transition-all user-select-none"
       style={{
-        width,
-        height,
+        width: defaultWidth,
+        height: defaultHeight,
         backgroundColor: stateStyles.bg,
         border: stateStyles.border,
         borderRadius: '8px',
@@ -576,21 +575,23 @@ export default function BusSeatMap({
             </div>
 
             {/* Actions for the selected seat */}
-            <div className="d-flex flex-wrap gap-2">
+            <div className="d-flex flex-wrap gap-2 w-100 w-sm-auto justify-content-end">
               {activeSelectedBed.is_occupied ? (
                 <>
                   <button
                     type="button"
                     onClick={() => onTransfer && onTransfer(activeSelectedBed, room)}
-                    className="btn btn-sm btn-outline-warning text-dark fw-semibold"
+                    className="btn btn-sm btn-outline-warning text-dark fw-semibold flex-fill flex-sm-grow-0 d-flex align-items-center justify-content-center"
+                    style={{ minHeight: '40px' }}
                   >
-                    <i className="bi bi-arrow-left-right me-1"></i> Transfer Room
+                    <i className="bi bi-arrow-left-right me-1"></i> Transfer
                   </button>
 
                   <button
                     type="button"
                     onClick={() => onCheckout && onCheckout(activeSelectedBed, room)}
-                    className="btn btn-sm btn-outline-danger fw-semibold"
+                    className="btn btn-sm btn-outline-danger fw-semibold flex-fill flex-sm-grow-0 d-flex align-items-center justify-content-center"
+                    style={{ minHeight: '40px' }}
                   >
                     <i className="bi bi-box-arrow-right me-1"></i> Check Out
                   </button>
@@ -599,7 +600,8 @@ export default function BusSeatMap({
                 <button
                   type="button"
                   onClick={() => onAssign && onAssign(activeSelectedBed, room)}
-                  className="btn btn-sm btn-success fw-bold px-3 shadow-sm"
+                  className="btn btn-sm btn-success fw-bold px-3 shadow-sm flex-fill flex-sm-grow-0 d-flex align-items-center justify-content-center"
+                  style={{ minHeight: '40px' }}
                 >
                   <i className="bi bi-person-plus-fill me-1"></i> Assign Resident to {activeSelectedBed.bed_number}
                 </button>
@@ -608,7 +610,8 @@ export default function BusSeatMap({
               <button
                 type="button"
                 onClick={() => setInternalSelectedBed(null)}
-                className="btn btn-sm btn-outline-secondary"
+                className="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center"
+                style={{ minHeight: '40px' }}
               >
                 Close
               </button>

@@ -19,31 +19,31 @@ export default function MobileBottomBar() {
   };
 
   return (
-    <div className="mobile-bottom-bar">
+    <div className="mobile-bottom-bar" style={{ zIndex: 1040 }}>
       <a
         href="tel:+917893744206"
-        className="btn btn-sm btn-outline-dark d-flex align-items-center justify-content-center gap-1 flex-fill py-2 fw-semibold"
-        style={{ fontSize: '0.82rem' }}
+        className="btn btn-outline-dark d-flex align-items-center justify-content-center gap-1 flex-fill fw-semibold text-decoration-none"
+        style={{ minHeight: '44px', fontSize: '0.85rem' }}
       >
-        <i className="bi bi-telephone-fill text-success"></i>
+        <i className="bi bi-telephone-fill text-success fs-6"></i>
         <span>Call</span>
       </a>
 
       <button
         onClick={handleVisit}
-        className="btn btn-sm btn-pg-primary d-flex align-items-center justify-content-center gap-1 flex-fill py-2"
-        style={{ fontSize: '0.82rem' }}
+        className="btn btn-pg-primary d-flex align-items-center justify-content-center gap-1 flex-fill fw-semibold"
+        style={{ minHeight: '44px', fontSize: '0.85rem' }}
       >
-        <i className="bi bi-calendar2-check"></i>
+        <i className="bi bi-calendar2-check fs-6"></i>
         <span>Visit</span>
       </button>
 
       <button
         onClick={handleBook}
-        className="btn btn-sm btn-dark d-flex align-items-center justify-content-center gap-1 flex-fill py-2 fw-semibold"
-        style={{ fontSize: '0.82rem' }}
+        className="btn btn-dark d-flex align-items-center justify-content-center gap-1 flex-fill fw-semibold"
+        style={{ minHeight: '44px', fontSize: '0.85rem' }}
       >
-        <i className="bi bi-door-open text-warning"></i>
+        <i className="bi bi-door-open text-warning fs-6"></i>
         <span>Book</span>
       </button>
     </div>

@@ -383,16 +383,18 @@ export default function Navbar() {
                           <span>My Visits</span>
                         </Link>
                         <Link
-                          to="/user/report"
+                          to="/report"
                           className="btn btn-sm btn-light border text-start d-flex align-items-center gap-2 py-2"
+                          style={{ minHeight: '44px' }}
                           onClick={() => setNavOpen(false)}
                         >
-                          <i className="bi bi-exclamation-octagon"></i>
+                          <i className="bi bi-exclamation-octagon text-danger"></i>
                           <span>Report an Issue</span>
                         </Link>
                         <Link
                           to="/profile"
                           className="btn btn-sm btn-light border text-start d-flex align-items-center gap-2 py-2"
+                          style={{ minHeight: '44px' }}
                           onClick={() => setNavOpen(false)}
                         >
                           <i className="bi bi-person-gear"></i>
@@ -403,6 +405,7 @@ export default function Navbar() {
 
                     <button
                       className="btn btn-sm btn-outline-danger text-start d-flex align-items-center gap-2 py-2 mt-2"
+                      style={{ minHeight: '44px' }}
                       onClick={() => {
                         setNavOpen(false);
                         logout();
@@ -417,10 +420,10 @@ export default function Navbar() {
               </>
             ) : (
               <div className="d-flex align-items-center gap-2">
-                <Link to="/login" className="btn btn-sm btn-pg-secondary flex-fill" onClick={() => setNavOpen(false)}>
+                <Link to="/login" className="btn btn-pg-secondary flex-fill d-flex align-items-center justify-content-center" style={{ minHeight: '44px' }} onClick={() => setNavOpen(false)}>
                   Login
                 </Link>
-                <Link to="/register" className="btn btn-sm btn-outline-dark fw-semibold flex-fill" onClick={() => setNavOpen(false)}>
+                <Link to="/register" className="btn btn-outline-dark fw-semibold flex-fill d-flex align-items-center justify-content-center" style={{ minHeight: '44px' }} onClick={() => setNavOpen(false)}>
                   Register
                 </Link>
               </div>
