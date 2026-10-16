@@ -45,13 +45,13 @@ export default function AdminDashboard() {
       </div>
 
       {/* 8 SaaS Metric Cards (2-column on mobile) */}
-      <div className="row g-2 g-md-3">
+      <div className="row g-2.5 g-md-3">
         <div className="col-6 col-md-3">
           <Link to="/admin/residents" className="text-decoration-none">
-            <div className="stat-box h-100 border-start border-4 border-primary">
+            <div className="stat-box border-top-primary h-100">
               <div className="d-flex justify-content-between align-items-center mb-1">
                 <span className="small text-muted fw-semibold">Active Residents</span>
-                <i className="bi bi-people text-primary fs-6 d-none d-sm-block"></i>
+                <i className="bi bi-people text-primary fs-6"></i>
               </div>
               <h4 className="fw-bold mb-0 text-dark">{stats?.active_residents || stats?.total_users}</h4>
               <span className="small text-primary fw-semibold">Manage &rarr;</span>
@@ -61,10 +61,10 @@ export default function AdminDashboard() {
 
         <div className="col-6 col-md-3">
           <Link to="/admin/rooms" className="text-decoration-none">
-            <div className="stat-box h-100 border-start border-4 border-info">
+            <div className="stat-box border-top-info h-100">
               <div className="d-flex justify-content-between align-items-center mb-1">
                 <span className="small text-muted fw-semibold">Inventory</span>
-                <i className="bi bi-building text-info fs-6 d-none d-sm-block"></i>
+                <i className="bi bi-building text-info fs-6"></i>
               </div>
               <h4 className="fw-bold mb-0 text-dark">{stats?.total_rooms} Rooms</h4>
               <span className="small text-info fw-semibold">{stats?.total_beds} Beds &rarr;</span>
@@ -74,10 +74,10 @@ export default function AdminDashboard() {
 
         <div className="col-6 col-md-3">
           <Link to="/admin/rooms" className="text-decoration-none">
-            <div className="stat-box h-100 border-start border-4 border-success">
+            <div className="stat-box border-top-success h-100">
               <div className="d-flex justify-content-between align-items-center mb-1">
                 <span className="small text-muted fw-semibold">Available</span>
-                <i className="bi bi-door-open text-success fs-6 d-none d-sm-block"></i>
+                <i className="bi bi-door-open text-success fs-6"></i>
               </div>
               <h4 className="fw-bold mb-0 text-success">{stats?.available_rooms}</h4>
               <span className="small text-muted">Ready rooms</span>
@@ -87,10 +87,10 @@ export default function AdminDashboard() {
 
         <div className="col-6 col-md-3">
           <Link to="/admin/rooms" className="text-decoration-none">
-            <div className="stat-box h-100 border-start border-4 border-warning">
+            <div className="stat-box border-top-warning h-100">
               <div className="d-flex justify-content-between align-items-center mb-1">
                 <span className="small text-muted fw-semibold">Occupied Beds</span>
-                <i className="bi bi-person-check text-warning fs-6 d-none d-sm-block"></i>
+                <i className="bi bi-person-check text-warning fs-6"></i>
               </div>
               <h4 className="fw-bold mb-0 text-warning">{stats?.occupied_beds}</h4>
               <span className="small text-muted">{stats?.occupancy_rate}% Occupied</span>

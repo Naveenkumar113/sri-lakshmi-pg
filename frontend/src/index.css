@@ -398,19 +398,36 @@ a {
   color: var(--accent);
 }
 
-/* Stat Box */
+/* Stat Box - Modern Premium SaaS Structure */
 .stat-box {
   background: #FFFFFF;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 22px;
-  transition: all 0.25s ease;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 12px !important;
+  padding: 16px 18px !important;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
 }
 
 .stat-box:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.08);
+  border-color: #CBD5E1 !important;
 }
+
+.stat-box h3, .stat-box h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* Subtle, elegant top-accent indicators instead of ugly thick 4-sided borders */
+.stat-box.border-top-primary { border-top: 3px solid #2563EB !important; }
+.stat-box.border-top-info { border-top: 3px solid #0EA5E9 !important; }
+.stat-box.border-top-success { border-top: 3px solid #10B981 !important; }
+.stat-box.border-top-warning { border-top: 3px solid #F59E0B !important; }
+.stat-box.border-top-danger { border-top: 3px solid #EF4444 !important; }
 
 /* Status Badges */
 .status-pill {

@@ -420,24 +420,26 @@ export default function AdminRentManagement() {
 
   return (
     <div className="d-flex flex-column gap-3">
-      {/* Top Header & Actions Bar (Compact Mobile First) */}
-      <div className="bg-white p-3 rounded-4 border shadow-sm">
-        <div className="d-flex justify-content-between align-items-center mb-2">
+      {/* Top Header Card: Title + Month Selector + Action Buttons (Well-Structured) */}
+      <div className="bg-white p-3 p-md-4 rounded-4 border shadow-sm">
+        <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
           <div>
             <h4 className="fw-bold mb-0 text-dark">Rent Management</h4>
-            <span className="text-secondary small d-none d-sm-inline">Track monthly dues and dispatch WhatsApp reminders</span>
+            <div className="text-secondary small">Monthly dues, payments, and WhatsApp reminders</div>
           </div>
-          <span className="badge bg-warning text-dark fw-bold">ERP Automated</span>
+          <span className="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2.5 py-1 fw-semibold">
+            Automated ERP
+          </span>
         </div>
 
-        <div className="d-flex flex-wrap align-items-center gap-1.5 pt-1">
-          {/* Month Selector */}
-          <div className="d-flex align-items-center gap-1.5 bg-light px-2.5 py-1 rounded-3 border flex-grow-1 flex-sm-grow-0">
-            <i className="bi bi-calendar3 text-primary small"></i>
-            <span className="small text-muted fw-semibold">Month:</span>
+        {/* Structured Row: Month Selector on Left, Action Buttons on Right */}
+        <div className="d-flex flex-column flex-sm-row justify-content-between align-items-stretch align-items-sm-center gap-2 pt-2 border-top">
+          <div className="d-flex align-items-center gap-2 bg-light px-3 py-1.5 rounded-3 border">
+            <i className="bi bi-calendar3 text-primary"></i>
+            <span className="small text-muted fw-semibold text-nowrap">Month:</span>
             <select
               className="form-select form-select-sm border-0 bg-transparent fw-bold text-dark py-0 ps-1"
-              style={{ width: 'auto', cursor: 'pointer', minHeight: '32px' }}
+              style={{ cursor: 'pointer', minHeight: 'auto' }}
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
             >
@@ -450,37 +452,35 @@ export default function AdminRentManagement() {
             </select>
           </div>
 
-          {/* Trigger Daily Scheduler Check */}
-          <button
-            onClick={handleRunDailyJobNow}
-            disabled={runningJob}
-            className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 flex-fill flex-sm-grow-0"
-            title="Runs daily automated check"
-            style={{ minHeight: '34px' }}
-          >
-            {runningJob ? (
-              <span className="spinner-border spinner-border-sm" role="status"></span>
-            ) : (
-              <i className="bi bi-play-circle-fill"></i>
-            )}
-            <span>Auto Check</span>
-          </button>
+          <div className="d-flex gap-2">
+            <button
+              onClick={handleRunDailyJobNow}
+              disabled={runningJob}
+              className="btn btn-sm btn-outline-primary d-flex align-items-center justify-content-center gap-1.5 flex-fill px-3 py-1.5"
+              title="Runs daily automated check"
+            >
+              {runningJob ? (
+                <span className="spinner-border spinner-border-sm" role="status"></span>
+              ) : (
+                <i className="bi bi-play-circle-fill"></i>
+              )}
+              <span>Auto Check</span>
+            </button>
 
-          {/* Sync Records */}
-          <button
-            onClick={handleSyncRecords}
-            disabled={syncingRecords}
-            className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 flex-fill flex-sm-grow-0"
-            title="Sync active resident records"
-            style={{ minHeight: '34px' }}
-          >
-            {syncingRecords ? (
-              <span className="spinner-border spinner-border-sm" role="status"></span>
-            ) : (
-              <i className="bi bi-arrow-repeat"></i>
-            )}
-            <span>Sync</span>
-          </button>
+            <button
+              onClick={handleSyncRecords}
+              disabled={syncingRecords}
+              className="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1.5 flex-fill px-3 py-1.5"
+              title="Sync active resident records"
+            >
+              {syncingRecords ? (
+                <span className="spinner-border spinner-border-sm" role="status"></span>
+              ) : (
+                <i className="bi bi-arrow-repeat"></i>
+              )}
+              <span>Sync Records</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -495,32 +495,29 @@ export default function AdminRentManagement() {
         </div>
       )}
 
-      {/* WhatsApp Configuration Status Banner (Compact) */}
-      <div
-        className="p-2.5 p-md-3 rounded-4 border d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 bg-white shadow-xs"
-        style={{ borderLeft: '4px solid #25D366' }}
-      >
-        <div className="d-flex align-items-center gap-2">
+      {/* Clean WhatsApp Status Card */}
+      <div className="bg-white p-3 rounded-4 border shadow-sm d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2.5">
+        <div className="d-flex align-items-center gap-2.5">
           <div
             className="rounded-circle d-flex align-items-center justify-content-center text-white flex-shrink-0"
-            style={{ width: '32px', height: '32px', backgroundColor: '#25D366' }}
+            style={{ width: '38px', height: '38px', backgroundColor: '#25D366' }}
           >
-            <i className="bi bi-whatsapp fs-6"></i>
+            <i className="bi bi-whatsapp fs-5"></i>
           </div>
           <div>
-            <div className="fw-bold small d-flex flex-wrap align-items-center gap-1.5">
-              <span className="text-dark">Direct WhatsApp Chat Active</span>
-              <span className="badge bg-success-subtle text-success border border-success-subtle" style={{ fontSize: '0.65rem' }}>
+            <div className="d-flex flex-wrap align-items-center gap-2">
+              <span className="fw-bold text-dark small">WhatsApp Chat Active</span>
+              <span className="badge bg-success-subtle text-success border border-success-subtle px-2 py-0.5" style={{ fontSize: '0.65rem' }}>
                 wa.me
               </span>
               {settings.admin_whatsapp_number && (
-                <span className="badge bg-light text-secondary border" style={{ fontSize: '0.65rem' }}>
+                <span className="badge bg-light text-secondary border px-2 py-0.5" style={{ fontSize: '0.65rem' }}>
                   +91 {settings.admin_whatsapp_number}
                 </span>
               )}
             </div>
-            <div className="text-muted" style={{ fontSize: '0.72rem' }}>
-              Opens WhatsApp with prefilled resident rent details.
+            <div className="text-muted small" style={{ fontSize: '0.75rem' }}>
+              Prefilled payment reminder messages via WhatsApp
             </div>
           </div>
         </div>
@@ -530,114 +527,118 @@ export default function AdminRentManagement() {
             setActiveTab('settings');
             smartScrollTo('#rent-automation-settings', { offset: 90, delay: 100, focusFirstInput: true });
           }}
-          className="btn btn-sm btn-outline-dark bg-light px-2.5 py-1 rounded-2 align-self-start align-self-sm-center"
-          style={{ minHeight: '32px', fontSize: '0.75rem' }}
+          className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1.5 px-3 py-1.5 align-self-start align-self-sm-center"
         >
-          <i className="bi bi-gear me-1"></i>Settings
+          <i className="bi bi-gear"></i>
+          <span>Settings</span>
         </button>
       </div>
 
-      {/* SaaS Summary KPI Cards (Responsive on Mobile) */}
-      <div className="row g-2 g-md-3">
-        <div className="col-6 col-md-4 col-xl-3">
-          <div className="stat-box h-100 border-start border-4 border-primary bg-white p-3 rounded-4 border shadow-sm">
+      {/* 8 Metric KPI Cards in Clean Structured 4x2 Grid (2-column on mobile, 4-column on desktop) */}
+      <div className="row g-2.5 g-md-3">
+        {/* Row 1 */}
+        <div className="col-6 col-md-3">
+          <div className="stat-box border-top-primary h-100">
             <div className="d-flex justify-content-between align-items-center mb-1">
               <span className="small text-muted fw-semibold">Active Residents</span>
-              <i className="bi bi-people text-primary fs-5"></i>
+              <i className="bi bi-people text-primary fs-6"></i>
             </div>
-            <h3 className="fw-bold mb-0 text-dark">{stats?.total_active_residents || 0}</h3>
-            <span className="small text-muted">Allocated beds in PG</span>
+            <h4 className="fw-bold mb-0 text-dark">{stats?.total_active_residents || 0}</h4>
+            <div className="text-muted small" style={{ fontSize: '0.72rem' }}>Allocated beds</div>
           </div>
         </div>
 
-        <div className="col-6 col-md-4 col-xl-3">
-          <div className="stat-box h-100 border-start border-4 border-info bg-white p-3 rounded-4 border shadow-sm">
+        <div className="col-6 col-md-3">
+          <div className="stat-box border-top-info h-100">
             <div className="d-flex justify-content-between align-items-center mb-1">
               <span className="small text-muted fw-semibold">Rent Expected</span>
-              <i className="bi bi-currency-rupee text-info fs-5"></i>
+              <i className="bi bi-currency-rupee text-info fs-6"></i>
             </div>
-            <h3 className="fw-bold mb-0 text-info">₹{(stats?.expected_rent || 0).toLocaleString()}</h3>
-            <span className="small text-muted">For {stats?.month_name || 'Selected Month'}</span>
+            <h4 className="fw-bold mb-0 text-dark">₹{(stats?.expected_rent || 0).toLocaleString()}</h4>
+            <div className="text-muted small" style={{ fontSize: '0.72rem' }}>{stats?.month_name || 'This month'}</div>
           </div>
         </div>
 
-        <div className="col-6 col-md-4 col-xl-3">
-          <div className="stat-box h-100 border-start border-4 border-success bg-white p-3 rounded-4 border shadow-sm">
+        <div className="col-6 col-md-3">
+          <div className="stat-box border-top-success h-100">
             <div className="d-flex justify-content-between align-items-center mb-1">
               <span className="small text-muted fw-semibold">Rent Collected</span>
-              <i className="bi bi-cash-stack text-success fs-5"></i>
+              <i className="bi bi-cash-stack text-success fs-6"></i>
             </div>
-            <h3 className="fw-bold mb-0 text-success">₹{(stats?.collected_rent || 0).toLocaleString()}</h3>
-            <span className="small text-muted fw-semibold text-success">
+            <h4 className="fw-bold mb-0 text-success">₹{(stats?.collected_rent || 0).toLocaleString()}</h4>
+            <div className="text-success fw-semibold small" style={{ fontSize: '0.72rem' }}>
               {stats?.expected_rent > 0
                 ? `${Math.round((stats.collected_rent / stats.expected_rent) * 100)}% collected`
-                : '100% collected'}
-            </span>
-          </div>
-        </div>
-
-        <div className="col-6 col-md-4 col-xl-3">
-          <div className="stat-box h-100 border-start border-4 border-danger bg-white p-3 rounded-4 border shadow-sm">
-            <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-muted fw-semibold">Outstanding Rent</span>
-              <i className="bi bi-wallet2 text-danger fs-5"></i>
+                : '100%'}
             </div>
-            <h3 className="fw-bold mb-0 text-danger">₹{(stats?.outstanding_rent || 0).toLocaleString()}</h3>
-            <span className="small text-muted">Pending balance due</span>
           </div>
         </div>
 
-        <div className="col-6 col-md-4 col-xl-3">
-          <div className="stat-box h-100 bg-white p-3 rounded-4 border shadow-sm">
+        <div className="col-6 col-md-3">
+          <div className="stat-box border-top-danger h-100">
+            <div className="d-flex justify-content-between align-items-center mb-1">
+              <span className="small text-muted fw-semibold">Outstanding</span>
+              <i className="bi bi-wallet2 text-danger fs-6"></i>
+            </div>
+            <h4 className="fw-bold mb-0 text-danger">₹{(stats?.outstanding_rent || 0).toLocaleString()}</h4>
+            <div className="text-muted small" style={{ fontSize: '0.72rem' }}>Pending balance</div>
+          </div>
+        </div>
+
+        {/* Row 2 */}
+        <div className="col-6 col-md-3">
+          <div className="stat-box h-100">
             <div className="d-flex justify-content-between align-items-center mb-1">
               <span className="small text-muted fw-semibold">Paid Residents</span>
               <span className="badge bg-success rounded-pill px-2">{stats?.paid_residents || 0}</span>
             </div>
-            <h3 className="fw-bold mb-0 text-success">{stats?.paid_residents || 0}</h3>
-            <span className="small text-muted">Fully settled</span>
+            <h4 className="fw-bold mb-0 text-success">{stats?.paid_residents || 0}</h4>
+            <div className="text-muted small" style={{ fontSize: '0.72rem' }}>Fully settled</div>
           </div>
         </div>
 
-        <div className="col-6 col-md-4 col-xl-3">
-          <div className="stat-box h-100 bg-white p-3 rounded-4 border shadow-sm">
+        <div className="col-6 col-md-3">
+          <div className="stat-box h-100">
             <div className="d-flex justify-content-between align-items-center mb-1">
               <span className="small text-muted fw-semibold">Pending / Partial</span>
               <span className="badge bg-warning text-dark rounded-pill px-2">
                 {(stats?.pending_residents || 0) + (stats?.partially_paid_residents || 0)}
               </span>
             </div>
-            <h3 className="fw-bold mb-0 text-warning">
+            <h4 className="fw-bold mb-0 text-warning">
               {(stats?.pending_residents || 0) + (stats?.partially_paid_residents || 0)}
-            </h3>
-            <span className="small text-muted">
-              {stats?.partially_paid_residents || 0} partial • {stats?.pending_residents || 0} awaiting
-            </span>
+            </h4>
+            <div className="text-muted small" style={{ fontSize: '0.72rem' }}>
+              {stats?.partially_paid_residents || 0} part • {stats?.pending_residents || 0} due
+            </div>
           </div>
         </div>
 
-        <div className="col-6 col-md-4 col-xl-3">
-          <div className="stat-box h-100 bg-white p-3 rounded-4 border shadow-sm">
+        <div className="col-6 col-md-3">
+          <div className="stat-box h-100">
             <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-muted fw-semibold text-danger">Overdue Payments</span>
+              <span className="small text-muted fw-semibold">Overdue</span>
               <span className="badge bg-danger rounded-pill px-2">{stats?.overdue_residents || 0}</span>
             </div>
-            <h3 className="fw-bold mb-0 text-danger">{stats?.overdue_residents || 0}</h3>
-            <span className="small text-danger fw-semibold">₹{(stats?.overdue_amount || 0).toLocaleString()} overdue</span>
+            <h4 className="fw-bold mb-0 text-danger">{stats?.overdue_residents || 0}</h4>
+            <div className="text-danger fw-semibold small" style={{ fontSize: '0.72rem' }}>
+              ₹{(stats?.overdue_amount || 0).toLocaleString()} overdue
+            </div>
           </div>
         </div>
 
-        <div className="col-12 col-md-4 col-xl-3">
-          <div className="stat-box h-100 bg-white p-3 rounded-4 border shadow-sm">
+        <div className="col-6 col-md-3">
+          <div className="stat-box h-100">
             <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-muted fw-semibold">WhatsApp Reminders</span>
-              <i className="bi bi-whatsapp text-success fs-5"></i>
+              <span className="small text-muted fw-semibold">WhatsApp Sent</span>
+              <i className="bi bi-whatsapp text-success fs-6"></i>
             </div>
-            <h3 className="fw-bold mb-0 text-dark">
-              {stats?.reminders_sent || 0} <span className="fs-6 fw-normal text-muted">Sent</span>
-            </h3>
-            <span className="small text-muted">
-              {stats?.reminders_failed || 0} Failed • <button onClick={() => setActiveTab('logs')} className="btn btn-link btn-xs p-0 text-primary">View Log &rarr;</button>
-            </span>
+            <h4 className="fw-bold mb-0 text-dark">
+              {stats?.reminders_sent || 0}
+            </h4>
+            <div className="text-muted small" style={{ fontSize: '0.72rem' }}>
+              {stats?.reminders_failed || 0} Failed • <button onClick={() => setActiveTab('logs')} className="btn btn-link btn-xs p-0 text-primary">Logs &rarr;</button>
+            </div>
           </div>
         </div>
       </div>

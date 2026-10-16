@@ -567,48 +567,48 @@ export default function AdminRooms() {
       </div>
 
       {/* Metric Stat Cards (Responsive 2-column mobile, 4-column desktop) */}
-      <div className="row g-2 g-md-3">
+      <div className="row g-2.5 g-md-3">
         <div className="col-6 col-md-3">
-          <div className="stat-box h-100 border-start border-4 border-primary p-2.5 p-md-3">
+          <div className="stat-box border-top-primary h-100">
             <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-muted fw-semibold" style={{ fontSize: '0.75rem' }}>Total Inventory</span>
-              <i className="bi bi-building text-primary fs-6 d-none d-sm-block"></i>
+              <span className="small text-muted fw-semibold">Total Inventory</span>
+              <i className="bi bi-building text-primary fs-6"></i>
             </div>
             <h4 className="fw-bold mb-0 text-dark">{totalRooms} Rooms</h4>
-            <span className="small text-muted" style={{ fontSize: '0.7rem' }}>{totalBeds} Total Beds</span>
+            <div className="small text-muted" style={{ fontSize: '0.72rem' }}>{totalBeds} Total Beds</div>
           </div>
         </div>
 
         <div className="col-6 col-md-3">
-          <div className="stat-box h-100 border-start border-4 border-danger p-2.5 p-md-3">
+          <div className="stat-box border-top-danger h-100">
             <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-muted fw-semibold" style={{ fontSize: '0.75rem' }}>Occupied Beds</span>
-              <i className="bi bi-person-fill-lock text-danger fs-6 d-none d-sm-block"></i>
+              <span className="small text-muted fw-semibold">Occupied Beds</span>
+              <i className="bi bi-person-fill-lock text-danger fs-6"></i>
             </div>
             <h4 className="fw-bold mb-0 text-danger">{occupiedBeds}</h4>
-            <span className="small text-muted" style={{ fontSize: '0.7rem' }}>{occupancyRate}% PG Occupancy</span>
+            <div className="small text-muted" style={{ fontSize: '0.72rem' }}>{occupancyRate}% PG Occupancy</div>
           </div>
         </div>
 
         <div className="col-6 col-md-3">
-          <div className="stat-box h-100 border-start border-4 border-success p-2.5 p-md-3">
+          <div className="stat-box border-top-success h-100">
             <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-muted fw-semibold" style={{ fontSize: '0.75rem' }}>Available Beds</span>
-              <i className="bi bi-door-open-fill text-success fs-6 d-none d-sm-block"></i>
+              <span className="small text-muted fw-semibold">Available Beds</span>
+              <i className="bi bi-door-open-fill text-success fs-6"></i>
             </div>
             <h4 className="fw-bold mb-0 text-success">{availableBeds}</h4>
-            <span className="small text-muted" style={{ fontSize: '0.7rem' }}>Vacant for intake</span>
+            <div className="small text-muted" style={{ fontSize: '0.72rem' }}>Vacant for intake</div>
           </div>
         </div>
 
         <div className="col-6 col-md-3">
-          <div className="stat-box h-100 border-start border-4 border-warning p-2.5 p-md-3">
+          <div className="stat-box border-top-warning h-100">
             <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-muted fw-semibold" style={{ fontSize: '0.75rem' }}>Occupancy Rate</span>
-              <i className="bi bi-pie-chart-fill text-warning fs-6 d-none d-sm-block"></i>
+              <span className="small text-muted fw-semibold">Occupancy Rate</span>
+              <i className="bi bi-pie-chart-fill text-warning fs-6"></i>
             </div>
             <h4 className="fw-bold mb-0 text-dark">{occupancyRate}%</h4>
-            <div className="progress mt-1" style={{ height: '5px' }}>
+            <div className="progress mt-1.5" style={{ height: '4px' }}>
               <div
                 className="progress-bar bg-warning"
                 role="progressbar"
