@@ -119,53 +119,67 @@ export default function Home() {
                 transition={{ duration: 0.6 }}
               >
                 {/* Authentic Property Badge */}
-                <div className="d-flex flex-wrap align-items-center gap-1.5 mb-2">
-                  <span className="badge-authentic" style={{ fontSize: '0.68rem', padding: '3px 8px' }}>
-                    <i className="bi bi-shield-check"></i> Velachery, Chennai
+                <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
+                  <span className="badge-authentic">
+                    <i className="bi bi-shield-check"></i> Verified Property • Velachery, Chennai
                   </span>
-                  <span className="badge bg-warning text-dark px-2 py-0.5 fw-bold rounded-pill" style={{ fontSize: '0.68rem' }}>
-                    ⭐ 3.6/5 Reviews
+                  <span className="badge bg-warning text-dark px-3 py-1 fw-bold rounded-pill">
+                    ⭐ 3.6 / 5 Google Reviews
                   </span>
-                  <span className="badge bg-success text-white px-2 py-0.5 fw-semibold rounded-pill" style={{ fontSize: '0.68rem' }}>
-                    <i className="bi bi-clock-history me-1"></i> Open 24h
+                  <span className="badge bg-success text-white px-3 py-1 fw-semibold rounded-pill">
+                    <i className="bi bi-clock-history me-1"></i> Open 24 Hours
                   </span>
                 </div>
 
-                <h1 className="display-5 fw-extrabold text-white mb-2" style={{ letterSpacing: '-0.02em' }}>
-                  Sri Lakshmi Srinivasa <span style={{ color: '#FDBA74' }}>Gents PG</span>
+                <h1 className="display-4 fw-extrabold text-white mb-2" style={{ letterSpacing: '-0.03em' }}>
+                  SRI LAKSHMI SRINIVASA <br />
+                  <span style={{ color: '#FDBA74' }}>GENTS PG</span>
                 </h1>
 
-                <p className="fs-6 text-light opacity-90 mb-3 pe-lg-4 lh-base" style={{ maxWidth: '580px' }}>
-                  Comfortable, secure men's PG accommodation in Velachery, Chennai. Optic fiber Wi-Fi, automatic laundry, RO water, and 24/7 security near IT corridor.
+                <h3 className="h4 fw-semibold text-light opacity-90 mb-3">
+                  "Comfortable & Convenient Men's PG in Velachery, Chennai"
+                </h3>
+
+                <p className="fs-6 text-light opacity-80 mb-4 pe-lg-5" style={{ maxWidth: '640px' }}>
+                  Comfortable accommodation for working professionals and students in the Velachery–Taramani area. High-speed optic fiber Wi-Fi, automatic laundry, purified RO water, 24/7 security, and hygienic living.
                 </p>
 
                 {/* Hero CTA Buttons */}
-                <div className="d-flex flex-wrap gap-2 pt-1">
-                  <button onClick={() => handleBookRoom()} className="btn btn-pg-primary shadow">
-                    <i className="bi bi-key-fill"></i>
-                    Book Room
-                  </button>
-
-                  <Link to="/rooms" className="btn btn-pg-secondary">
+                <div className="d-flex flex-wrap gap-3 pt-2">
+                  <Link to="/rooms" className="btn btn-pg-secondary shadow">
                     <i className="bi bi-door-open"></i>
-                    View Rooms & Pricing
+                    View Rooms
                   </Link>
 
-                  <button onClick={handleScheduleVisit} className="btn btn-pg-outline-light">
+                  <button onClick={handleScheduleVisit} className="btn btn-pg-primary shadow-lg">
                     <i className="bi bi-calendar2-check"></i>
-                    Visit
+                    Schedule a Visit
                   </button>
+
+                  <button onClick={() => handleBookRoom()} className="btn btn-pg-outline-light">
+                    <i className="bi bi-key-fill"></i>
+                    Book a Room
+                  </button>
+
+                  <a href="tel:+917893744206" className="btn btn-outline-light rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-2">
+                    <i className="bi bi-telephone-fill text-success"></i>
+                    Call Now
+                  </a>
                 </div>
 
                 {/* Trust Indicators */}
-                <div className="d-flex flex-wrap gap-3 mt-3 pt-2 border-top border-light border-opacity-25 small text-light opacity-85">
-                  <div className="d-flex align-items-center gap-1.5">
-                    <i className="bi bi-geo-alt-fill text-danger"></i>
-                    <span>3, Bhavani St, Velachery</span>
+                <div className="d-flex flex-wrap gap-4 mt-5 pt-3 border-top border-light border-opacity-25 small text-light opacity-85">
+                  <div className="d-flex align-items-center gap-2">
+                    <i className="bi bi-geo-alt-fill text-danger fs-5"></i>
+                    <span>3, Bhavani St, Bharathi Nagar</span>
                   </div>
-                  <div className="d-flex align-items-center gap-1.5">
-                    <i className="bi bi-train-front text-info"></i>
-                    <span>Near MRTS & Taramani</span>
+                  <div className="d-flex align-items-center gap-2">
+                    <i className="bi bi-train-front text-info fs-5"></i>
+                    <span>Near Velachery MRTS & Taramani</span>
+                  </div>
+                  <div className="d-flex align-items-center gap-2">
+                    <i className="bi bi-wifi text-warning fs-5"></i>
+                    <span>High-Speed Wi-Fi</span>
                   </div>
                 </div>
               </motion.div>
