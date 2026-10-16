@@ -46,42 +46,50 @@ export default function UserLayout() {
   }
 
   return (
-    <div className="bg-light min-vh-100 py-3 py-md-4 has-bottom-bar-padding">
-      <div className="container px-3 px-md-4">
-        {/* User Greeting Bar */}
-        <div className="bg-white p-3 p-md-4 rounded-4 border shadow-sm mb-3 mb-md-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
-          <div className="d-flex align-items-center gap-3">
+    <div className="bg-light min-vh-100 py-2.5 py-md-4">
+      <div className="container px-2.5 px-md-4">
+        {/* User Greeting Bar - Clean, Compact & Purposeful */}
+        <div className="bg-white p-3 p-md-3.5 rounded-3 border shadow-xs mb-2.5 mb-md-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <div className="d-flex align-items-center gap-2.5">
             <div
-              className="d-flex align-items-center justify-content-center rounded-circle text-white fw-bold shadow-sm flex-shrink-0"
+              className="d-flex align-items-center justify-content-center rounded-circle text-white fw-bold shadow-xs flex-shrink-0"
               style={{
-                width: '48px',
-                height: '48px',
+                width: '40px',
+                height: '40px',
                 background: 'linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%)',
-                fontSize: '1.2rem',
+                fontSize: '1.05rem',
               }}
             >
               {user.full_name?.charAt(0).toUpperCase()}
             </div>
             <div>
-              <h5 className="fw-bold text-dark mb-0" style={{ fontSize: '1.1rem' }}>{user.full_name}</h5>
-              <div className="text-muted small">
-                {user.occupation || 'Resident / Guest'} • {user.phone}
+              <div className="d-flex align-items-center gap-2">
+                <h6 className="fw-bold text-dark mb-0">{user.full_name}</h6>
+                <span className="badge bg-primary-subtle text-primary border border-primary-subtle small py-0.5 px-1.5" style={{ fontSize: '0.65rem' }}>
+                  Resident
+                </span>
+              </div>
+              <div className="text-muted small" style={{ fontSize: '0.75rem' }}>
+                {user.phone ? `+91 ${user.phone}` : user.email}
               </div>
             </div>
           </div>
 
-          <div className="d-flex gap-2 w-100 w-sm-auto justify-content-end">
-            <NavLink to="/visit-request" className="btn btn-sm btn-outline-dark fw-semibold flex-fill flex-sm-grow-0 d-flex align-items-center justify-content-center" style={{ minHeight: '40px' }}>
-              <i className="bi bi-calendar2-plus me-1"></i> Visit
-            </NavLink>
-            <NavLink to="/book-room" className="btn btn-sm btn-pg-primary fw-semibold flex-fill flex-sm-grow-0 d-flex align-items-center justify-content-center" style={{ minHeight: '40px' }}>
-              <i className="bi bi-key-fill me-1"></i> Book Room
+          <div className="d-flex gap-1.5 ms-auto">
+            <NavLink
+              to="/profile"
+              className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 px-2.5 py-1.5"
+              style={{ minHeight: '34px', fontSize: '0.8rem' }}
+              title="Account Settings"
+            >
+              <i className="bi bi-person-gear"></i>
+              <span className="d-none d-sm-inline">Profile</span>
             </NavLink>
           </div>
         </div>
 
         {/* Mobile Horizontal Navigation Tabs (< lg screens) */}
-        <div className="d-lg-none mb-3">
+        <div className="d-lg-none mb-2.5">
           <div className="user-mobile-nav-pills">
             <NavLink
               to="/dashboard"
@@ -92,10 +100,10 @@ export default function UserLayout() {
             </NavLink>
 
             <NavLink
-              to="/my-visits"
+              to="/report"
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
             >
-              <i className="bi bi-calendar-check me-1"></i> Visits
+              <i className="bi bi-exclamation-octagon me-1"></i> Issues
             </NavLink>
 
             <NavLink
@@ -103,6 +111,13 @@ export default function UserLayout() {
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
             >
               <i className="bi bi-door-open me-1"></i> Bookings
+            </NavLink>
+
+            <NavLink
+              to="/my-visits"
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            >
+              <i className="bi bi-calendar-check me-1"></i> Visits
             </NavLink>
 
             <NavLink
@@ -115,13 +130,6 @@ export default function UserLayout() {
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
-            </NavLink>
-
-            <NavLink
-              to="/report"
-              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-            >
-              <i className="bi bi-exclamation-octagon me-1"></i> Report Issue
             </NavLink>
 
             <NavLink

@@ -1,10 +1,32 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function MobileBottomBar() {
   const { requireAuth } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Hide the public sticky bottom bar on resident portal, report forms, booking flows, and admin pages
+  const hiddenPaths = [
+    '/dashboard',
+    '/report',
+    '/my-visits',
+    '/my-bookings',
+    '/visit-request',
+    '/book-room',
+    '/profile',
+    '/notifications',
+    '/login',
+    '/register',
+    '/forgot-password'
+  ];
+
+  const shouldHide = hiddenPaths.some((p) => location.pathname === p || location.pathname.startsWith('/admin'));
+
+  if (shouldHide) {
+    return null;
+  }
 
   const handleVisit = () => {
     if (requireAuth('Schedule a Visit', '/visit-request')) {
