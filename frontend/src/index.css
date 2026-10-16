@@ -712,6 +712,110 @@ html, body {
   z-index: 1045;
 }
 
+/* Center-Active Carousel Mobile Navigation */
+.center-active-nav-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #FFFFFF;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.center-active-nav-track {
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  white-space: nowrap;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  gap: 8px;
+  padding: 4px 12px;
+  flex: 1;
+}
+
+.center-active-nav-track::-webkit-scrollbar {
+  display: none;
+}
+
+.center-nav-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  user-select: none;
+  flex-shrink: 0;
+  min-height: 40px;
+}
+
+.center-nav-item i {
+  font-size: 1rem;
+  opacity: 0.85;
+}
+
+.center-nav-item:hover {
+  color: var(--text-main);
+  background: var(--bg-hover);
+}
+
+.center-nav-item.active {
+  background: var(--accent);
+  color: #FFFFFF !important;
+  font-weight: 600;
+  border-color: var(--accent);
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25);
+  transform: scale(1.04);
+}
+
+.center-nav-item.active i {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* All Features Grid Modal / Drawer */
+.all-features-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.feature-grid-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  background: #FFFFFF;
+  text-decoration: none;
+  color: var(--text-main);
+  transition: all 0.2s ease;
+}
+
+.feature-grid-card:hover, .feature-grid-card:active {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.feature-grid-card.active {
+  background: rgba(234, 88, 12, 0.08);
+  border-color: var(--accent);
+}
+
 /* User & Admin Sticky Mobile Bars */
 .user-mobile-nav-pills {
   display: flex;

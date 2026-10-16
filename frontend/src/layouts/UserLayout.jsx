@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { NavLink, Outlet, Navigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { NavLink, Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { processIncomingNotificationsForDesktop, registerServiceWorker } from '../services/desktopNotificationService';
@@ -7,6 +7,36 @@ import { processIncomingNotificationsForDesktop, registerServiceWorker } from '.
 export default function UserLayout() {
   const { user, isAuthenticated, loading } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [showAllFeatures, setShowAllFeatures] = useState(false);
+  const location = useLocation();
+  const navTrackRef = useRef(null);
+
+  const NAV_ITEMS = [
+    { path: '/dashboard', label: 'Dashboard', icon: 'bi-grid', exact: true, desc: 'Overview & quick actions' },
+    { path: '/my-visits', label: 'Visits', icon: 'bi-calendar-check', exact: false, desc: 'Scheduled PG viewings' },
+    { path: '/my-bookings', label: 'Bookings', icon: 'bi-door-open', exact: false, desc: 'Room requests & allocations' },
+    { path: '/report', label: 'Issue Reports', icon: 'bi-exclamation-octagon', exact: false, desc: 'Maintenance & room complaints' },
+    { path: '/notifications', label: 'Alerts', icon: 'bi-bell', exact: false, desc: 'PG announcements & updates', badge: unreadCount },
+    { path: '/profile', label: 'Profile', icon: 'bi-person-gear', exact: false, desc: 'Resident info & password' },
+  ];
+
+  // Auto-scroll active item to center of track whenever route changes
+  useEffect(() => {
+    if (!navTrackRef.current) return;
+    const track = navTrackRef.current;
+    const activeEl = track.querySelector('.center-nav-item.active');
+    if (activeEl) {
+      const trackWidth = track.offsetWidth;
+      const elOffsetLeft = activeEl.offsetLeft;
+      const elWidth = activeEl.offsetWidth;
+      const targetScrollLeft = elOffsetLeft - (trackWidth / 2) + (elWidth / 2);
+
+      track.scrollTo({
+        left: targetScrollLeft,
+        behavior: 'smooth',
+      });
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -88,58 +118,148 @@ export default function UserLayout() {
           </div>
         </div>
 
-        {/* Mobile Horizontal Navigation Tabs (< lg screens) */}
-        <div className="d-lg-none mb-2.5">
-          <div className="user-mobile-nav-pills">
-            <NavLink
-              to="/dashboard"
-              end
-              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+        {/* Mobile Center-Active Navigation Bar (< lg screens) */}
+        <div className="d-lg-none mb-3">
+          <div className="center-active-nav-container">
+            <button
+              type="button"
+              className="btn btn-sm btn-light border d-flex align-items-center justify-content-center p-2 rounded-circle flex-shrink-0"
+              style={{ width: '38px', height: '38px' }}
+              onClick={() => setShowAllFeatures(true)}
+              title="All Features Menu"
+              aria-label="View all features"
             >
-              <i className="bi bi-grid me-1"></i> Dashboard
-            </NavLink>
+              <i className="bi bi-grid-3x3-gap-fill text-primary" style={{ fontSize: '1rem' }}></i>
+            </button>
 
-            <NavLink
-              to="/report"
-              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            <div
+              className="center-active-nav-track"
+              ref={navTrackRef}
             >
-              <i className="bi bi-exclamation-octagon me-1"></i> Issues
-            </NavLink>
+              {NAV_ITEMS.map((item) => {
+                const isActive = item.exact
+                  ? location.pathname === item.path
+                  : location.pathname.startsWith(item.path);
 
-            <NavLink
-              to="/my-bookings"
-              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-            >
-              <i className="bi bi-door-open me-1"></i> Bookings
-            </NavLink>
+                return (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    end={item.exact}
+                    data-nav-path={item.path}
+                    className={`center-nav-item ${isActive ? 'active' : ''}`}
+                  >
+                    <i className={`bi ${item.icon}`}></i>
+                    <span>{item.label}</span>
+                    {item.badge > 0 && (
+                      <span className={`badge rounded-pill ms-1 ${isActive ? 'bg-white text-dark' : 'bg-danger text-white'}`} style={{ fontSize: '0.62rem' }}>
+                        {item.badge > 9 ? '9+' : item.badge}
+                      </span>
+                    )}
+                  </NavLink>
+                );
+              })}
+            </div>
 
-            <NavLink
-              to="/my-visits"
-              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            <button
+              type="button"
+              className="btn btn-sm btn-light border-0 text-muted px-2 py-1 rounded-pill flex-shrink-0 d-flex align-items-center gap-1"
+              style={{ fontSize: '0.75rem', fontWeight: 600 }}
+              onClick={() => setShowAllFeatures(true)}
             >
-              <i className="bi bi-calendar-check me-1"></i> Visits
-            </NavLink>
-
-            <NavLink
-              to="/notifications"
-              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-            >
-              <i className="bi bi-bell me-1"></i> Alerts
-              {unreadCount > 0 && (
-                <span className="badge bg-danger rounded-pill ms-1" style={{ fontSize: '0.65rem' }}>
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
-            </NavLink>
-
-            <NavLink
-              to="/profile"
-              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-            >
-              <i className="bi bi-person-gear me-1"></i> Profile
-            </NavLink>
+              <span>All</span>
+              <i className="bi bi-chevron-right" style={{ fontSize: '0.7rem' }}></i>
+            </button>
           </div>
         </div>
+
+        {/* All Features Grid Modal (< lg screens) */}
+        {showAllFeatures && (
+          <div
+            className="modal show d-block"
+            tabIndex="-1"
+            style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', zIndex: 1065 }}
+            onClick={() => setShowAllFeatures(false)}
+          >
+            <div
+              className="modal-dialog modal-dialog-centered px-3"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="modal-content rounded-4 border-0 shadow-xl overflow-hidden">
+                <div className="modal-header border-bottom p-3 bg-light">
+                  <div className="d-flex align-items-center gap-2">
+                    <div className="p-1.5 bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style={{ width: '28px', height: '28px' }}>
+                      <i className="bi bi-grid-3x3-gap-fill" style={{ fontSize: '0.85rem' }}></i>
+                    </div>
+                    <div>
+                      <h6 className="modal-title fw-bold mb-0">All Resident Features</h6>
+                      <span className="text-muted" style={{ fontSize: '0.72rem' }}>Jump directly to any dashboard section</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={() => setShowAllFeatures(false)}
+                    aria-label="Close"
+                  ></button>
+                </div>
+
+                <div className="modal-body p-3">
+                  <div className="all-features-grid">
+                    {NAV_ITEMS.map((item) => {
+                      const isActive = item.exact
+                        ? location.pathname === item.path
+                        : location.pathname.startsWith(item.path);
+
+                      return (
+                        <NavLink
+                          key={item.path}
+                          to={item.path}
+                          end={item.exact}
+                          onClick={() => setShowAllFeatures(false)}
+                          className={`feature-grid-card ${isActive ? 'active' : ''}`}
+                        >
+                          <div className="d-flex align-items-center justify-content-between w-100 mb-2">
+                            <div
+                              className="rounded-circle d-flex align-items-center justify-content-center"
+                              style={{
+                                width: '36px',
+                                height: '36px',
+                                background: isActive ? 'var(--accent)' : 'rgba(15, 23, 42, 0.06)',
+                                color: isActive ? '#FFFFFF' : 'var(--text-main)',
+                              }}
+                            >
+                              <i className={`bi ${item.icon} fs-6`}></i>
+                            </div>
+                            {item.badge > 0 && (
+                              <span className="badge bg-danger rounded-pill" style={{ fontSize: '0.65rem' }}>
+                                {item.badge}
+                              </span>
+                            )}
+                          </div>
+                          <div className="fw-bold small text-dark mb-0.5">{item.label}</div>
+                          <div className="text-muted" style={{ fontSize: '0.7rem', lineHeight: '1.2' }}>
+                            {item.desc}
+                          </div>
+                        </NavLink>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="modal-footer bg-light p-2.5">
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-secondary w-100 py-2 fw-semibold"
+                    onClick={() => setShowAllFeatures(false)}
+                  >
+                    Close Menu
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="row g-3 g-md-4">
           {/* Desktop Sidebar Navigation */}
