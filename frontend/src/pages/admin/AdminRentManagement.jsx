@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api, { cachedGet, invalidateClientCache } from '../../services/api';
 import { smartScrollTo } from '../../utils/scrollHelper';
 
 export default function AdminRentManagement() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('records'); // 'records', 'logs', 'settings'
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
@@ -16,10 +18,11 @@ export default function AdminRentManagement() {
   const currentMonthKey = new Date().toISOString().slice(0, 7); // "YYYY-MM"
   const [selectedMonth, setSelectedMonth] = useState(currentMonthKey);
 
-  // Filters
+  // Filters & Active Card Filter Title
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [roomFilter, setRoomFilter] = useState('');
+  const [activeFilterTitle, setActiveFilterTitle] = useState('');
 
   // Modals state
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -536,69 +539,150 @@ export default function AdminRentManagement() {
 
       {/* 8 Metric KPI Cards in Clean Structured 4x2 Grid (2-column on mobile, 4-column on desktop) */}
       <div className="row g-2.5 g-md-3">
-        {/* Row 1 */}
+        {/* Card 1: Active Residents -> Navigates to /admin/residents */}
         <div className="col-6 col-md-3">
-          <div className="stat-box border-top-primary h-100">
+          <div
+            onClick={() => navigate('/admin/residents')}
+            className="stat-box stat-box-interactive border-top-primary h-100"
+            title="Click to view all active residents and room allocations"
+            role="button"
+            tabIndex={0}
+          >
             <div className="d-flex justify-content-between align-items-center mb-1">
               <span className="small text-muted fw-semibold">Active Residents</span>
               <i className="bi bi-people text-primary fs-6"></i>
             </div>
             <h4 className="fw-bold mb-0 text-dark">{stats?.total_active_residents || 0}</h4>
-            <div className="text-muted small" style={{ fontSize: '0.72rem' }}>Allocated beds</div>
+            <div className="d-flex justify-content-between align-items-center text-muted small mt-1" style={{ fontSize: '0.72rem' }}>
+              <span>Allocated beds</span>
+              <span className="text-primary fw-semibold">View &rarr;</span>
+            </div>
           </div>
         </div>
 
+        {/* Card 2: Rent Expected -> Filters ALL residents for selected month */}
         <div className="col-6 col-md-3">
-          <div className="stat-box border-top-info h-100">
+          <div
+            onClick={() => {
+              setActiveTab('records');
+              setStatusFilter('ALL');
+              setActiveFilterTitle(`Rent Expected — All Residents (${stats?.month_name || selectedMonth})`);
+              smartScrollTo('#rent-tabs-section', { offset: 90 });
+            }}
+            className={`stat-box stat-box-interactive border-top-info h-100 ${statusFilter === 'ALL' && activeFilterTitle ? 'active-filter-card' : ''}`}
+            title="Click to show all expected rent obligations for this month"
+            role="button"
+            tabIndex={0}
+          >
             <div className="d-flex justify-content-between align-items-center mb-1">
               <span className="small text-muted fw-semibold">Rent Expected</span>
               <i className="bi bi-currency-rupee text-info fs-6"></i>
             </div>
             <h4 className="fw-bold mb-0 text-dark">₹{(stats?.expected_rent || 0).toLocaleString()}</h4>
-            <div className="text-muted small" style={{ fontSize: '0.72rem' }}>{stats?.month_name || 'This month'}</div>
+            <div className="d-flex justify-content-between align-items-center text-muted small mt-1" style={{ fontSize: '0.72rem' }}>
+              <span>{stats?.month_name || 'This month'}</span>
+              <span className="text-info fw-semibold">Filter &rarr;</span>
+            </div>
           </div>
         </div>
 
+        {/* Card 3: Rent Collected -> Filters residents with amount_paid > 0 */}
         <div className="col-6 col-md-3">
-          <div className="stat-box border-top-success h-100">
+          <div
+            onClick={() => {
+              setActiveTab('records');
+              setStatusFilter('COLLECTED');
+              setActiveFilterTitle(`Rent Collected — Paid & Partial Payments (${stats?.month_name || selectedMonth})`);
+              smartScrollTo('#rent-tabs-section', { offset: 90 });
+            }}
+            className={`stat-box stat-box-interactive border-top-success h-100 ${statusFilter === 'COLLECTED' ? 'active-filter-card' : ''}`}
+            title="Click to show residents who made payments this month"
+            role="button"
+            tabIndex={0}
+          >
             <div className="d-flex justify-content-between align-items-center mb-1">
               <span className="small text-muted fw-semibold">Rent Collected</span>
               <i className="bi bi-cash-stack text-success fs-6"></i>
             </div>
             <h4 className="fw-bold mb-0 text-success">₹{(stats?.collected_rent || 0).toLocaleString()}</h4>
-            <div className="text-success fw-semibold small" style={{ fontSize: '0.72rem' }}>
-              {stats?.expected_rent > 0
-                ? `${Math.round((stats.collected_rent / stats.expected_rent) * 100)}% collected`
-                : '100%'}
+            <div className="d-flex justify-content-between align-items-center text-success fw-semibold small mt-1" style={{ fontSize: '0.72rem' }}>
+              <span>
+                {stats?.expected_rent > 0
+                  ? `${Math.round((stats.collected_rent / stats.expected_rent) * 100)}% collected`
+                  : '100%'}
+              </span>
+              <span>Filter &rarr;</span>
             </div>
           </div>
         </div>
 
+        {/* Card 4: Outstanding Rent -> Filters residents with balance_due > 0 */}
         <div className="col-6 col-md-3">
-          <div className="stat-box border-top-danger h-100">
+          <div
+            onClick={() => {
+              setActiveTab('records');
+              setStatusFilter('OUTSTANDING');
+              setActiveFilterTitle(`Outstanding Rent — Unsettled Balances (${stats?.month_name || selectedMonth})`);
+              smartScrollTo('#rent-tabs-section', { offset: 90 });
+            }}
+            className={`stat-box stat-box-interactive border-top-danger h-100 ${statusFilter === 'OUTSTANDING' ? 'active-filter-card' : ''}`}
+            title="Click to show residents with unpaid or remaining balances"
+            role="button"
+            tabIndex={0}
+          >
             <div className="d-flex justify-content-between align-items-center mb-1">
               <span className="small text-muted fw-semibold">Outstanding</span>
               <i className="bi bi-wallet2 text-danger fs-6"></i>
             </div>
             <h4 className="fw-bold mb-0 text-danger">₹{(stats?.outstanding_rent || 0).toLocaleString()}</h4>
-            <div className="text-muted small" style={{ fontSize: '0.72rem' }}>Pending balance</div>
+            <div className="d-flex justify-content-between align-items-center text-muted small mt-1" style={{ fontSize: '0.72rem' }}>
+              <span>Pending balance</span>
+              <span className="text-danger fw-semibold">Filter &rarr;</span>
+            </div>
           </div>
         </div>
 
         {/* Row 2 */}
+        {/* Card 5: Paid Residents -> Filters status=PAID */}
         <div className="col-6 col-md-3">
-          <div className="stat-box h-100">
+          <div
+            onClick={() => {
+              setActiveTab('records');
+              setStatusFilter('PAID');
+              setActiveFilterTitle(`Paid Residents — Fully Settled (${stats?.month_name || selectedMonth})`);
+              smartScrollTo('#rent-tabs-section', { offset: 90 });
+            }}
+            className={`stat-box stat-box-interactive border-top-success h-100 ${statusFilter === 'PAID' ? 'active-filter-card' : ''}`}
+            title="Click to show only fully settled residents"
+            role="button"
+            tabIndex={0}
+          >
             <div className="d-flex justify-content-between align-items-center mb-1">
               <span className="small text-muted fw-semibold">Paid Residents</span>
               <span className="badge bg-success rounded-pill px-2">{stats?.paid_residents || 0}</span>
             </div>
             <h4 className="fw-bold mb-0 text-success">{stats?.paid_residents || 0}</h4>
-            <div className="text-muted small" style={{ fontSize: '0.72rem' }}>Fully settled</div>
+            <div className="d-flex justify-content-between align-items-center text-muted small mt-1" style={{ fontSize: '0.72rem' }}>
+              <span>Fully settled</span>
+              <span className="text-success fw-semibold">Filter &rarr;</span>
+            </div>
           </div>
         </div>
 
+        {/* Card 6: Pending / Partial -> Filters status in (PENDING, PARTIALLY_PAID) */}
         <div className="col-6 col-md-3">
-          <div className="stat-box h-100">
+          <div
+            onClick={() => {
+              setActiveTab('records');
+              setStatusFilter('PENDING_OR_PARTIAL');
+              setActiveFilterTitle(`Pending & Partial Rent (${stats?.month_name || selectedMonth})`);
+              smartScrollTo('#rent-tabs-section', { offset: 90 });
+            }}
+            className={`stat-box stat-box-interactive border-top-warning h-100 ${statusFilter === 'PENDING_OR_PARTIAL' ? 'active-filter-card' : ''}`}
+            title="Click to show pending and partially paid residents"
+            role="button"
+            tabIndex={0}
+          >
             <div className="d-flex justify-content-between align-items-center mb-1">
               <span className="small text-muted fw-semibold">Pending / Partial</span>
               <span className="badge bg-warning text-dark rounded-pill px-2">
@@ -608,27 +692,52 @@ export default function AdminRentManagement() {
             <h4 className="fw-bold mb-0 text-warning">
               {(stats?.pending_residents || 0) + (stats?.partially_paid_residents || 0)}
             </h4>
-            <div className="text-muted small" style={{ fontSize: '0.72rem' }}>
-              {stats?.partially_paid_residents || 0} part • {stats?.pending_residents || 0} due
+            <div className="d-flex justify-content-between align-items-center text-muted small mt-1" style={{ fontSize: '0.72rem' }}>
+              <span>{stats?.partially_paid_residents || 0} part • {stats?.pending_residents || 0} due</span>
+              <span className="text-warning-emphasis fw-semibold">Filter &rarr;</span>
             </div>
           </div>
         </div>
 
+        {/* Card 7: Overdue Payments -> Filters status=OVERDUE */}
         <div className="col-6 col-md-3">
-          <div className="stat-box h-100">
+          <div
+            onClick={() => {
+              setActiveTab('records');
+              setStatusFilter('OVERDUE');
+              setActiveFilterTitle(`Overdue Rent — Immediate Follow-up (${stats?.month_name || selectedMonth})`);
+              smartScrollTo('#rent-tabs-section', { offset: 90 });
+            }}
+            className={`stat-box stat-box-interactive border-top-danger h-100 ${statusFilter === 'OVERDUE' ? 'active-filter-card' : ''}`}
+            title="Click to show residents with overdue rent past due date"
+            role="button"
+            tabIndex={0}
+          >
             <div className="d-flex justify-content-between align-items-center mb-1">
               <span className="small text-muted fw-semibold">Overdue</span>
               <span className="badge bg-danger rounded-pill px-2">{stats?.overdue_residents || 0}</span>
             </div>
             <h4 className="fw-bold mb-0 text-danger">{stats?.overdue_residents || 0}</h4>
-            <div className="text-danger fw-semibold small" style={{ fontSize: '0.72rem' }}>
-              ₹{(stats?.overdue_amount || 0).toLocaleString()} overdue
+            <div className="d-flex justify-content-between align-items-center text-danger fw-semibold small mt-1" style={{ fontSize: '0.72rem' }}>
+              <span>₹{(stats?.overdue_amount || 0).toLocaleString()} overdue</span>
+              <span>Filter &rarr;</span>
             </div>
           </div>
         </div>
 
+        {/* Card 8: WhatsApp Sent / Failed -> Switches to Reminder Logs tab */}
         <div className="col-6 col-md-3">
-          <div className="stat-box h-100">
+          <div
+            onClick={() => {
+              setActiveTab('logs');
+              smartScrollTo('#rent-tabs-section', { offset: 90 });
+            }}
+            className={`stat-box stat-box-interactive h-100 ${activeTab === 'logs' ? 'active-filter-card' : ''}`}
+            style={{ borderTop: '3px solid #25D366 !important' }}
+            title="Click to open WhatsApp delivery history & retry logs"
+            role="button"
+            tabIndex={0}
+          >
             <div className="d-flex justify-content-between align-items-center mb-1">
               <span className="small text-muted fw-semibold">WhatsApp Sent</span>
               <i className="bi bi-whatsapp text-success fs-6"></i>
@@ -636,8 +745,9 @@ export default function AdminRentManagement() {
             <h4 className="fw-bold mb-0 text-dark">
               {stats?.reminders_sent || 0}
             </h4>
-            <div className="text-muted small" style={{ fontSize: '0.72rem' }}>
-              {stats?.reminders_failed || 0} Failed • <button onClick={() => setActiveTab('logs')} className="btn btn-link btn-xs p-0 text-primary">Logs &rarr;</button>
+            <div className="d-flex justify-content-between align-items-center text-muted small mt-1" style={{ fontSize: '0.72rem' }}>
+              <span>{stats?.reminders_failed || 0} Failed</span>
+              <span className="text-success fw-semibold">Logs &rarr;</span>
             </div>
           </div>
         </div>
@@ -695,6 +805,30 @@ export default function AdminRentManagement() {
         {/* TAB 1: Main Resident Rent Table */}
         {activeTab === 'records' && (
           <div className="p-2.5 p-md-3 d-flex flex-column gap-2.5">
+            {/* Active Card Filter Banner (Shown when admin clicked a dashboard card) */}
+            {activeFilterTitle && (
+              <div className="d-flex align-items-center justify-content-between p-2.5 rounded-3 bg-primary-subtle border border-primary-subtle shadow-xs">
+                <div className="d-flex align-items-center gap-2">
+                  <span className="badge bg-primary px-2.5 py-1 fw-bold">Active Filter</span>
+                  <span className="small fw-bold text-primary-emphasis">{activeFilterTitle}</span>
+                  <span className="badge bg-white text-dark border px-2 py-0.5 small">{totalRecords} records</span>
+                </div>
+                <button
+                  onClick={() => {
+                    setStatusFilter('ALL');
+                    setActiveFilterTitle('');
+                    setRoomFilter('');
+                    setSearch('');
+                  }}
+                  className="btn btn-xs btn-outline-primary d-flex align-items-center gap-1 px-2.5 py-1 fw-semibold bg-white"
+                  title="Clear filter and show all records"
+                >
+                  <i className="bi bi-x-circle"></i>
+                  <span>Clear Filter</span>
+                </button>
+              </div>
+            )}
+
             {/* Filter Bar */}
             <div className="row g-1.5 align-items-center">
               <div className="col-12 col-md-4">
@@ -722,14 +856,26 @@ export default function AdminRentManagement() {
                 <select
                   className="form-select form-select-sm"
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
+                  onChange={(e) => {
+                    setStatusFilter(e.target.value);
+                    if (e.target.value === 'ALL') setActiveFilterTitle('');
+                    else if (e.target.value === 'OVERDUE') setActiveFilterTitle('Overdue Rent');
+                    else if (e.target.value === 'PAID') setActiveFilterTitle('Paid Residents');
+                    else if (e.target.value === 'OUTSTANDING') setActiveFilterTitle('Outstanding Rent');
+                    else if (e.target.value === 'COLLECTED') setActiveFilterTitle('Rent Collected');
+                    else if (e.target.value === 'PENDING_OR_PARTIAL') setActiveFilterTitle('Pending / Partial Rent');
+                    else setActiveFilterTitle(`Status: ${e.target.value}`);
+                  }}
                   style={{ minHeight: '36px' }}
                 >
                   <option value="ALL">Status: All</option>
-                  <option value="PENDING">Pending</option>
+                  <option value="OVERDUE">Overdue Only</option>
+                  <option value="OUTSTANDING">Outstanding Balance (&gt; ₹0)</option>
+                  <option value="COLLECTED">Collected Payments</option>
+                  <option value="PENDING_OR_PARTIAL">Pending / Partial</option>
+                  <option value="PAID">Fully Paid</option>
+                  <option value="PENDING">Pending (Not Due)</option>
                   <option value="PARTIALLY_PAID">Partially Paid</option>
-                  <option value="PAID">Paid</option>
-                  <option value="OVERDUE">Overdue</option>
                 </select>
               </div>
 
@@ -782,134 +928,254 @@ export default function AdminRentManagement() {
                 </button>
               </div>
             ) : (
-              <div className="table-responsive">
-                <table className="table table-hover align-middle small mb-0">
-                  <thead className="table-light">
-                    <tr>
-                      <th>Resident ID & Name</th>
-                      <th>Room & Bed</th>
-                      <th>Rent Month</th>
-                      <th className="text-end">Rent</th>
-                      <th>Due Date</th>
-                      <th className="text-end">Paid</th>
-                      <th className="text-end">Balance Due</th>
-                      <th>Payment Status</th>
-                      <th>WhatsApp Status</th>
-                      <th className="text-center" style={{ minWidth: '150px' }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {records.map((r) => (
-                      <tr key={r.id}>
-                        <td>
-                          <div className="fw-bold text-dark">{r.resident_name}</div>
-                          <div className="d-flex align-items-center gap-2">
-                            <span className="badge bg-light text-dark border font-monospace" style={{ fontSize: '0.72rem' }}>
-                              {r.resident_code}
+              <>
+                {/* Mobile Card List View (d-md-none) */}
+                <div className="d-md-none d-flex flex-column gap-2">
+              {records.map((r) => (
+                <div
+                  key={r.id}
+                  className="bg-white p-3 rounded-3 border shadow-xs d-flex flex-column gap-2"
+                  style={{
+                    borderLeft: r.payment_status === 'OVERDUE'
+                      ? '4px solid #EF4444'
+                      : r.payment_status === 'PAID'
+                      ? '4px solid #10B981'
+                      : r.payment_status === 'PARTIALLY_PAID'
+                      ? '4px solid #F59E0B'
+                      : '4px solid #94A3B8'
+                  }}
+                >
+                  {/* Top Row: Resident Name, Code & Status */}
+                  <div className="d-flex justify-content-between align-items-start gap-1">
+                    <div
+                      onClick={() => handleOpenHistoryModal(r)}
+                      role="button"
+                      tabIndex={0}
+                      className="cursor-pointer flex-grow-1"
+                    >
+                      <div className="fw-bold text-dark text-truncate fs-6">{r.resident_name}</div>
+                      <div className="d-flex align-items-center gap-1.5 flex-wrap">
+                        <span className="badge bg-light text-dark border font-monospace" style={{ fontSize: '0.68rem' }}>
+                          {r.resident_code}
+                        </span>
+                        <span className="text-muted small" style={{ fontSize: '0.75rem' }}>
+                          Rm {r.room_number} • Bed {r.bed_number}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-end flex-shrink-0">
+                      {getStatusBadge(r.payment_status)}
+                    </div>
+                  </div>
+
+                  {/* Financial Metrics Strip */}
+                  <div
+                    onClick={() => handleOpenHistoryModal(r)}
+                    role="button"
+                    tabIndex={0}
+                    className="p-2 bg-light rounded-2 border d-flex justify-content-between align-items-center cursor-pointer"
+                  >
+                    <div>
+                      <div className="text-muted" style={{ fontSize: '0.68rem' }}>Total Rent</div>
+                      <div className="fw-bold text-dark small">₹{r.rent_amount.toLocaleString()}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-muted" style={{ fontSize: '0.68rem' }}>Paid</div>
+                      <div className="fw-semibold text-success small">₹{r.amount_paid.toLocaleString()}</div>
+                    </div>
+                    <div className="text-end">
+                      <div className="text-muted" style={{ fontSize: '0.68rem' }}>Balance Due</div>
+                      <div className={`fw-bold small ${r.balance_due > 0 ? 'text-danger' : 'text-success'}`}>
+                        ₹{r.balance_due.toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Timing & WhatsApp Info */}
+                  <div className="d-flex justify-content-between align-items-center text-muted" style={{ fontSize: '0.72rem' }}>
+                    <div>
+                      <span>Due: <strong className="text-dark">{r.due_date_formatted}</strong></span>
+                      {r.days_overdue > 0 && (
+                        <span className="text-danger fw-bold ms-1">({r.days_overdue}d overdue)</span>
+                      )}
+                    </div>
+                    <div>
+                      {getWhatsAppBadge(r.latest_reminder_status)}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons Row */}
+                  <div className="d-flex gap-1.5 pt-1 border-top">
+                    {r.balance_due > 0 && (
+                      <button
+                        onClick={() => handleOpenPaymentModal(r)}
+                        className="btn btn-sm btn-success d-flex align-items-center justify-content-center gap-1 flex-fill py-1.5 fw-semibold"
+                        style={{ minHeight: '36px' }}
+                      >
+                        <i className="bi bi-credit-card"></i>
+                        <span>Pay ₹{r.balance_due.toLocaleString()}</span>
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => handleSendReminder(r)}
+                      className="btn btn-sm btn-outline-success d-flex align-items-center justify-content-center gap-1 flex-fill py-1.5"
+                      style={{ minHeight: '36px' }}
+                      title="Send WhatsApp Reminder"
+                    >
+                      <i className="bi bi-whatsapp"></i>
+                      <span>Remind</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleOpenHistoryModal(r)}
+                      className="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1 flex-fill py-1.5"
+                      style={{ minHeight: '36px' }}
+                      title="View Rent Details & History"
+                    >
+                      <i className="bi bi-eye"></i>
+                      <span>Details</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View (d-none d-md-block) */}
+            <div className="table-responsive d-none d-md-block">
+              <table className="table table-hover align-middle small mb-0">
+                <thead className="table-light">
+                  <tr>
+                    <th>Resident ID & Name</th>
+                    <th>Room & Bed</th>
+                    <th>Rent Month</th>
+                    <th className="text-end">Rent</th>
+                    <th>Due Date</th>
+                    <th className="text-end">Paid</th>
+                    <th className="text-end">Balance Due</th>
+                    <th>Payment Status</th>
+                    <th>WhatsApp Status</th>
+                    <th className="text-center" style={{ minWidth: '150px' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {records.map((r) => (
+                    <tr key={r.id}>
+                      <td
+                        onClick={() => handleOpenHistoryModal(r)}
+                        style={{ cursor: 'pointer' }}
+                        title="Click to view full details"
+                      >
+                        <div className="fw-bold text-dark">{r.resident_name}</div>
+                        <div className="d-flex align-items-center gap-2">
+                          <span className="badge bg-light text-dark border font-monospace" style={{ fontSize: '0.72rem' }}>
+                            {r.resident_code}
+                          </span>
+                          <a
+                            href={`https://wa.me/${r.resident_phone.replace(/\D/g, '')}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-decoration-none text-muted small"
+                            title="Click to chat on WhatsApp"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <i className="bi bi-telephone text-success me-1"></i>
+                            {r.resident_phone}
+                          </a>
+                        </div>
+                      </td>
+
+                      <td>
+                        <div className="fw-semibold text-dark">Room {r.room_number}</div>
+                        <div className="text-muted small">Bed: <span className="badge bg-secondary-subtle text-secondary">{r.bed_number}</span></div>
+                      </td>
+
+                      <td>
+                        <span className="fw-semibold text-dark">{r.rent_month}</span>
+                        <div className="text-muted" style={{ fontSize: '0.7rem' }}>Cycle: {r.billing_cycle_start} to {r.billing_cycle_end}</div>
+                      </td>
+
+                      <td className="text-end fw-bold text-dark">
+                        ₹{r.rent_amount.toLocaleString()}
+                      </td>
+
+                      <td>
+                        <div className="fw-semibold">{r.due_date_formatted}</div>
+                        {r.days_overdue > 0 && (
+                          <div className="text-danger fw-bold" style={{ fontSize: '0.7rem' }}>
+                            <i className="bi bi-clock-history me-1"></i>{r.days_overdue} days overdue
+                          </div>
+                        )}
+                      </td>
+
+                      <td className="text-end fw-semibold text-success">
+                        ₹{r.amount_paid.toLocaleString()}
+                      </td>
+
+                      <td className="text-end fw-bold text-danger">
+                        ₹{r.balance_due.toLocaleString()}
+                      </td>
+
+                      <td>
+                        {getStatusBadge(r.payment_status)}
+                      </td>
+
+                      <td>
+                        <div className="d-flex flex-column gap-1">
+                          {getWhatsAppBadge(r.latest_reminder_status)}
+                          {r.reminder_count > 0 && (
+                            <span className="text-muted" style={{ fontSize: '0.68rem' }}>
+                              Sent: {r.reminder_count} time(s)
                             </span>
-                            <a
-                              href={`https://wa.me/${r.resident_phone.replace(/\D/g, '')}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-decoration-none text-muted small"
-                              title="Click to chat on WhatsApp"
-                            >
-                              <i className="bi bi-telephone text-success me-1"></i>
-                              {r.resident_phone}
-                            </a>
-                          </div>
-                        </td>
-
-                        <td>
-                          <div className="fw-semibold text-dark">Room {r.room_number}</div>
-                          <div className="text-muted small">Bed: <span className="badge bg-secondary-subtle text-secondary">{r.bed_number}</span></div>
-                        </td>
-
-                        <td>
-                          <span className="fw-semibold text-dark">{r.rent_month}</span>
-                          <div className="text-muted" style={{ fontSize: '0.7rem' }}>Cycle: {r.billing_cycle_start} to {r.billing_cycle_end}</div>
-                        </td>
-
-                        <td className="text-end fw-bold text-dark">
-                          ₹{r.rent_amount.toLocaleString()}
-                        </td>
-
-                        <td>
-                          <div className="fw-semibold">{r.due_date_formatted}</div>
-                          {r.days_overdue > 0 && (
-                            <div className="text-danger fw-bold" style={{ fontSize: '0.7rem' }}>
-                              <i className="bi bi-clock-history me-1"></i>{r.days_overdue} days overdue
-                            </div>
                           )}
-                        </td>
+                        </div>
+                      </td>
 
-                        <td className="text-end fw-semibold text-success">
-                          ₹{r.amount_paid.toLocaleString()}
-                        </td>
-
-                        <td className="text-end fw-bold text-danger">
-                          ₹{r.balance_due.toLocaleString()}
-                        </td>
-
-                        <td>
-                          {getStatusBadge(r.payment_status)}
-                        </td>
-
-                        <td>
-                          <div className="d-flex flex-column gap-1">
-                            {getWhatsAppBadge(r.latest_reminder_status)}
-                            {r.reminder_count > 0 && (
-                              <span className="text-muted" style={{ fontSize: '0.68rem' }}>
-                                Sent: {r.reminder_count} time(s)
-                              </span>
-                            )}
-                          </div>
-                        </td>
-
-                        <td>
-                          <div className="d-flex justify-content-center align-items-center gap-1.5" style={{ minWidth: '140px' }}>
-                            {/* Record Payment Button */}
-                            {r.balance_due > 0 ? (
-                              <button
-                                onClick={() => handleOpenPaymentModal(r)}
-                                className="btn btn-sm btn-success d-flex align-items-center gap-1 px-2.5 py-1.5 shadow-xs fw-semibold"
-                                style={{ minHeight: '38px' }}
-                                title="Record a payment receipt"
-                              >
-                                <i className="bi bi-credit-card"></i>
-                                <span>Pay</span>
-                              </button>
-                            ) : (
-                              <span className="badge bg-success-subtle text-success py-1.5 px-2">Settled</span>
-                            )}
-
-                            {/* Send WhatsApp Reminder Button */}
+                      <td>
+                        <div className="d-flex justify-content-center align-items-center gap-1.5" style={{ minWidth: '140px' }}>
+                          {/* Record Payment Button */}
+                          {r.balance_due > 0 ? (
                             <button
-                              onClick={() => handleSendReminder(r)}
-                              className="btn btn-sm btn-outline-success d-flex align-items-center justify-content-center px-2 py-1.5 shadow-xs"
-                              style={{ minHeight: '38px', minWidth: '38px' }}
-                              title="Send or retry WhatsApp reminder"
+                              onClick={() => handleOpenPaymentModal(r)}
+                              className="btn btn-sm btn-success d-flex align-items-center gap-1 px-2.5 py-1.5 shadow-xs fw-semibold"
+                              style={{ minHeight: '38px' }}
+                              title="Record a payment receipt"
                             >
-                              <i className="bi bi-whatsapp fs-6"></i>
+                              <i className="bi bi-credit-card"></i>
+                              <span>Pay</span>
                             </button>
+                          ) : (
+                            <span className="badge bg-success-subtle text-success py-1.5 px-2">Settled</span>
+                          )}
 
-                            {/* View History & Details Button */}
-                            <button
-                              onClick={() => handleOpenHistoryModal(r)}
-                              className="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center px-2 py-1.5 shadow-xs"
-                              style={{ minHeight: '38px', minWidth: '38px' }}
-                              title="View payment transactions and reminder history"
-                            >
-                              <i className="bi bi-receipt fs-6"></i>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                          {/* Send WhatsApp Reminder Button */}
+                          <button
+                            onClick={() => handleSendReminder(r)}
+                            className="btn btn-sm btn-outline-success d-flex align-items-center justify-content-center px-2 py-1.5 shadow-xs"
+                            style={{ minHeight: '38px', minWidth: '38px' }}
+                            title="Send or retry WhatsApp reminder"
+                          >
+                            <i className="bi bi-whatsapp fs-6"></i>
+                          </button>
+
+                          {/* View History & Details Button */}
+                          <button
+                            onClick={() => handleOpenHistoryModal(r)}
+                            className="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center px-2 py-1.5 shadow-xs"
+                            style={{ minHeight: '38px', minWidth: '38px' }}
+                            title="View payment transactions and reminder history"
+                          >
+                            <i className="bi bi-receipt fs-6"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
 
             {/* Pagination */}
             {totalRecords > limit && (
@@ -1368,39 +1634,101 @@ export default function AdminRentManagement() {
 
       {/* PAYMENT HISTORY & RECORD DETAILS MODAL */}
       {showHistoryModal && selectedRecord && (
-        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}>
-          <div className="modal-dialog modal-lg modal-dialog-centered">
+        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.55)', zIndex: 1060 }}>
+          <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div className="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
               <div className="modal-header bg-dark text-white p-3">
-                <h5 className="modal-title fs-6 fw-bold">
-                  <i className="bi bi-receipt-cutoff text-warning me-2"></i>
-                  Rent Details & Payment History
-                </h5>
+                <div className="d-flex align-items-center gap-2">
+                  <div className="bg-warning text-dark rounded-circle p-1 d-flex align-items-center justify-content-center" style={{ width: '28px', height: '28px' }}>
+                    <i className="bi bi-person-badge-fill fs-6"></i>
+                  </div>
+                  <div>
+                    <h6 className="modal-title fw-bold mb-0">Resident Rent Obligation Details</h6>
+                    <div className="text-white-50 small" style={{ fontSize: '0.72rem' }}>
+                      Complete breakdown for {selectedRecord.rent_month}
+                    </div>
+                  </div>
+                </div>
                 <button type="button" className="btn-close btn-close-white" onClick={() => setShowHistoryModal(false)}></button>
               </div>
 
-              <div className="modal-body p-4 d-flex flex-column gap-3">
-                {/* Summary Box */}
-                <div className="p-3 bg-light rounded-3 border d-flex justify-content-between align-items-center">
+              <div className="modal-body p-3 p-md-4 d-flex flex-column gap-3">
+                {/* Resident Profile & Room Allocation Card */}
+                <div className="p-3 bg-light rounded-3 border d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
                   <div>
-                    <h5 className="fw-bold mb-0 text-dark">{selectedRecord.resident_name}</h5>
-                    <div className="text-muted small">
-                      {selectedRecord.resident_code} • Room {selectedRecord.room_number} • Bed {selectedRecord.bed_number}
+                    <div className="d-flex align-items-center gap-2">
+                      <h5 className="fw-bold mb-0 text-dark">{selectedRecord.resident_name}</h5>
+                      <span className="badge bg-white text-dark border font-monospace">{selectedRecord.resident_code}</span>
+                      {getStatusBadge(selectedRecord.payment_status)}
+                    </div>
+                    <div className="d-flex flex-wrap align-items-center gap-3 text-muted small mt-1">
+                      <span><i className="bi bi-door-open text-primary me-1"></i>Room {selectedRecord.room_number} (Bed: <strong>{selectedRecord.bed_number}</strong>)</span>
+                      <a
+                        href={`https://wa.me/${selectedRecord.resident_phone?.replace(/\D/g, '')}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-decoration-none text-success fw-semibold"
+                      >
+                        <i className="bi bi-telephone text-success me-1"></i>{selectedRecord.resident_phone}
+                      </a>
                     </div>
                   </div>
-                  <div className="text-end">
-                    <div className="fw-bold fs-5 text-dark">₹{selectedRecord.rent_amount.toLocaleString()}</div>
-                    <span className="badge bg-secondary">{selectedRecord.rent_month}</span>
+                  <div className="text-sm-end">
+                    <span className="badge bg-secondary-subtle text-secondary border px-2.5 py-1">
+                      Billing: {selectedRecord.rent_month}
+                    </span>
+                    <div className="text-muted small mt-1" style={{ fontSize: '0.72rem' }}>
+                      {selectedRecord.billing_cycle_start} to {selectedRecord.billing_cycle_end}
+                    </div>
                   </div>
                 </div>
 
-                {/* Balance Progress */}
-                <div className="bg-white p-3 rounded-3 border">
+                {/* 3-Column Financial Status Grid */}
+                <div className="row g-2 text-center">
+                  <div className="col-4">
+                    <div className="p-2.5 bg-light rounded-3 border">
+                      <div className="text-muted small" style={{ fontSize: '0.72rem' }}>Total Rent Due</div>
+                      <div className="fw-bold text-dark fs-6">₹{selectedRecord.rent_amount.toLocaleString()}</div>
+                      <div className="text-muted small" style={{ fontSize: '0.68rem' }}>Due: {selectedRecord.due_date_formatted}</div>
+                    </div>
+                  </div>
+                  <div className="col-4">
+                    <div className="p-2.5 bg-success-subtle rounded-3 border border-success-subtle">
+                      <div className="text-success-emphasis small" style={{ fontSize: '0.72rem' }}>Amount Paid</div>
+                      <div className="fw-bold text-success fs-6">₹{selectedRecord.amount_paid.toLocaleString()}</div>
+                      <div className="text-success small" style={{ fontSize: '0.68rem' }}>
+                        {selectedRecord.rent_amount > 0 ? `${Math.round((selectedRecord.amount_paid / selectedRecord.rent_amount) * 100)}% settled` : '100%'}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-4">
+                    <div className={`p-2.5 rounded-3 border ${selectedRecord.balance_due > 0 ? 'bg-danger-subtle border-danger-subtle' : 'bg-light'}`}>
+                      <div className={selectedRecord.balance_due > 0 ? 'text-danger-emphasis small' : 'text-muted small'} style={{ fontSize: '0.72rem' }}>
+                        Outstanding
+                      </div>
+                      <div className={`fw-bold fs-6 ${selectedRecord.balance_due > 0 ? 'text-danger' : 'text-success'}`}>
+                        ₹{selectedRecord.balance_due.toLocaleString()}
+                      </div>
+                      <div className="small" style={{ fontSize: '0.68rem' }}>
+                        {selectedRecord.days_overdue > 0 ? (
+                          <span className="text-danger fw-bold">{selectedRecord.days_overdue} days overdue</span>
+                        ) : selectedRecord.balance_due === 0 ? (
+                          <span className="text-success fw-semibold">Zero balance</span>
+                        ) : (
+                          <span className="text-muted">On schedule</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Balance Progress Bar */}
+                <div className="bg-white p-2.5 rounded-3 border">
                   <div className="d-flex justify-content-between small text-muted mb-1">
                     <span>Paid: <strong className="text-success">₹{selectedRecord.amount_paid.toLocaleString()}</strong></span>
-                    <span>Balance Due: <strong className="text-danger">₹{selectedRecord.balance_due.toLocaleString()}</strong></span>
+                    <span>Remaining: <strong className={selectedRecord.balance_due > 0 ? 'text-danger' : 'text-success'}>₹{selectedRecord.balance_due.toLocaleString()}</strong></span>
                   </div>
-                  <div className="progress" style={{ height: '8px' }}>
+                  <div className="progress" style={{ height: '7px' }}>
                     <div
                       className="progress-bar bg-success"
                       role="progressbar"
@@ -1413,10 +1741,25 @@ export default function AdminRentManagement() {
 
                 {/* Payment Transactions Table */}
                 <div>
-                  <h6 className="fw-bold text-dark mb-2">Recorded Payment Receipts ({selectedRecord.payments?.length || 0})</h6>
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <h6 className="fw-bold text-dark mb-0">Recorded Payment Receipts ({selectedRecord.payments?.length || 0})</h6>
+                    {selectedRecord.balance_due > 0 && (
+                      <button
+                        onClick={() => {
+                          setShowHistoryModal(false);
+                          handleOpenPaymentModal(selectedRecord);
+                        }}
+                        className="btn btn-xs btn-success d-flex align-items-center gap-1 px-2.5 py-1 fw-semibold"
+                      >
+                        <i className="bi bi-plus-circle"></i>
+                        <span>Record Payment</span>
+                      </button>
+                    )}
+                  </div>
                   {selectedRecord.payments?.length === 0 ? (
                     <div className="text-center py-4 bg-light rounded-3 text-muted small">
-                      No payments have been recorded for this billing period yet.
+                      <i className="bi bi-clock text-muted d-block fs-4 mb-1"></i>
+                      No payments have been recorded for this billing cycle yet.
                     </div>
                   ) : (
                     <div className="table-responsive">
@@ -1426,7 +1769,7 @@ export default function AdminRentManagement() {
                             <th>Date</th>
                             <th>Amount</th>
                             <th>Method</th>
-                            <th>Reference</th>
+                            <th>Ref / UTR</th>
                             <th>Recorded By</th>
                             <th>Notes</th>
                           </tr>
@@ -1437,9 +1780,9 @@ export default function AdminRentManagement() {
                               <td className="fw-semibold">{p.payment_date}</td>
                               <td className="fw-bold text-success">₹{p.amount.toLocaleString()}</td>
                               <td><span className="badge bg-light text-dark border">{p.payment_method}</span></td>
-                              <td className="font-monospace">{p.transaction_reference || '—'}</td>
-                              <td className="text-muted">{p.recorded_by_admin_email || 'Admin'}</td>
-                              <td className="text-muted">{p.notes || '—'}</td>
+                              <td className="font-monospace small">{p.transaction_reference || '—'}</td>
+                              <td className="text-muted small">{p.recorded_by_admin_email || 'Admin'}</td>
+                              <td className="text-muted small">{p.notes || '—'}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -1448,18 +1791,18 @@ export default function AdminRentManagement() {
                   )}
                 </div>
 
-                {/* Reminder Log Info */}
-                <div className="pt-2 border-top">
-                  <div className="d-flex justify-content-between align-items-center">
-                    <span className="small text-muted">
-                      WhatsApp Reminders Sent: <strong>{selectedRecord.reminder_count || 0}</strong>
-                    </span>
+                {/* Reminder Log Info & Quick Actions Footer */}
+                <div className="pt-2 border-top d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+                  <div className="small text-muted">
+                    WhatsApp Reminders: <strong>{selectedRecord.reminder_count || 0} sent</strong> • Latest: {getWhatsAppBadge(selectedRecord.latest_reminder_status)}
+                  </div>
+                  <div className="d-flex gap-2">
                     <button
                       onClick={() => {
                         setShowHistoryModal(false);
                         handleSendReminder(selectedRecord);
                       }}
-                      className="btn btn-sm btn-outline-success d-flex align-items-center gap-1"
+                      className="btn btn-sm btn-outline-success d-flex align-items-center gap-1 px-3 py-1.5"
                     >
                       <i className="bi bi-whatsapp"></i>
                       <span>Send WhatsApp Reminder</span>
@@ -1468,14 +1811,26 @@ export default function AdminRentManagement() {
                 </div>
               </div>
 
-              <div className="modal-footer bg-light p-3">
+              <div className="modal-footer bg-light p-2.5 d-flex justify-content-between align-items-center">
                 <button
                   type="button"
-                  className="btn btn-sm btn-secondary"
+                  className="btn btn-sm btn-outline-secondary"
                   onClick={() => setShowHistoryModal(false)}
                 >
-                  Close
+                  &larr; Back to Rent Management
                 </button>
+                {selectedRecord.balance_due > 0 && (
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-success fw-semibold px-3"
+                    onClick={() => {
+                      setShowHistoryModal(false);
+                      handleOpenPaymentModal(selectedRecord);
+                    }}
+                  >
+                    <i className="bi bi-credit-card me-1"></i> Record Payment (₹{selectedRecord.balance_due.toLocaleString()})
+                  </button>
+                )}
               </div>
             </div>
           </div>

@@ -231,7 +231,15 @@ def get_rent_records(
 
     # Filter by payment status
     if status and status.upper() != "ALL":
-        query = query.filter(RentRecord.payment_status == status.upper())
+        status_clean = status.upper().strip()
+        if status_clean == "OUTSTANDING":
+            query = query.filter(RentRecord.balance_due > 0)
+        elif status_clean == "COLLECTED":
+            query = query.filter(RentRecord.amount_paid > 0)
+        elif status_clean in ("PENDING_OR_PARTIAL", "PENDING_PARTIAL"):
+            query = query.filter(RentRecord.payment_status.in_(["PENDING", "PARTIALLY_PAID"]))
+        else:
+            query = query.filter(RentRecord.payment_status == status_clean)
 
     # Search filter (name, resident_code, phone)
     if search:
