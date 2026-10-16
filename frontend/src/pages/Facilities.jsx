@@ -50,12 +50,13 @@ export default function Facilities() {
         </div>
 
         {/* Category Tabs */}
-        <div className="d-flex justify-content-center flex-wrap gap-2 mb-5">
+        <div className="d-flex justify-content-center flex-wrap gap-1.5 mb-3">
           {categories.map((c) => (
             <button
               key={c.id}
               onClick={() => setActiveCategory(c.id)}
-              className={`btn btn-sm ${activeCategory === c.id ? 'btn-dark fw-bold px-3' : 'btn-white bg-white border text-secondary px-3'}`}
+              className={`btn btn-sm ${activeCategory === c.id ? 'btn-dark fw-bold px-2.5 py-1' : 'btn-white bg-white border text-secondary px-2.5 py-1'}`}
+              style={{ fontSize: '0.8rem' }}
             >
               {c.label}
             </button>
@@ -64,30 +65,34 @@ export default function Facilities() {
 
         {/* Facilities Grid */}
         {loading ? (
-          <div className="text-center py-5">
-            <div className="spinner-border text-primary" role="status"></div>
+          <div className="text-center py-4">
+            <div className="spinner-border text-primary spinner-border-sm" role="status"></div>
             <p className="text-muted small mt-2">Loading verified facilities...</p>
           </div>
         ) : (
-          <div className="row g-4 mb-5">
+          <div className="row g-2 g-md-3 mb-4">
             {filtered.map((fac) => (
-              <div key={fac.id} className="col-md-6 col-lg-4">
-                <div className="pg-card p-4 h-100 d-flex flex-column justify-content-between">
+              <div key={fac.id} className="col-6 col-md-4 col-lg-3">
+                <div className="pg-card p-2.5 p-md-3 h-100 d-flex flex-column justify-content-between">
                   <div>
-                    <div className="d-flex justify-content-between align-items-start mb-3">
+                    <div className="d-flex justify-content-between align-items-center mb-1.5">
                       <div
-                        className="d-flex align-items-center justify-content-center rounded-3"
-                        style={{ width: '52px', height: '52px', backgroundColor: '#FFF7ED', color: '#EA580C' }}
+                        className="d-flex align-items-center justify-content-center rounded-2"
+                        style={{ width: '32px', height: '32px', backgroundColor: '#FFF7ED', color: '#EA580C' }}
                       >
-                        <i className={`bi bi-${fac.icon} fs-4`}></i>
+                        <i className={`bi bi-${fac.icon}`} style={{ fontSize: '1.05rem' }}></i>
                       </div>
-                      <span className="badge bg-light text-secondary border text-uppercase" style={{ fontSize: '0.68rem' }}>
+                      <span className="badge bg-light text-secondary border text-uppercase" style={{ fontSize: '0.62rem' }}>
                         {fac.category}
                       </span>
                     </div>
 
-                    <h5 className="fw-bold mb-2">{fac.title}</h5>
-                    <p className="text-secondary small mb-0 lh-base">{fac.description}</p>
+                    <h6 className="fw-bold mb-1 text-dark" style={{ fontSize: '0.88rem' }}>{fac.title}</h6>
+                    {fac.description && (
+                      <p className="text-secondary small mb-0 lh-sm text-truncate w-100" style={{ fontSize: '0.74rem' }} title={fac.description}>
+                        {fac.description}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

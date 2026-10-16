@@ -261,62 +261,121 @@ a {
 
 /* Section Container */
 .section-padding {
-  padding-top: 80px;
-  padding-bottom: 80px;
+  padding-top: 56px;
+  padding-bottom: 56px;
 }
 
 @media (max-width: 768px) {
   .section-padding {
-    padding-top: 50px;
-    padding-bottom: 50px;
+    padding-top: 28px;
+    padding-bottom: 28px;
   }
 }
 
 .section-header {
   text-align: center;
   max-width: 680px;
-  margin: 0 auto 50px auto;
+  margin: 0 auto 36px auto;
+}
+
+@media (max-width: 768px) {
+  .section-header {
+    margin: 0 auto 20px auto;
+  }
 }
 
 .section-title {
-  font-size: 2.35rem;
+  font-size: 2.1rem;
   font-weight: 800;
-  margin-top: 10px;
-  margin-bottom: 15px;
+  margin-top: 6px;
+  margin-bottom: 10px;
+  line-height: 1.25;
 }
 
 @media (max-width: 768px) {
   .section-title {
-    font-size: 1.85rem;
+    font-size: 1.45rem;
+    margin-top: 4px;
+    margin-bottom: 6px;
   }
 }
 
 .section-subtitle {
   color: var(--text-muted);
-  font-size: 1.05rem;
+  font-size: 0.95rem;
 }
 
-/* Sticky Bottom Mobile Bar */
+@media (max-width: 768px) {
+  .section-subtitle {
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+}
+
+/* Sticky Bottom Mobile Bar - Compact, Tappable & Safe-Area Aware */
 .mobile-bottom-bar {
   display: none;
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid var(--border-color);
-  padding: 10px 16px;
+  padding: 6px 12px;
+  padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
   z-index: 1040;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.06);
 }
 
 @media (max-width: 768px) {
   .mobile-bottom-bar {
     display: flex;
     justify-content: space-around;
+    align-items: center;
     gap: 8px;
   }
+}
+
+/* Compact Booking Stepper (Horizontal on desktop, vertical on mobile) */
+.booking-steps-list {
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+}
+
+.booking-step-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: #FFFFFF;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.booking-step-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.booking-step-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0;
 }
 
 /* Gallery Masonry & Hover */
@@ -620,6 +679,103 @@ html, body {
     padding: 6px 12px !important;
     font-size: 0.8rem !important;
   }
+
+  /* Compact Booking Stepper: horizontal stepper on desktop, compact vertical list on mobile */
+  .booking-steps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .booking-step-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: #FFFFFF;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+  }
+
+  .booking-step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: var(--accent);
+    color: #FFFFFF;
+    font-weight: 700;
+    font-size: 0.82rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .booking-step-text {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0;
+  }
+
+  /* Compact section spacing across the whole site */
+  .py-5 {
+    padding-top: 1.5rem !important;
+    padding-bottom: 1.5rem !important;
+  }
+
+  .my-4, .my-5 {
+    margin-top: 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .mb-4, .mb-5 {
+    margin-bottom: 1rem !important;
+  }
+
+  .g-4, .g-5 {
+    --bs-gutter-x: 0.75rem !important;
+    --bs-gutter-y: 0.75rem !important;
+  }
+
+  .g-3 {
+    --bs-gutter-x: 0.5rem !important;
+    --bs-gutter-y: 0.5rem !important;
+  }
+
+  /* Compact card padding on mobile */
+  .pg-card, .card {
+    border-radius: 10px !important;
+  }
+
+  .p-4, .p-md-5 {
+    padding: 12px 14px !important;
+  }
+
+  .p-3 {
+    padding: 10px 12px !important;
+  }
+
+  /* Compact typography on mobile */
+  h1.display-5, .display-5 {
+    font-size: 1.5rem !important;
+    line-height: 1.25 !important;
+  }
+
+  h2.display-6, .display-6 {
+    font-size: 1.35rem !important;
+  }
+
+  /* Interface icons sizing */
+  .bi:not(.hero-bg-img) {
+    font-size: 1.1rem;
+  }
+
+  /* Compact footer */
+  footer.bg-dark {
+    padding-top: 2rem !important;
+    padding-bottom: calc(1.5rem + 50px) !important;
+  }
 }
 
 /* Bus Seat Berth Mobile Adaptations */
@@ -848,7 +1004,7 @@ html, body {
   border-color: var(--accent);
 }
 
-/* Ensure bottom fixed bar never covers actions */
+/* Ensure bottom fixed bar never covers actions - sized for compact mobile bar */
 .has-bottom-bar-padding {
-  padding-bottom: 84px !important;
+  padding-bottom: calc(54px + env(safe-area-inset-bottom, 0px)) !important;
 }

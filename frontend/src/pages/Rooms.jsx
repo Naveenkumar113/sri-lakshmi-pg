@@ -144,7 +144,7 @@ export default function Rooms() {
                 <div key={room.id || `room-${idx}`} className="col-md-6 col-lg-4">
                   <div className="pg-card h-100 d-flex flex-column">
                     {/* Image Header */}
-                    <div className="position-relative overflow-hidden" style={{ height: '220px' }}>
+                    <div className="position-relative overflow-hidden" style={{ height: '175px' }}>
                       <img
                         src={displayImg}
                         onError={(e) => { e.target.src = '/images/bedroom_double.png'; }}
@@ -153,63 +153,58 @@ export default function Rooms() {
                         style={{ objectFit: 'cover' }}
                       />
                       <div className="position-absolute top-0 start-0 m-2 d-flex gap-1">
-                        <span className={`badge ${room.is_ac ? 'bg-primary' : 'bg-dark'} fw-semibold`}>
-                          {room.is_ac ? 'Air Conditioned' : 'Non-AC Ventilated'}
+                        <span className={`badge ${room.is_ac ? 'bg-primary' : 'bg-dark'} fw-semibold`} style={{ fontSize: '0.68rem' }}>
+                          {room.is_ac ? 'AC' : 'Non-AC'}
                         </span>
-                        <span className="badge bg-secondary">
-                          Floor {room.floor || 1}
+                        <span className="badge bg-secondary" style={{ fontSize: '0.68rem' }}>
+                          Fl {room.floor || 1}
                         </span>
                       </div>
                       <div className="position-absolute top-0 end-0 m-2">
-                        <span className={`status-pill status-${statusClass}`}>
+                        <span className={`status-pill status-${statusClass}`} style={{ fontSize: '0.65rem', padding: '2px 8px' }}>
                           {statusLabel}
                         </span>
                       </div>
                     </div>
 
                     {/* Card Content */}
-                    <div className="p-4 d-flex flex-column flex-grow-1 justify-content-between">
+                    <div className="p-3 d-flex flex-column flex-grow-1 justify-content-between">
                       <div>
                         <div className="d-flex justify-content-between align-items-center mb-1">
-                          <h4 className="fw-bold mb-0">Room {room.room_number}</h4>
-                          <span className="badge bg-light text-dark border">
+                          <h5 className="fw-bold mb-0 text-dark" style={{ fontSize: '1rem' }}>Room {room.room_number}</h5>
+                          <span className="badge bg-light text-dark border" style={{ fontSize: '0.68rem' }}>
                             {room.available_beds !== undefined ? room.available_beds : room.capacity} of {room.capacity} Beds Free
                           </span>
                         </div>
 
-                        <div className="text-secondary small fw-semibold mb-2">
+                        <div className="text-secondary small fw-semibold mb-1" style={{ fontSize: '0.8rem' }}>
                           {sharingLabel}
                         </div>
 
-                        <p className="text-muted small line-clamp-2 mb-3">
-                          {room.description || 'Clean and comfortable bedroom with sturdy cot, red mattress, almirah, and ventilation.'}
-                        </p>
-
                         {/* Amenities Tags */}
-                        <div className="d-flex flex-wrap gap-1 mb-3">
-                          {amenities.slice(0, 4).map((am, i) => (
-                            <span key={i} className="badge bg-light text-secondary border small" style={{ fontSize: '0.72rem' }}>
-                              <i className="bi bi-check text-success me-1"></i>{am}
+                        <div className="d-flex flex-wrap gap-1 mb-2">
+                          {amenities.slice(0, 3).map((am, i) => (
+                            <span key={i} className="badge bg-light text-secondary border small" style={{ fontSize: '0.68rem' }}>
+                              <i className="bi bi-check text-success me-0.5"></i>{am}
                             </span>
                           ))}
                         </div>
                       </div>
 
                       {/* Pricing and Action Buttons */}
-                      <div className="pt-3 border-top">
-                        <div className="d-flex justify-content-between align-items-center mb-3">
+                      <div className="pt-2 border-top">
+                        <div className="d-flex justify-content-between align-items-center mb-2">
                           <div>
-                            <span className="text-muted small d-block" style={{ fontSize: '0.72rem' }}>Monthly Rent</span>
-                            <span className="fw-bold text-dark fs-5">
-                              {room.monthly_rent ? `₹${room.monthly_rent.toLocaleString('en-IN')}` : 'Contact for Price'}
+                            <span className="text-muted d-block" style={{ fontSize: '0.68rem' }}>Monthly Rent</span>
+                            <span className="fw-bold text-dark fs-6">
+                              {room.monthly_rent ? `₹${room.monthly_rent.toLocaleString('en-IN')}` : 'Contact'}
                             </span>
-                            <span className="text-muted small"> / month</span>
                           </div>
 
                           {room.security_deposit && (
                             <div className="text-end">
-                              <span className="text-muted small d-block" style={{ fontSize: '0.72rem' }}>Deposit</span>
-                              <span className="small fw-semibold text-secondary">
+                              <span className="text-muted d-block" style={{ fontSize: '0.68rem' }}>Deposit</span>
+                              <span className="small fw-semibold text-secondary" style={{ fontSize: '0.78rem' }}>
                                 ₹{room.security_deposit.toLocaleString('en-IN')}
                               </span>
                             </div>
@@ -229,7 +224,7 @@ export default function Rooms() {
                             className="btn btn-sm btn-pg-primary flex-fill"
                           >
                             <i className="bi bi-key-fill me-1"></i>
-                            {room.available_beds > 0 ? 'Book Room' : 'Fully Occupied'}
+                            {room.available_beds > 0 ? 'Book Room' : 'Full'}
                           </button>
                         </div>
                       </div>

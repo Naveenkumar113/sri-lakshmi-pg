@@ -119,67 +119,53 @@ export default function Home() {
                 transition={{ duration: 0.6 }}
               >
                 {/* Authentic Property Badge */}
-                <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
-                  <span className="badge-authentic">
-                    <i className="bi bi-shield-check"></i> Verified Property • Velachery, Chennai
+                <div className="d-flex flex-wrap align-items-center gap-1.5 mb-2">
+                  <span className="badge-authentic" style={{ fontSize: '0.68rem', padding: '3px 8px' }}>
+                    <i className="bi bi-shield-check"></i> Velachery, Chennai
                   </span>
-                  <span className="badge bg-warning text-dark px-3 py-1 fw-bold rounded-pill">
-                    ⭐ 3.6 / 5 Google Reviews
+                  <span className="badge bg-warning text-dark px-2 py-0.5 fw-bold rounded-pill" style={{ fontSize: '0.68rem' }}>
+                    ⭐ 3.6/5 Reviews
                   </span>
-                  <span className="badge bg-success text-white px-3 py-1 fw-semibold rounded-pill">
-                    <i className="bi bi-clock-history me-1"></i> Open 24 Hours
+                  <span className="badge bg-success text-white px-2 py-0.5 fw-semibold rounded-pill" style={{ fontSize: '0.68rem' }}>
+                    <i className="bi bi-clock-history me-1"></i> Open 24h
                   </span>
                 </div>
 
-                <h1 className="display-4 fw-extrabold text-white mb-2" style={{ letterSpacing: '-0.03em' }}>
-                  SRI LAKSHMI SRINIVASA <br />
-                  <span style={{ color: '#FDBA74' }}>GENTS PG</span>
+                <h1 className="display-5 fw-extrabold text-white mb-2" style={{ letterSpacing: '-0.02em' }}>
+                  Sri Lakshmi Srinivasa <span style={{ color: '#FDBA74' }}>Gents PG</span>
                 </h1>
 
-                <h3 className="h4 fw-semibold text-light opacity-90 mb-3">
-                  "Comfortable & Convenient Men's PG in Velachery, Chennai"
-                </h3>
-
-                <p className="fs-6 text-light opacity-80 mb-4 pe-lg-5" style={{ maxWidth: '640px' }}>
-                  Comfortable accommodation for working professionals and students in the Velachery–Taramani area. High-speed optic fiber Wi-Fi, automatic laundry, purified RO water, 24/7 security, and hygienic living.
+                <p className="fs-6 text-light opacity-90 mb-3 pe-lg-4 lh-base" style={{ maxWidth: '580px' }}>
+                  Comfortable, secure men's PG accommodation in Velachery, Chennai. Optic fiber Wi-Fi, automatic laundry, RO water, and 24/7 security near IT corridor.
                 </p>
 
                 {/* Hero CTA Buttons */}
-                <div className="d-flex flex-wrap gap-3 pt-2">
-                  <Link to="/rooms" className="btn btn-pg-secondary shadow">
+                <div className="d-flex flex-wrap gap-2 pt-1">
+                  <button onClick={() => handleBookRoom()} className="btn btn-pg-primary shadow">
+                    <i className="bi bi-key-fill"></i>
+                    Book Room
+                  </button>
+
+                  <Link to="/rooms" className="btn btn-pg-secondary">
                     <i className="bi bi-door-open"></i>
-                    View Rooms
+                    View Rooms & Pricing
                   </Link>
 
-                  <button onClick={handleScheduleVisit} className="btn btn-pg-primary shadow-lg">
+                  <button onClick={handleScheduleVisit} className="btn btn-pg-outline-light">
                     <i className="bi bi-calendar2-check"></i>
-                    Schedule a Visit
+                    Visit
                   </button>
-
-                  <button onClick={() => handleBookRoom()} className="btn btn-pg-outline-light">
-                    <i className="bi bi-key-fill"></i>
-                    Book a Room
-                  </button>
-
-                  <a href="tel:+917893744206" className="btn btn-outline-light rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-2">
-                    <i className="bi bi-telephone-fill text-success"></i>
-                    Call Now
-                  </a>
                 </div>
 
                 {/* Trust Indicators */}
-                <div className="d-flex flex-wrap gap-4 mt-5 pt-3 border-top border-light border-opacity-25 small text-light opacity-85">
-                  <div className="d-flex align-items-center gap-2">
-                    <i className="bi bi-geo-alt-fill text-danger fs-5"></i>
-                    <span>3, Bhavani St, Bharathi Nagar</span>
+                <div className="d-flex flex-wrap gap-3 mt-3 pt-2 border-top border-light border-opacity-25 small text-light opacity-85">
+                  <div className="d-flex align-items-center gap-1.5">
+                    <i className="bi bi-geo-alt-fill text-danger"></i>
+                    <span>3, Bhavani St, Velachery</span>
                   </div>
-                  <div className="d-flex align-items-center gap-2">
-                    <i className="bi bi-train-front text-info fs-5"></i>
-                    <span>Near Velachery MRTS & Taramani</span>
-                  </div>
-                  <div className="d-flex align-items-center gap-2">
-                    <i className="bi bi-wifi text-warning fs-5"></i>
-                    <span>High-Speed Wi-Fi</span>
+                  <div className="d-flex align-items-center gap-1.5">
+                    <i className="bi bi-train-front text-info"></i>
+                    <span>Near MRTS & Taramani</span>
                   </div>
                 </div>
               </motion.div>
@@ -243,141 +229,24 @@ export default function Home() {
       </section>
 
       {/* ==================================================
-          SECTION 2: ABOUT THE PG
+          SECTION 2: AVAILABLE ROOMS & PRICING
           ================================================== */}
       <section className="section-padding bg-light">
         <div className="container">
-          <div className="row align-items-center g-5">
-            <div className="col-lg-6">
-              <div className="position-relative">
-                <img
-                  src="/images/exterior_main.png"
-                  alt="Actual PG Building Exterior"
-                  className="img-fluid rounded-4 shadow-md w-100"
-                  style={{ maxHeight: '420px', objectFit: 'cover' }}
-                />
-                <div className="position-absolute bottom-0 start-0 m-3">
-                  <span className="badge-authentic">
-                    <i className="bi bi-camera-fill"></i> Actual PG Exterior Photo
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="col-lg-6">
-              <span className="pill-badge pill-badge-accent mb-2">About The Property</span>
-              <h2 className="section-title text-start mb-3">
-                Reliable & Peaceful Accommodation in Bharathi Nagar, Velachery
-              </h2>
-              <p className="text-secondary mb-3">
-                Sri Lakshmi Srinivasa Gents PG is located at 3, Bhavani St, Bharathi Nagar in Velachery, Chennai. Conveniently situated near the Taramani IT hub, Velachery MRTS Station, and Phoenix Marketcity, it provides a safe, welcoming, and productive environment for working bachelors and students.
-              </p>
-              <p className="text-secondary mb-4">
-                Our property is designed with essential amenities including comfortable wooden cots with clean mattresses, individual steel almirahs, automatic washing machines on the covered terrace, high-speed Wi-Fi, and 24/7 security watch.
-              </p>
-
-              <div className="row g-3 mb-4">
-                <div className="col-sm-6">
-                  <div className="d-flex align-items-center gap-2">
-                    <i className="bi bi-check-circle-fill text-success fs-5"></i>
-                    <span className="fw-semibold small">Walkable to Local Bus Stop</span>
-                  </div>
-                </div>
-                <div className="col-sm-6">
-                  <div className="d-flex align-items-center gap-2">
-                    <i className="bi bi-check-circle-fill text-success fs-5"></i>
-                    <span className="fw-semibold small">Commercial RO Drinking Water</span>
-                  </div>
-                </div>
-                <div className="col-sm-6">
-                  <div className="d-flex align-items-center gap-2">
-                    <i className="bi bi-check-circle-fill text-success fs-5"></i>
-                    <span className="fw-semibold small">24/7 Gate & Security Check</span>
-                  </div>
-                </div>
-                <div className="col-sm-6">
-                  <div className="d-flex align-items-center gap-2">
-                    <i className="bi bi-check-circle-fill text-success fs-5"></i>
-                    <span className="fw-semibold small">Easy Online Visit Scheduling</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="d-flex gap-3">
-                <Link to="/about" className="btn btn-pg-secondary">
-                  Learn More About Us
-                </Link>
-                <button onClick={handleScheduleVisit} className="btn btn-pg-primary">
-                  Schedule a Visit
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ==================================================
-          SECTION 3: WHY CHOOSE US
-          ================================================== */}
-      <section className="section-padding bg-white">
-        <div className="container">
-          <div className="section-header">
-            <span className="pill-badge pill-badge-accent mb-2">Key Highlights</span>
-            <h2 className="section-title">Why Choose Sri Lakshmi Srinivasa Gents PG</h2>
-            <p className="section-subtitle">
-              Carefully maintained facilities designed specifically for IT professionals, students, and job seekers in Chennai.
-            </p>
-          </div>
-
-          <div className="row g-4">
-            {[
-              { title: "Convenient Velachery Location", desc: "Walking distance to Bhavani St bus stop and minutes from Taramani Ascendas, RMZ Millenia, and Velachery MRTS.", icon: "geo-alt-fill", color: "#EA580C" },
-              { title: "Comfortable Rooms", desc: "Equipped with sturdy wooden cots, red mattresses, pillows, and cross-ventilation windows.", icon: "lamp-fill", color: "#2563EB" },
-              { title: "AC & Non-AC Options", desc: "Choose between air-conditioned comfort or budget-friendly, well-ventilated natural rooms.", icon: "snow", color: "#0D9488" },
-              { title: "Free Wi-Fi", desc: "High-speed broadband Wi-Fi coverage across all floors for seamless remote work and video calls.", icon: "wifi", color: "#7C3AED" },
-              { title: "24/7 Security", desc: "CCTV monitoring of common corridors and 24-hour gated security entrance for total safety.", icon: "shield-fill-check", color: "#059669" },
-              { title: "Washing Machine", desc: "Fully automatic washing machines with covered clothes drying lines on the open terrace.", icon: "droplet-fill", color: "#0284C7" },
-              { title: "Clean Living Environment", desc: "Daily housekeeping of common areas and sanitized bathrooms to ensure hygiene.", icon: "sparkles", color: "#D97706" },
-              { title: "Easy Visit Scheduling", desc: "Transparent booking system: choose your date and slot, and get confirmed prior to visiting.", icon: "calendar2-check-fill", color: "#DC2626" }
-            ].map((card, i) => (
-              <div key={i} className="col-md-6 col-lg-3">
-                <div className="pg-card h-100 p-4 d-flex flex-column justify-content-between">
-                  <div>
-                    <div
-                      className="d-flex align-items-center justify-content-center rounded-3 mb-3"
-                      style={{ width: '48px', height: '48px', backgroundColor: `${card.color}15`, color: card.color }}
-                    >
-                      <i className={`bi bi-${card.icon} fs-4`}></i>
-                    </div>
-                    <h5 className="fw-bold mb-2 fs-6">{card.title}</h5>
-                    <p className="text-secondary small mb-0">{card.desc}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ==================================================
-          SECTION 4: ROOMS SHOWCASE
-          ================================================== */}
-      <section className="section-padding bg-light">
-        <div className="container">
-          <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-4">
+          <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-3">
             <div>
-              <span className="pill-badge pill-badge-accent mb-2">Room Inventory</span>
-              <h2 className="section-title text-start mb-1">Available Rooms & Sharing Types</h2>
+              <span className="pill-badge pill-badge-accent mb-2">Available Options</span>
+              <h2 className="section-title text-start mb-1">Available Rooms & Pricing</h2>
               <p className="section-subtitle mb-0">
                 Single, Double, Triple, and 4-sharing rooms in AC and Non-AC configurations.
               </p>
             </div>
-            <Link to="/rooms" className="btn btn-outline-dark fw-semibold mt-3 mt-md-0">
+            <Link to="/rooms" className="btn btn-sm btn-outline-dark fw-semibold mt-2 mt-md-0">
               View All Rooms <i className="bi bi-arrow-right ms-1"></i>
             </Link>
           </div>
 
-          <div className="row g-4">
+          <div className="row g-3 g-md-4">
             {rooms.slice(0, 3).map((room, idx) => {
               let imagesList = ['/images/bedroom_double.png'];
               if (Array.isArray(room.images)) {
@@ -399,7 +268,7 @@ export default function Home() {
               return (
                 <div key={room.id || `room-${idx}`} className="col-md-6 col-lg-4">
                   <div className="pg-card h-100 d-flex flex-column">
-                    <div className="position-relative overflow-hidden" style={{ height: '220px' }}>
+                    <div className="position-relative overflow-hidden" style={{ height: '180px' }}>
                       <img
                         src={displayImg}
                         onError={(e) => { e.target.src = '/images/bedroom_double.png'; }}
@@ -408,36 +277,33 @@ export default function Home() {
                         style={{ objectFit: 'cover' }}
                       />
                       <div className="position-absolute top-0 start-0 m-2">
-                        <span className={`badge ${room.is_ac ? 'bg-primary' : 'bg-secondary'} fw-semibold`}>
-                          {room.is_ac ? 'AC Room' : 'Non-AC Room'}
+                        <span className={`badge ${room.is_ac ? 'bg-primary' : 'bg-secondary'} fw-semibold`} style={{ fontSize: '0.7rem' }}>
+                          {room.is_ac ? 'AC' : 'Non-AC'}
                         </span>
                       </div>
                       <div className="position-absolute top-0 end-0 m-2">
-                        <span className={`status-pill status-${statusClass}`}>
+                        <span className={`status-pill status-${statusClass}`} style={{ fontSize: '0.68rem', padding: '2px 8px' }}>
                           {statusLabel}
                         </span>
                       </div>
                     </div>
 
-                    <div className="p-4 d-flex flex-column flex-grow-1 justify-content-between">
+                    <div className="p-3 d-flex flex-column flex-grow-1 justify-content-between">
                       <div>
-                        <div className="d-flex justify-content-between align-items-center mb-2">
-                          <h5 className="fw-bold mb-0">Room {room.room_number}</h5>
+                        <div className="d-flex justify-content-between align-items-center mb-1">
+                          <h6 className="fw-bold mb-0">Room {room.room_number}</h6>
                           <span className="small text-muted fw-semibold">Floor {room.floor || 1}</span>
                         </div>
-                        <p className="text-secondary small mb-3">
+                        <p className="text-secondary small mb-2">
                           {sharingLabel} • {room.capacity || 2} Bed Capacity
-                        </p>
-                        <p className="text-muted small line-clamp-2 mb-3">
-                          {room.description || 'Comfortable accommodation with individual lockers, sturdy cots, and daily cleaning.'}
                         </p>
                       </div>
 
-                      <div className="pt-3 border-top d-flex justify-content-between align-items-center">
+                      <div className="pt-2 border-top d-flex justify-content-between align-items-center">
                         <div>
-                          <div className="small text-muted">Monthly Rent</div>
-                          <div className="fw-bold text-dark fs-5">
-                            {room.monthly_rent ? `₹${room.monthly_rent.toLocaleString('en-IN')}` : 'Contact for Price'}
+                          <div className="text-muted" style={{ fontSize: '0.72rem' }}>Monthly Rent</div>
+                          <div className="fw-bold text-dark fs-6">
+                            {room.monthly_rent ? `₹${room.monthly_rent.toLocaleString('en-IN')}` : 'Contact'}
                           </div>
                         </div>
 
@@ -458,6 +324,77 @@ export default function Home() {
       </section>
 
       {/* ==================================================
+          SECTION 3: ABOUT THE PG
+          ================================================== */}
+      <section className="section-padding bg-white">
+        <div className="container">
+          <div className="row align-items-center g-4">
+            <div className="col-lg-6">
+              <div className="position-relative">
+                <img
+                  src="/images/exterior_main.png"
+                  alt="Actual PG Building Exterior"
+                  className="img-fluid rounded-4 shadow-sm w-100"
+                  style={{ maxHeight: '340px', objectFit: 'cover' }}
+                />
+                <div className="position-absolute bottom-0 start-0 m-2">
+                  <span className="badge-authentic" style={{ fontSize: '0.68rem' }}>
+                    <i className="bi bi-camera-fill"></i> Actual PG Exterior Photo
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="col-lg-6">
+              <span className="pill-badge pill-badge-accent mb-2">About The Property</span>
+              <h2 className="section-title text-start mb-2">
+                Reliable Accommodation in Bharathi Nagar, Velachery
+              </h2>
+              <p className="text-secondary small mb-3">
+                Sri Lakshmi Srinivasa Gents PG is located at 3, Bhavani St, Bharathi Nagar, Velachery. Conveniently situated near Taramani IT hub and Velachery MRTS, we offer safe, hygienic, and affordable accommodation.
+              </p>
+
+              <div className="row g-2 mb-3">
+                <div className="col-sm-6">
+                  <div className="d-flex align-items-center gap-2">
+                    <i className="bi bi-check-circle-fill text-success"></i>
+                    <span className="fw-semibold small">Walkable to Bus Stop</span>
+                  </div>
+                </div>
+                <div className="col-sm-6">
+                  <div className="d-flex align-items-center gap-2">
+                    <i className="bi bi-check-circle-fill text-success"></i>
+                    <span className="fw-semibold small">RO Drinking Water</span>
+                  </div>
+                </div>
+                <div className="col-sm-6">
+                  <div className="d-flex align-items-center gap-2">
+                    <i className="bi bi-check-circle-fill text-success"></i>
+                    <span className="fw-semibold small">24/7 Gated Security</span>
+                  </div>
+                </div>
+                <div className="col-sm-6">
+                  <div className="d-flex align-items-center gap-2">
+                    <i className="bi bi-check-circle-fill text-success"></i>
+                    <span className="fw-semibold small">Easy Online Booking</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="d-flex gap-2">
+                <Link to="/about" className="btn btn-sm btn-pg-secondary">
+                  About Us
+                </Link>
+                <button onClick={handleScheduleVisit} className="btn btn-sm btn-pg-primary">
+                  Schedule Visit
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ==================================================
           SECTION 5: FACILITIES (Configurable by Admin)
           ================================================== */}
       <section className="section-padding bg-white">
@@ -470,24 +407,28 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="row g-4">
+          <div className="row g-2 g-md-3">
             {facilities.map((fac) => (
               <div key={fac.id} className="col-6 col-md-4 col-lg-3">
-                <div className="p-3 border rounded-3 h-100 bg-light d-flex flex-column align-items-start transition-hover">
+                <div className="p-2 p-md-3 border rounded-3 h-100 bg-light d-flex flex-column align-items-start">
                   <div
-                    className="d-flex align-items-center justify-content-center rounded-circle mb-2"
-                    style={{ width: '42px', height: '42px', backgroundColor: '#FFF7ED', color: '#EA580C' }}
+                    className="d-flex align-items-center justify-content-center rounded-2 mb-1.5"
+                    style={{ width: '32px', height: '32px', backgroundColor: '#FFF7ED', color: '#EA580C' }}
                   >
-                    <i className={`bi bi-${fac.icon} fs-5`}></i>
+                    <i className={`bi bi-${fac.icon}`} style={{ fontSize: '1.05rem' }}></i>
                   </div>
-                  <h6 className="fw-bold mb-1 fs-6">{fac.title}</h6>
-                  <p className="text-muted small mb-0">{fac.description}</p>
+                  <h6 className="fw-bold mb-0.5 text-dark" style={{ fontSize: '0.85rem' }}>{fac.title}</h6>
+                  {fac.description && (
+                    <p className="text-muted small mb-0 lh-sm text-truncate w-100" style={{ fontSize: '0.72rem' }} title={fac.description}>
+                      {fac.description}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="text-center mt-4">
+          <div className="text-center mt-3">
             <Link to="/facilities" className="btn btn-sm btn-outline-dark fw-semibold">
               Explore All Facilities & Guidelines
             </Link>
@@ -539,40 +480,28 @@ export default function Home() {
       </section>
 
       {/* ==================================================
-          SECTION 7: HOW IT WORKS
+          SECTION 7: HOW TO BOOK
           ================================================== */}
       <section className="section-padding bg-white">
         <div className="container">
           <div className="section-header">
-            <span className="pill-badge pill-badge-accent mb-2">Process</span>
-            <h2 className="section-title">How To Visit & Reserve Your Stay</h2>
+            <span className="pill-badge pill-badge-accent mb-2">Booking Process</span>
+            <h2 className="section-title">How to Book</h2>
             <p className="section-subtitle">
-              A straightforward 5-step process designed for convenience and transparency.
+              Simple 4-step process to reserve your bed or schedule a physical inspection.
             </p>
           </div>
 
-          <div className="row g-4 position-relative">
+          <div className="booking-steps-list">
             {[
-              { step: "01", title: "Create Account", desc: "Register a free account with your email and phone number.", icon: "person-check-fill" },
-              { step: "02", title: "Choose Room / Visit", desc: "Select your desired sharing category (Single, Double, Triple, 4-Sharing) or visit date.", icon: "search" },
-              { step: "03", title: "Submit Request", desc: "Pick a convenient time slot and submit your request in seconds.", icon: "send-check-fill" },
-              { step: "04", title: "Admin Reviews", desc: "Our PG management checks live availability and approves your slot.", icon: "shield-lock-fill" },
-              { step: "05", title: "Get Confirmation", desc: "Receive real-time notifications with confirmed date, time, and directions.", icon: "check-circle-fill" }
+              { num: "1", text: "Choose a room" },
+              { num: "2", text: "Schedule a visit or select Book Room" },
+              { num: "3", text: "Submit your details" },
+              { num: "4", text: "Wait for admin confirmation" },
             ].map((st, i) => (
-              <div key={i} className="col-md-6 col-lg">
-                <div className="p-4 border rounded-4 bg-light text-center h-100 d-flex flex-column justify-content-between">
-                  <div>
-                    <div className="fw-extrabold text-warning fs-3 mb-2">{st.step}</div>
-                    <div
-                      className="d-flex align-items-center justify-content-center rounded-circle mx-auto mb-3"
-                      style={{ width: '48px', height: '48px', backgroundColor: '#EA580C', color: '#FFFFFF' }}
-                    >
-                      <i className={`bi bi-${st.icon} fs-5`}></i>
-                    </div>
-                    <h5 className="fw-bold fs-6 mb-2">{st.title}</h5>
-                    <p className="text-secondary small mb-0">{st.desc}</p>
-                  </div>
-                </div>
+              <div key={i} className="booking-step-item">
+                <div className="booking-step-num">{st.num}</div>
+                <div className="booking-step-text">{st.text}</div>
               </div>
             ))}
           </div>
@@ -584,36 +513,32 @@ export default function Home() {
           ================================================== */}
       <section className="section-padding bg-light">
         <div className="container">
-          <div className="row g-5 align-items-center">
+          <div className="row g-4 align-items-center">
             <div className="col-lg-6">
-              <span className="pill-badge pill-badge-accent mb-2">Strategic Spot</span>
-              <h2 className="section-title text-start mb-3">Velachery, Chennai – Connected To Everywhere</h2>
-              <div className="p-3 bg-white rounded-3 border mb-3">
-                <div className="fw-bold text-dark mb-1">
-                  <i className="bi bi-geo-alt-fill text-danger me-2"></i>
+              <span className="pill-badge pill-badge-accent mb-2">Strategic Location</span>
+              <h2 className="section-title text-start mb-2">Velachery, Chennai</h2>
+              <div className="p-2.5 p-md-3 bg-white rounded-3 border mb-3">
+                <div className="fw-bold text-dark small mb-0.5">
+                  <i className="bi bi-geo-alt-fill text-danger me-1"></i>
                   Sri Lakshmi Srinivasa Gents PG
                 </div>
                 <div className="text-secondary small">
-                  3, Bhavani St, Bharathi Nagar, Velachery, Chennai, Tamil Nadu – 600113
+                  3, Bhavani St, Bharathi Nagar, Velachery, Chennai – 600113
                 </div>
               </div>
 
-              <div className="d-flex flex-column gap-2 mb-4">
+              <div className="d-flex flex-column gap-1.5 mb-3">
                 <div className="d-flex align-items-center gap-2 small text-secondary">
-                  <i className="bi bi-check2-circle text-success fs-5"></i>
+                  <i className="bi bi-check2 text-success"></i>
                   <span>5 mins to Velachery MRTS Railway Station</span>
                 </div>
                 <div className="d-flex align-items-center gap-2 small text-secondary">
-                  <i className="bi bi-check2-circle text-success fs-5"></i>
-                  <span>Quick access to Taramani IT corridor & Ascendas Tech Park</span>
+                  <i className="bi bi-check2 text-success"></i>
+                  <span>Quick access to Taramani IT corridor & Ascendas</span>
                 </div>
                 <div className="d-flex align-items-center gap-2 small text-secondary">
-                  <i className="bi bi-check2-circle text-success fs-5"></i>
-                  <span>Near Phoenix Marketcity Chennai</span>
-                </div>
-                <div className="d-flex align-items-center gap-2 small text-secondary">
-                  <i className="bi bi-check2-circle text-success fs-5"></i>
-                  <span>Close to restaurants, medical shops, and ATMs on 100 Feet Road</span>
+                  <i className="bi bi-check2 text-success"></i>
+                  <span>Near Phoenix Marketcity & 100 Feet Road</span>
                 </div>
               </div>
 
@@ -622,18 +547,18 @@ export default function Home() {
                   href="https://maps.google.com/?q=Sri+Lakshmi+Srinivasa+Gents+PG+Velachery+Chennai"
                   target="_blank"
                   rel="noreferrer"
-                  className="btn btn-pg-primary"
+                  className="btn btn-sm btn-pg-primary"
                 >
-                  <i className="bi bi-compass me-1"></i> Get Directions
+                  <i className="bi bi-compass me-1"></i> Directions
                 </a>
-                <a href="tel:+917893744206" className="btn btn-pg-secondary">
-                  <i className="bi bi-telephone me-1"></i> +91 78937 44206
+                <a href="tel:+917893744206" className="btn btn-sm btn-pg-secondary">
+                  <i className="bi bi-telephone me-1"></i> Call Desk
                 </a>
                 <a
                   href="https://wa.me/917893744206"
                   target="_blank"
                   rel="noreferrer"
-                  className="btn btn-success"
+                  className="btn btn-sm btn-success"
                 >
                   <i className="bi bi-whatsapp me-1"></i> WhatsApp
                 </a>
@@ -642,7 +567,7 @@ export default function Home() {
 
             {/* Embedded Map */}
             <div className="col-lg-6">
-              <div className="rounded-4 overflow-hidden shadow border" style={{ height: '380px' }}>
+              <div className="rounded-3 overflow-hidden shadow-sm border" style={{ height: '260px' }}>
                 <iframe
                   title="PG Location Map"
                   src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3887.488344654944!2d80.2180!3d12.9815!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a525d80b7410041%3A0x6b2b73bcfa014c27!2sBhavani%20St%2C%20Bharathi%20Nagar%2C%20Velachery%2C%20Chennai%2C%20Tamil%20Nadu%20600113!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"

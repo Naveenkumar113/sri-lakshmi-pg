@@ -64,24 +64,24 @@ export default function Navbar() {
       <nav className="navbar navbar-expand-lg navbar-glass sticky-top py-2">
         <div className="container">
           {/* Brand */}
-          <Link className="navbar-brand d-flex align-items-center gap-2" to="/" onClick={() => setNavOpen(false)}>
+          <Link className="navbar-brand d-flex align-items-center gap-2 py-0" to="/" onClick={() => setNavOpen(false)}>
             <div
-              className="d-flex align-items-center justify-content-center text-white rounded-3 shadow-sm flex-shrink-0"
+              className="d-flex align-items-center justify-content-center text-white rounded-2 shadow-xs flex-shrink-0"
               style={{
-                width: '38px',
-                height: '38px',
+                width: '32px',
+                height: '32px',
                 background: 'linear-gradient(135deg, #EA580C 0%, #C2410C 100%)',
                 fontWeight: 800,
-                fontSize: '1.1rem',
+                fontSize: '0.95rem',
               }}
             >
               SL
             </div>
             <div>
-              <div className="fw-bold text-dark lh-1" style={{ fontSize: '1rem', letterSpacing: '-0.02em' }}>
+              <div className="fw-bold text-dark lh-1" style={{ fontSize: '0.92rem', letterSpacing: '-0.02em' }}>
                 SRI LAKSHMI SRINIVASA
               </div>
-              <div className="text-muted fw-semibold" style={{ fontSize: '0.68rem', letterSpacing: '0.04em' }}>
+              <div className="text-muted fw-semibold" style={{ fontSize: '0.62rem', letterSpacing: '0.04em' }}>
                 GENTS PG • VELACHERY
               </div>
             </div>
@@ -89,11 +89,11 @@ export default function Navbar() {
 
           {/* Mobile Menu Button with clear accessible icon */}
           <button
-            className="navbar-toggler border-0 shadow-none d-lg-none p-1.5 rounded-2"
+            className="navbar-toggler border-0 shadow-none d-lg-none p-1 rounded-2"
             type="button"
             onClick={() => setNavOpen(true)}
             aria-label="Open mobile navigation"
-            style={{ minHeight: '38px', minWidth: '38px' }}
+            style={{ width: '34px', height: '34px' }}
           >
             <i className="bi bi-list fs-4 text-dark"></i>
           </button>
