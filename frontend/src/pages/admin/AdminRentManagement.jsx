@@ -419,31 +419,29 @@ export default function AdminRentManagement() {
   };
 
   return (
-    <div className="d-flex flex-column gap-4">
-      {/* Top Header & Actions Bar */}
-      <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 bg-white p-4 rounded-4 border shadow-sm">
-        <div>
-          <div className="d-flex align-items-center gap-2">
-            <h3 className="fw-bold mb-0 text-dark">Rent Management & WhatsApp Reminders</h3>
-            <span className="badge bg-warning text-dark fw-bold">ERP Automated</span>
+    <div className="d-flex flex-column gap-3">
+      {/* Top Header & Actions Bar (Compact Mobile First) */}
+      <div className="bg-white p-3 rounded-4 border shadow-sm">
+        <div className="d-flex justify-content-between align-items-center mb-2">
+          <div>
+            <h4 className="fw-bold mb-0 text-dark">Rent Management</h4>
+            <span className="text-secondary small d-none d-sm-inline">Track monthly dues and dispatch WhatsApp reminders</span>
           </div>
-          <p className="text-secondary small mb-0 mt-1">
-            Track monthly rents, calculate move-in due dates, record admin payments, and dispatch official WhatsApp reminders.
-          </p>
+          <span className="badge bg-warning text-dark fw-bold">ERP Automated</span>
         </div>
 
-        <div className="d-flex flex-wrap align-items-center gap-2">
+        <div className="d-flex flex-wrap align-items-center gap-1.5 pt-1">
           {/* Month Selector */}
-          <div className="d-flex align-items-center gap-2 bg-light px-3 py-1 rounded-3 border">
-            <i className="bi bi-calendar3 text-primary"></i>
-            <span className="small text-muted fw-semibold">Rent Month:</span>
+          <div className="d-flex align-items-center gap-1.5 bg-light px-2.5 py-1 rounded-3 border flex-grow-1 flex-sm-grow-0">
+            <i className="bi bi-calendar3 text-primary small"></i>
+            <span className="small text-muted fw-semibold">Month:</span>
             <select
-              className="form-select form-select-sm border-0 bg-transparent fw-bold text-dark py-0"
-              style={{ width: 'auto', cursor: 'pointer' }}
+              className="form-select form-select-sm border-0 bg-transparent fw-bold text-dark py-0 ps-1"
+              style={{ width: 'auto', cursor: 'pointer', minHeight: '32px' }}
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
             >
-              <option value="ALL">All Rent Months</option>
+              <option value="ALL">All Months</option>
               {monthOptions.map((m) => (
                 <option key={m.key} value={m.key}>
                   {m.label} {m.key === currentMonthKey ? '(Current)' : ''}
@@ -456,30 +454,32 @@ export default function AdminRentManagement() {
           <button
             onClick={handleRunDailyJobNow}
             disabled={runningJob}
-            className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 px-3 shadow-xs"
-            title="Runs the daily reminder algorithm immediately"
+            className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 flex-fill flex-sm-grow-0"
+            title="Runs daily automated check"
+            style={{ minHeight: '34px' }}
           >
             {runningJob ? (
               <span className="spinner-border spinner-border-sm" role="status"></span>
             ) : (
               <i className="bi bi-play-circle-fill"></i>
             )}
-            <span>Run Automated Check</span>
+            <span>Auto Check</span>
           </button>
 
           {/* Sync Records */}
           <button
             onClick={handleSyncRecords}
             disabled={syncingRecords}
-            className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 px-3 shadow-xs"
-            title="Ensures all active resident bed allocations have rent records"
+            className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 flex-fill flex-sm-grow-0"
+            title="Sync active resident records"
+            style={{ minHeight: '34px' }}
           >
             {syncingRecords ? (
               <span className="spinner-border spinner-border-sm" role="status"></span>
             ) : (
               <i className="bi bi-arrow-repeat"></i>
             )}
-            <span>Sync Month Records</span>
+            <span>Sync</span>
           </button>
         </div>
       </div>
@@ -495,47 +495,46 @@ export default function AdminRentManagement() {
         </div>
       )}
 
-      {/* WhatsApp Configuration Status Banner */}
+      {/* WhatsApp Configuration Status Banner (Compact) */}
       <div
-        className="p-3 rounded-4 border d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 bg-white shadow-xs"
-        style={{ borderLeft: '5px solid #25D366' }}
+        className="p-2.5 p-md-3 rounded-4 border d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 bg-white shadow-xs"
+        style={{ borderLeft: '4px solid #25D366' }}
       >
-        <div className="d-flex align-items-center gap-3">
+        <div className="d-flex align-items-center gap-2">
           <div
-            className="rounded-circle d-flex align-items-center justify-content-center text-white"
-            style={{ width: '42px', height: '42px', backgroundColor: '#25D366', flexShrink: 0 }}
+            className="rounded-circle d-flex align-items-center justify-content-center text-white flex-shrink-0"
+            style={{ width: '32px', height: '32px', backgroundColor: '#25D366' }}
           >
-            <i className="bi bi-whatsapp fs-5"></i>
+            <i className="bi bi-whatsapp fs-6"></i>
           </div>
           <div>
-            <div className="fw-bold small d-flex flex-wrap align-items-center gap-2">
-              <span className="text-dark">WhatsApp Mode: Regular WhatsApp Direct Chat Active</span>
-              <span className="badge bg-success-subtle text-success border border-success-subtle small">
-                Click-to-Chat (wa.me)
+            <div className="fw-bold small d-flex flex-wrap align-items-center gap-1.5">
+              <span className="text-dark">Direct WhatsApp Chat Active</span>
+              <span className="badge bg-success-subtle text-success border border-success-subtle" style={{ fontSize: '0.65rem' }}>
+                wa.me
               </span>
               {settings.admin_whatsapp_number && (
-                <span className="badge bg-light text-secondary border small">
-                  Admin Sender Contact: +91 {settings.admin_whatsapp_number}
+                <span className="badge bg-light text-secondary border" style={{ fontSize: '0.65rem' }}>
+                  +91 {settings.admin_whatsapp_number}
                 </span>
               )}
             </div>
-            <div className="small text-muted mt-1">
-              Reminders open directly in regular WhatsApp with prefilled resident rent details. No WhatsApp Business account required.
+            <div className="text-muted" style={{ fontSize: '0.72rem' }}>
+              Opens WhatsApp with prefilled resident rent details.
             </div>
           </div>
         </div>
 
-        <div className="d-flex align-items-center gap-2 flex-shrink-0">
-          <button
-            onClick={() => {
-              setActiveTab('settings');
-              smartScrollTo('#rent-automation-settings', { offset: 90, delay: 100, focusFirstInput: true });
-            }}
-            className="btn btn-xs btn-outline-dark bg-light shadow-xs small px-3 py-1 rounded-2"
-          >
-            <i className="bi bi-gear me-1"></i>Configure Settings
-          </button>
-        </div>
+        <button
+          onClick={() => {
+            setActiveTab('settings');
+            smartScrollTo('#rent-automation-settings', { offset: 90, delay: 100, focusFirstInput: true });
+          }}
+          className="btn btn-sm btn-outline-dark bg-light px-2.5 py-1 rounded-2 align-self-start align-self-sm-center"
+          style={{ minHeight: '32px', fontSize: '0.75rem' }}
+        >
+          <i className="bi bi-gear me-1"></i>Settings
+        </button>
       </div>
 
       {/* SaaS Summary KPI Cards (Responsive on Mobile) */}
@@ -643,21 +642,22 @@ export default function AdminRentManagement() {
         </div>
       </div>
 
-      {/* Tabs Navigation */}
+      {/* Tabs Navigation (Scrollable on small mobile) */}
       <div id="rent-tabs-section" className="bg-white rounded-4 border shadow-sm overflow-hidden">
-        <div className="d-flex border-bottom bg-light px-3 pt-2 gap-2">
+        <div className="d-flex border-bottom bg-light px-2.5 pt-1.5 gap-1 overflow-x-auto text-nowrap" style={{ scrollbarWidth: 'none' }}>
           <button
             onClick={() => {
               setActiveTab('records');
               smartScrollTo('#rent-tabs-section', { offset: 90 });
             }}
-            className={`btn btn-sm border-0 rounded-top-3 px-3 py-2 fw-semibold ${
+            className={`btn btn-sm border-0 rounded-top-3 px-3 py-1.5 fw-semibold ${
               activeTab === 'records'
                 ? 'bg-white text-primary border-top border-start border-end shadow-xs'
                 : 'text-muted hover-bg-light'
             }`}
+            style={{ fontSize: '0.8rem', minHeight: '34px' }}
           >
-            <i className="bi bi-table me-1"></i> Resident Rent Payments
+            <i className="bi bi-table me-1"></i> Rent Payments
           </button>
 
           <button
@@ -665,13 +665,14 @@ export default function AdminRentManagement() {
               setActiveTab('logs');
               smartScrollTo('#rent-tabs-section', { offset: 90 });
             }}
-            className={`btn btn-sm border-0 rounded-top-3 px-3 py-2 fw-semibold ${
+            className={`btn btn-sm border-0 rounded-top-3 px-3 py-1.5 fw-semibold ${
               activeTab === 'logs'
                 ? 'bg-white text-primary border-top border-start border-end shadow-xs'
                 : 'text-muted hover-bg-light'
             }`}
+            style={{ fontSize: '0.8rem', minHeight: '34px' }}
           >
-            <i className="bi bi-clock-history me-1"></i> WhatsApp Reminder History
+            <i className="bi bi-clock-history me-1"></i> Reminder Logs
           </button>
 
           <button
@@ -679,32 +680,34 @@ export default function AdminRentManagement() {
               setActiveTab('settings');
               smartScrollTo('#rent-automation-settings', { offset: 90, delay: 100 });
             }}
-            className={`btn btn-sm border-0 rounded-top-3 px-3 py-2 fw-semibold ${
+            className={`btn btn-sm border-0 rounded-top-3 px-3 py-1.5 fw-semibold ${
               activeTab === 'settings'
                 ? 'bg-white text-primary border-top border-start border-end shadow-xs'
                 : 'text-muted hover-bg-light'
             }`}
+            style={{ fontSize: '0.8rem', minHeight: '34px' }}
           >
-            <i className="bi bi-gear-fill me-1"></i> Automation Settings
+            <i className="bi bi-gear-fill me-1"></i> Settings
           </button>
         </div>
 
         {/* TAB 1: Main Resident Rent Table */}
         {activeTab === 'records' && (
-          <div className="p-4 d-flex flex-column gap-3">
+          <div className="p-2.5 p-md-3 d-flex flex-column gap-2.5">
             {/* Filter Bar */}
-            <div className="row g-2 align-items-center">
-              <div className="col-md-4">
+            <div className="row g-1.5 align-items-center">
+              <div className="col-12 col-md-4">
                 <div className="input-group input-group-sm">
                   <span className="input-group-text bg-white border-end-0">
-                    <i className="bi bi-search text-muted"></i>
+                    <i className="bi bi-search text-muted small"></i>
                   </span>
                   <input
                     type="text"
                     className="form-control border-start-0 ps-0"
-                    placeholder="Search by Resident Name, ID (SLPG-0001), or Phone..."
+                    placeholder="Search resident, ID, or phone..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
+                    style={{ minHeight: '36px' }}
                   />
                   {search && (
                     <button className="btn btn-outline-secondary" onClick={() => setSearch('')}>
@@ -714,44 +717,48 @@ export default function AdminRentManagement() {
                 </div>
               </div>
 
-              <div className="col-sm-6 col-md-3">
+              <div className="col-6 col-md-3">
                 <select
                   className="form-select form-select-sm"
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
+                  style={{ minHeight: '36px' }}
                 >
-                  <option value="ALL">All Payment Statuses</option>
-                  <option value="PENDING">Pending (Awaiting Payment)</option>
+                  <option value="ALL">Status: All</option>
+                  <option value="PENDING">Pending</option>
                   <option value="PARTIALLY_PAID">Partially Paid</option>
-                  <option value="PAID">Paid (Settled)</option>
+                  <option value="PAID">Paid</option>
                   <option value="OVERDUE">Overdue</option>
                 </select>
               </div>
 
-              <div className="col-sm-6 col-md-3">
+              <div className="col-6 col-md-3">
                 <select
                   className="form-select form-select-sm"
                   value={roomFilter}
                   onChange={(e) => setRoomFilter(e.target.value)}
+                  style={{ minHeight: '36px' }}
                 >
-                  <option value="">All Rooms</option>
+                  <option value="">Rooms: All</option>
                   {rooms.map((rm) => (
                     <option key={rm.id} value={rm.room_number}>
-                      Room {rm.room_number} ({rm.sharing_type || `${rm.capacity} Sharing`})
+                      Room {rm.room_number}
                     </option>
                   ))}
                 </select>
               </div>
 
-              <div className="col-md-2 text-md-end">
+              <div className="col-12 col-md-2 text-md-end">
                 <button
                   onClick={() => {
                     fetchStats();
                     fetchRecords();
                   }}
-                  className="btn btn-sm btn-outline-secondary w-100"
+                  className="btn btn-sm btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-1"
+                  style={{ minHeight: '36px' }}
                 >
-                  <i className="bi bi-arrow-clockwise me-1"></i>Refresh
+                  <i className="bi bi-arrow-clockwise"></i>
+                  <span>Refresh</span>
                 </button>
               </div>
             </div>

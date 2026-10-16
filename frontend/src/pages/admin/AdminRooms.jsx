@@ -524,37 +524,44 @@ export default function AdminRooms() {
   const unallocatedResidents = residents.filter((r) => !r.current_allocation_id);
 
   return (
-    <div className="d-flex flex-column gap-4">
-      {/* Top Title & Actions */}
-      <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div className="d-flex flex-column gap-3">
+      {/* Top Title & Actions (Compact on Mobile) */}
+      <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
         <div>
-          <h4 className="fw-bold mb-1">Room & Bed Management</h4>
-          <p className="text-secondary small mb-0">
-            Create rooms, configure sharing types & AC options, manage bed allocations, and monitor real-time occupancy.
-          </p>
+          <h4 className="fw-bold mb-0">Room & Bed Management</h4>
+          <span className="text-secondary small d-none d-sm-inline">
+            Create rooms, assign beds, and monitor occupancy.
+          </span>
         </div>
 
-        <div className="d-flex align-items-center gap-2">
+        <div className="d-flex align-items-center gap-1.5 ms-auto">
           {/* View toggle */}
           <div className="btn-group btn-group-sm" role="group">
             <button
               onClick={() => setViewMode('CARDS')}
-              className={`btn ${viewMode === 'CARDS' ? 'btn-dark' : 'btn-outline-secondary'}`}
+              className={`btn btn-sm ${viewMode === 'CARDS' ? 'btn-dark' : 'btn-outline-secondary'}`}
+              style={{ minHeight: '34px', fontSize: '0.78rem' }}
               title="Card View"
             >
-              <i className="bi bi-grid-fill me-1"></i> Card View
+              <i className="bi bi-grid-fill me-1"></i> Cards
             </button>
             <button
               onClick={() => setViewMode('TABLE')}
-              className={`btn ${viewMode === 'TABLE' ? 'btn-dark' : 'btn-outline-secondary'}`}
+              className={`btn btn-sm ${viewMode === 'TABLE' ? 'btn-dark' : 'btn-outline-secondary'}`}
+              style={{ minHeight: '34px', fontSize: '0.78rem' }}
               title="Table View"
             >
-              <i className="bi bi-table me-1"></i> Table View
+              <i className="bi bi-table me-1"></i> Table
             </button>
           </div>
 
-          <button onClick={handleOpenAdd} className="btn btn-sm btn-pg-primary fw-semibold">
-            <i className="bi bi-plus-lg me-1"></i> Create Room
+          <button
+            onClick={handleOpenAdd}
+            className="btn btn-sm btn-pg-primary fw-semibold d-flex align-items-center gap-1"
+            style={{ minHeight: '34px', fontSize: '0.78rem', padding: '4px 12px' }}
+          >
+            <i className="bi bi-plus-lg"></i>
+            <span>Create</span>
           </button>
         </div>
       </div>

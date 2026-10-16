@@ -30,115 +30,121 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="d-flex flex-column gap-4">
+    <div className="d-flex flex-column gap-3">
       {/* Page Title */}
-      <div>
-        <h3 className="fw-bold mb-1">Hostel Operations Dashboard</h3>
-        <p className="text-secondary small mb-0">
-          Real-time metrics for Sri Lakshmi Srinivasa Gents PG (Velachery, Chennai).
-        </p>
+      <div className="d-flex justify-content-between align-items-center">
+        <div>
+          <h4 className="fw-bold mb-0">Operations Dashboard</h4>
+          <p className="text-secondary small mb-0 d-none d-sm-block">
+            Real-time metrics for Sri Lakshmi Srinivasa Gents PG.
+          </p>
+        </div>
+        <span className="badge bg-primary-subtle text-primary border border-primary-subtle d-sm-none">
+          Live PG
+        </span>
       </div>
 
-      {/* 8 SaaS Metric Cards */}
-      <div className="row g-3">
-        <div className="col-sm-6 col-xl-3">
+      {/* 8 SaaS Metric Cards (2-column on mobile) */}
+      <div className="row g-2 g-md-3">
+        <div className="col-6 col-md-3">
           <Link to="/admin/residents" className="text-decoration-none">
             <div className="stat-box h-100 border-start border-4 border-primary">
-              <div className="d-flex justify-content-between align-items-center mb-2">
+              <div className="d-flex justify-content-between align-items-center mb-1">
                 <span className="small text-muted fw-semibold">Active Residents</span>
-                <i className="bi bi-people text-primary fs-5"></i>
+                <i className="bi bi-people text-primary fs-6 d-none d-sm-block"></i>
               </div>
-              <h3 className="fw-bold mb-0 text-dark">{stats?.active_residents || stats?.total_users}</h3>
-              <span className="small text-primary fw-semibold">Manage Residents &rarr;</span>
+              <h4 className="fw-bold mb-0 text-dark">{stats?.active_residents || stats?.total_users}</h4>
+              <span className="small text-primary fw-semibold">Manage &rarr;</span>
             </div>
           </Link>
         </div>
 
-        <div className="col-sm-6 col-xl-3">
+        <div className="col-6 col-md-3">
           <Link to="/admin/rooms" className="text-decoration-none">
             <div className="stat-box h-100 border-start border-4 border-info">
-              <div className="d-flex justify-content-between align-items-center mb-2">
-                <span className="small text-muted fw-semibold">Room & Bed Inventory</span>
-                <i className="bi bi-building text-info fs-5"></i>
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Inventory</span>
+                <i className="bi bi-building text-info fs-6 d-none d-sm-block"></i>
               </div>
-              <h3 className="fw-bold mb-0 text-dark">{stats?.total_rooms} Rooms</h3>
-              <span className="small text-info fw-semibold">{stats?.total_beds} Total Beds &rarr;</span>
+              <h4 className="fw-bold mb-0 text-dark">{stats?.total_rooms} Rooms</h4>
+              <span className="small text-info fw-semibold">{stats?.total_beds} Beds &rarr;</span>
             </div>
           </Link>
         </div>
 
-        <div className="col-sm-6 col-xl-3">
+        <div className="col-6 col-md-3">
           <Link to="/admin/rooms" className="text-decoration-none">
             <div className="stat-box h-100 border-start border-4 border-success">
-              <div className="d-flex justify-content-between align-items-center mb-2">
-                <span className="small text-muted fw-semibold">Available Rooms</span>
-                <i className="bi bi-door-open text-success fs-5"></i>
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Available</span>
+                <i className="bi bi-door-open text-success fs-6 d-none d-sm-block"></i>
               </div>
-              <h3 className="fw-bold mb-0 text-success">{stats?.available_rooms}</h3>
-              <span className="small text-muted">Ready for occupancy</span>
+              <h4 className="fw-bold mb-0 text-success">{stats?.available_rooms}</h4>
+              <span className="small text-muted">Ready rooms</span>
             </div>
           </Link>
         </div>
 
-        <div className="col-sm-6 col-xl-3">
+        <div className="col-6 col-md-3">
           <Link to="/admin/rooms" className="text-decoration-none">
             <div className="stat-box h-100 border-start border-4 border-warning">
-              <div className="d-flex justify-content-between align-items-center mb-2">
+              <div className="d-flex justify-content-between align-items-center mb-1">
                 <span className="small text-muted fw-semibold">Occupied Beds</span>
-                <i className="bi bi-person-check text-warning fs-5"></i>
+                <i className="bi bi-person-check text-warning fs-6 d-none d-sm-block"></i>
               </div>
-              <h3 className="fw-bold mb-0 text-warning">{stats?.occupied_beds}</h3>
-              <span className="small text-muted">{stats?.occupancy_rate}% Bed Occupancy</span>
+              <h4 className="fw-bold mb-0 text-warning">{stats?.occupied_beds}</h4>
+              <span className="small text-muted">{stats?.occupancy_rate}% Occupied</span>
             </div>
           </Link>
         </div>
 
-
-        <div className="col-sm-6 col-xl-3">
-          <div className="stat-box h-100">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <span className="small text-muted fw-semibold">Pending Visits</span>
-              <span className="badge bg-danger rounded-pill">{stats?.pending_visits}</span>
+        <div className="col-6 col-md-3">
+          <Link to="/admin/visits" className="text-decoration-none">
+            <div className="stat-box h-100">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Pending Visits</span>
+                <span className="badge bg-danger rounded-pill px-2">{stats?.pending_visits}</span>
+              </div>
+              <h4 className="fw-bold mb-0 text-danger">{stats?.pending_visits}</h4>
+              <span className="small text-muted">Review visits &rarr;</span>
             </div>
-            <h3 className="fw-bold mb-0 text-danger">{stats?.pending_visits}</h3>
-            <Link to="/admin/visits" className="small text-decoration-none fw-semibold">
-              Review visits <i className="bi bi-arrow-right"></i>
-            </Link>
-          </div>
+          </Link>
         </div>
 
-        <div className="col-sm-6 col-xl-3">
-          <div className="stat-box h-100">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <span className="small text-muted fw-semibold">Approved Visits</span>
-              <i className="bi bi-check-all text-success fs-5"></i>
+        <div className="col-6 col-md-3">
+          <Link to="/admin/visits" className="text-decoration-none">
+            <div className="stat-box h-100">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Approved Visits</span>
+                <i className="bi bi-check-all text-success fs-6 d-none d-sm-block"></i>
+              </div>
+              <h4 className="fw-bold mb-0 text-success">{stats?.approved_visits}</h4>
+              <span className="small text-muted">Confirmed</span>
             </div>
-            <h3 className="fw-bold mb-0 text-success">{stats?.approved_visits}</h3>
-            <span className="small text-muted">Confirmed appointments</span>
-          </div>
+          </Link>
         </div>
 
-        <div className="col-sm-6 col-xl-3">
-          <div className="stat-box h-100">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <span className="small text-muted fw-semibold">Pending Bookings</span>
-              <span className="badge bg-warning text-dark rounded-pill">{stats?.pending_bookings}</span>
+        <div className="col-6 col-md-3">
+          <Link to="/admin/bookings" className="text-decoration-none">
+            <div className="stat-box h-100">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Bookings Due</span>
+                <span className="badge bg-warning text-dark rounded-pill px-2">{stats?.pending_bookings}</span>
+              </div>
+              <h4 className="fw-bold mb-0 text-warning">{stats?.pending_bookings}</h4>
+              <span className="small text-muted">Allocate beds &rarr;</span>
             </div>
-            <h3 className="fw-bold mb-0 text-warning">{stats?.pending_bookings}</h3>
-            <Link to="/admin/bookings" className="small text-decoration-none fw-semibold">
-              Allocate beds <i className="bi bi-arrow-right"></i>
-            </Link>
-          </div>
+          </Link>
         </div>
 
-        <div className="col-sm-6 col-xl-3">
+        <div className="col-6 col-md-3">
           <div className="stat-box h-100">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <span className="small text-muted fw-semibold">Approved Bookings</span>
-              <i className="bi bi-key-fill text-primary fs-5"></i>
+            <div className="d-flex justify-content-between align-items-center mb-1">
+              <span className="small text-muted fw-semibold">Bookings OK</span>
+              <i className="bi bi-key-fill text-primary fs-6 d-none d-sm-block"></i>
             </div>
-            <h3 className="fw-bold mb-0 text-primary">{stats?.approved_bookings}</h3>
-            <span className="small text-muted">Active resident allocations</span>
+            <h4 className="fw-bold mb-0 text-primary">{stats?.approved_bookings}</h4>
+            <span className="small text-muted">Allocated</span>
           </div>
         </div>
       </div>

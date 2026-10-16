@@ -480,42 +480,70 @@ html, body {
   overflow-x: hidden;
 }
 
-/* Touch targets */
+/* Compact Mobile-First Polish */
 @media (max-width: 768px) {
-  /* Minimum comfortable touch target height for buttons */
+  /* Compact touch buttons - precise 38px to 42px height without oversized padding */
   .btn:not(.btn-xs):not(.btn-sm-tight) {
-    min-height: 44px;
+    min-height: 40px;
+    padding: 6px 14px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 600;
   }
 
-  /* Form control sizes on touch */
+  .btn-sm {
+    min-height: 36px !important;
+    padding: 5px 10px !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* Form control sizes on touch: compact 38px height, 15px font */
   .form-control, .form-select {
-    min-height: 44px;
-    font-size: 16px !important; /* Prevents iOS auto-zoom on focus */
+    min-height: 38px;
+    padding: 6px 10px;
+    font-size: 0.85rem !important;
+    border-radius: 8px;
   }
 
-  /* Stat boxes on mobile */
+  /* Compact stat boxes on mobile */
   .stat-box {
-    padding: 14px 16px;
-    border-radius: var(--radius-md);
+    padding: 10px 12px !important;
+    border-radius: 12px !important;
   }
 
-  .stat-box h3 {
-    font-size: 1.45rem;
+  .stat-box h3, .stat-box h4 {
+    font-size: 1.25rem !important;
+    line-height: 1.2;
+  }
+
+  .stat-box .small {
+    font-size: 0.7rem !important;
+  }
+
+  /* Compact cards & sections on mobile */
+  .card, .pg-card, .bg-white.rounded-4 {
+    border-radius: 14px !important;
+  }
+
+  .p-4 {
+    padding: 14px 16px !important;
+  }
+
+  .gap-4 {
+    gap: 14px !important;
   }
 
   /* Reduce heavy hero section padding */
   .hero-wrapper {
-    min-height: 72vh;
-    padding-top: 30px;
-    padding-bottom: 30px;
+    min-height: 60vh;
+    padding-top: 20px;
+    padding-bottom: 20px;
   }
 
   .hero-wrapper h1.display-4 {
-    font-size: 1.95rem;
+    font-size: 1.65rem;
     line-height: 1.2;
   }
 
@@ -530,23 +558,29 @@ html, body {
   }
 
   .modal-content {
-    border-radius: 16px !important;
+    border-radius: 14px !important;
   }
 
   .modal-header, .modal-body, .modal-footer {
-    padding: 14px 16px !important;
+    padding: 12px 14px !important;
   }
 
   /* Responsive table card wrapper with smooth touch scrolling */
   .table-responsive {
     -webkit-overflow-scrolling: touch;
-    border-radius: 12px;
-    margin-bottom: 0.5rem;
+    border-radius: 10px;
+    margin-bottom: 0.25rem;
   }
 
-  /* Sticky table action headers on touch if needed */
-  .table-responsive table {
-    white-space: nowrap;
+  .table td, .table th {
+    padding: 8px 10px !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* Compact tab headers */
+  .nav-tabs .nav-link, #rent-tabs-section button {
+    padding: 6px 12px !important;
+    font-size: 0.8rem !important;
   }
 }
 
