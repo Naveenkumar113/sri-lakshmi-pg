@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
+import AdminOverviewHeader from '../../components/AdminOverviewHeader';
+import TablePagination from '../../components/TablePagination';
 
 export default function AdminVisits() {
   const [searchParams] = useSearchParams();
   const [visits, setVisits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState(searchParams.get('status') || 'ALL');
+
+  // Pagination state (default 10)
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Modal action states
   const [activeVisit, setActiveVisit] = useState(null);
@@ -85,39 +91,113 @@ export default function AdminVisits() {
     return v.status === filterStatus;
   });
 
+  const totalPages = Math.ceil(filtered.length / pageSize) || 1;
+  const paginatedVisits = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  // Overview stats
+  const pendingCount = visits.filter((v) => v.status === 'PENDING').length;
+  const approvedCount = visits.filter((v) => v.status === 'APPROVED').length;
+  const rescheduledCount = visits.filter((v) => v.status === 'RESCHEDULED').length;
+  const rejectedCount = visits.filter((v) => v.status === 'REJECTED').length;
+
   return (
-    <div className="bg-white p-4 rounded-4 border shadow-sm">
-      <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
-        <div>
-          <h4 className="fw-bold mb-1">PG Visit Appointments Management</h4>
-          <p className="text-secondary small mb-0">
-            Review, approve, reschedule, or cancel visitor appointments.
-          </p>
+    <div>
+      <AdminOverviewHeader
+        title="PG Visit Appointments"
+        badge="Appointments"
+        subtitle="Review, approve, reschedule, or cancel visitor appointments."
+        storageKey="admin_overview_visits"
+        defaultCollapsed={true}
+        summaryItems={[
+          { label: 'Pending', value: pendingCount, colorClass: 'badge bg-warning text-dark rounded-pill px-1.5 py-0.5' },
+          { label: 'Confirmed', value: approvedCount, colorClass: 'text-success' },
+          { label: 'Rescheduled', value: rescheduledCount, colorClass: 'text-primary' },
+          { label: 'Total Visits', value: visits.length, colorClass: 'text-dark' },
+        ]}
+        rightActions={
+          <button
+            onClick={fetchVisits}
+            className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1.5 px-2.5"
+            style={{ height: '36px' }}
+            title="Refresh visit requests"
+          >
+            <i className="bi bi-arrow-clockwise"></i>
+            <span className="d-none d-sm-inline">Refresh</span>
+          </button>
+        }
+      >
+        <div className="row g-2.5 g-md-3">
+          <div className="col-6 col-md-3">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-top-warning">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Pending</span>
+                <span className="badge bg-warning text-dark rounded-pill">{pendingCount}</span>
+              </div>
+              <h4 className="fw-bold mb-0 text-warning">{pendingCount}</h4>
+              <span className="small text-muted" style={{ fontSize: '0.72rem' }}>Awaiting admin action</span>
+            </div>
+          </div>
+          <div className="col-6 col-md-3">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-top-success">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Confirmed</span>
+                <i className="bi bi-calendar-check-fill text-success fs-6"></i>
+              </div>
+              <h4 className="fw-bold mb-0 text-success">{approvedCount}</h4>
+              <span className="small text-muted" style={{ fontSize: '0.72rem' }}>Slots approved</span>
+            </div>
+          </div>
+          <div className="col-6 col-md-3">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-top-primary">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Rescheduled</span>
+                <i className="bi bi-clock-history text-primary fs-6"></i>
+              </div>
+              <h4 className="fw-bold mb-0 text-primary">{rescheduledCount}</h4>
+              <span className="small text-muted" style={{ fontSize: '0.72rem' }}>New time proposed</span>
+            </div>
+          </div>
+          <div className="col-6 col-md-3">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-top-secondary">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Total Requests</span>
+                <i className="bi bi-people-fill text-secondary fs-6"></i>
+              </div>
+              <h4 className="fw-bold mb-0 text-dark">{visits.length}</h4>
+              <span className="small text-muted" style={{ fontSize: '0.72rem' }}>All appointment logs</span>
+            </div>
+          </div>
         </div>
+      </AdminOverviewHeader>
 
-        {/* Status Filters */}
-        <div className="d-flex flex-wrap gap-2">
-          {['ALL', 'PENDING', 'APPROVED', 'RESCHEDULED', 'REJECTED'].map((st) => (
-            <button
-              key={st}
-              onClick={() => setFilterStatus(st)}
-              className={`btn btn-sm ${filterStatus === st ? 'btn-dark fw-bold' : 'btn-outline-secondary'}`}
-            >
-              {st}
-            </button>
-          ))}
+      <div className="bg-white p-3 p-md-4 rounded-4 border shadow-sm">
+        <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+          {/* Status Filters */}
+          <div className="d-flex flex-wrap gap-1.5">
+            {['ALL', 'PENDING', 'APPROVED', 'RESCHEDULED', 'REJECTED'].map((st) => (
+              <button
+                key={st}
+                onClick={() => {
+                  setFilterStatus(st);
+                  setPage(1);
+                }}
+                className={`btn btn-sm ${filterStatus === st ? 'btn-dark fw-bold' : 'btn-outline-secondary'}`}
+              >
+                {st}
+              </button>
+            ))}
+          </div>
+
+          {/* Bookings & Visits Sub-navigation Tabs */}
+          <div className="d-flex gap-2">
+            <a href="/admin/bookings" className="btn btn-sm btn-outline-secondary">
+              <i className="bi bi-door-open me-1"></i> Room Bookings
+            </a>
+            <a href="/admin/visits" className="btn btn-sm btn-dark fw-bold">
+              <i className="bi bi-calendar-check me-1"></i> Visit Requests ({visits.length})
+            </a>
+          </div>
         </div>
-      </div>
-
-      {/* Bookings & Visits Sub-navigation Tabs */}
-      <div className="d-flex gap-2 border-bottom pb-2 mb-3">
-        <a href="/admin/bookings" className="btn btn-sm btn-outline-secondary">
-          <i className="bi bi-door-open me-1"></i> Room Bookings
-        </a>
-        <a href="/admin/visits" className="btn btn-sm btn-dark fw-bold">
-          <i className="bi bi-calendar-check me-1"></i> Visit Requests ({visits.length})
-        </a>
-      </div>
 
       {loading ? (
         <div className="text-center py-5">
@@ -132,7 +212,7 @@ export default function AdminVisits() {
         <>
           {/* Mobile Card List (< 768px) */}
           <div className="d-md-none d-flex flex-column gap-2">
-            {filtered.map((v) => (
+            {paginatedVisits.map((v) => (
               <div key={v.id} className="p-3 bg-white rounded-3 border shadow-xs d-flex flex-column gap-2">
                 <div className="d-flex justify-content-between align-items-start">
                   <div>
@@ -209,7 +289,7 @@ export default function AdminVisits() {
                 </tr>
               </thead>
               <tbody className="small">
-                {filtered.map((v) => (
+                {paginatedVisits.map((v) => (
                   <tr key={v.id}>
                     <td>
                       <div className="fw-bold text-dark">{v.full_name}</div>
@@ -275,6 +355,18 @@ export default function AdminVisits() {
               </tbody>
             </table>
           </div>
+
+          <TablePagination
+            currentPage={page}
+            pageSize={pageSize}
+            totalItems={filtered.length}
+            itemLabel="visit requests"
+            onPageChange={setPage}
+            onPageSizeChange={(newSize) => {
+              setPageSize(newSize);
+              setPage(1);
+            }}
+          />
         </>
       )}
 
@@ -366,6 +458,7 @@ export default function AdminVisits() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

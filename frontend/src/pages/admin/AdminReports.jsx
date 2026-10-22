@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
+import AdminOverviewHeader from '../../components/AdminOverviewHeader';
+import TablePagination from '../../components/TablePagination';
 
 const ISSUE_CATEGORIES = [
   'Room cleaning not completed today',
@@ -27,6 +29,10 @@ export default function AdminReports() {
   const [reports, setReports] = useState([]);
   const [counts, setCounts] = useState({ open: 0, in_progress: 0, resolved: 0, total: 0 });
   const [loading, setLoading] = useState(true);
+
+  // Pagination state (default 10)
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Filters & Search
   const [searchTerm, setSearchTerm] = useState('');
@@ -92,6 +98,12 @@ export default function AdminReports() {
     return () => clearInterval(timer);
   }, [statusFilter, categoryFilter, sortBy, directReportId]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, categoryFilter, searchTerm, sortBy]);
+
+  const paginatedReports = reports.slice((page - 1) * pageSize, page * pageSize);
+
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     fetchReports();
@@ -150,85 +162,86 @@ export default function AdminReports() {
 
   return (
     <div className="d-flex flex-column gap-4">
-      {/* Top Header */}
-      <div className="bg-white p-4 rounded-4 border shadow-sm">
-        <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
-          <div>
-            <div className="d-flex align-items-center gap-2 mb-1">
-              <span className="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-semibold px-2 py-1">
-                <i className="bi bi-exclamation-octagon me-1"></i> Maintenance ERP
-              </span>
-            </div>
-            <h4 className="fw-bold text-dark mb-1">Issue Reports & Resident Maintenance</h4>
-            <p className="text-muted small mb-0">
-              Manage room cleaning, plumbing, electrical, and maintenance reports submitted by PG residents.
-            </p>
-          </div>
+      {/* Reusable AdminOverviewHeader for Issue Reports */}
+      <AdminOverviewHeader
+        title="Issue Reports & Maintenance"
+        subtitle="Manage resident maintenance, cleaning requests, plumbing, and electrical issues."
+        badge={`${counts.open} Open Issues`}
+        storageKey="reports"
+        defaultCollapsed={true}
+        summaryItems={[
+          { label: 'Open', value: counts.open, colorClass: 'badge bg-warning text-dark rounded-pill px-1.5 py-0.5' },
+          { label: 'In Progress', value: counts.in_progress, colorClass: 'badge bg-primary rounded-pill px-1.5 py-0.5' },
+          { label: 'Resolved', value: counts.resolved, colorClass: 'text-success' },
+          { label: 'Total', value: counts.total, colorClass: 'text-dark' },
+        ]}
+        rightActions={
           <button
             onClick={fetchReports}
-            className="btn btn-sm btn-outline-dark d-flex align-items-center gap-1.5"
+            className="btn btn-sm btn-outline-dark d-flex align-items-center gap-1.5 px-2.5 shadow-xs"
+            style={{ height: '36px' }}
             title="Reload reports"
           >
             <i className="bi bi-arrow-clockwise"></i>
-            <span>Refresh Reports</span>
+            <span className="d-none d-sm-inline">Refresh</span>
           </button>
-        </div>
-      </div>
-
-      {/* 4 Summary Stat Cards (Responsive on Mobile) */}
-      <div className="row g-2 g-md-3">
-        <div className="col-6 col-xl-3">
-          <div className="stat-box h-100 bg-white p-2.5 p-md-3 rounded-4 border shadow-sm">
-            <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-muted fw-semibold" style={{ fontSize: '0.75rem' }}>Total Reports</span>
-              <div className="rounded-circle p-1.5 bg-light text-dark d-none d-sm-block">
-                <i className="bi bi-clipboard-data fs-6"></i>
+        }
+      >
+        {/* 4 Summary Stat Cards */}
+        <div className="row g-2 g-md-3">
+          <div className="col-6 col-xl-3">
+            <div className="stat-box h-100 bg-white p-2.5 p-md-3 rounded-4 border shadow-sm border-top-secondary">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold" style={{ fontSize: '0.75rem' }}>Total Reports</span>
+                <div className="rounded-circle p-1.5 bg-light text-dark d-none d-sm-block">
+                  <i className="bi bi-clipboard-data fs-6"></i>
+                </div>
               </div>
+              <h4 className="fw-bold mb-0 text-dark">{counts.total}</h4>
+              <span className="small text-muted" style={{ fontSize: '0.7rem' }}>All submissions</span>
             </div>
-            <h4 className="fw-bold mb-0 text-dark">{counts.total}</h4>
-            <span className="small text-muted" style={{ fontSize: '0.7rem' }}>All submissions</span>
+          </div>
+
+          <div className="col-6 col-xl-3">
+            <div className="stat-box h-100 bg-white p-2.5 p-md-3 rounded-4 border shadow-sm border-top-warning">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-warning-emphasis fw-semibold" style={{ fontSize: '0.75rem' }}>Open</span>
+                <div className="rounded-circle p-1.5 bg-warning-subtle text-warning d-none d-sm-block">
+                  <i className="bi bi-exclamation-circle fs-6"></i>
+                </div>
+              </div>
+              <h4 className="fw-bold mb-0 text-warning">{counts.open}</h4>
+              <span className="small text-warning fw-semibold" style={{ fontSize: '0.7rem' }}>Needs attention</span>
+            </div>
+          </div>
+
+          <div className="col-6 col-xl-3">
+            <div className="stat-box h-100 bg-white p-2.5 p-md-3 rounded-4 border shadow-sm border-top-primary">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-primary fw-semibold" style={{ fontSize: '0.75rem' }}>In Progress</span>
+                <div className="rounded-circle p-1.5 bg-primary-subtle text-primary d-none d-sm-block">
+                  <i className="bi bi-gear-wide-connected fs-6"></i>
+                </div>
+              </div>
+              <h4 className="fw-bold mb-0 text-primary">{counts.in_progress}</h4>
+              <span className="small text-primary fw-semibold" style={{ fontSize: '0.7rem' }}>Being resolved</span>
+            </div>
+          </div>
+
+          <div className="col-6 col-xl-3">
+            <div className="stat-box h-100 bg-white p-2.5 p-md-3 rounded-4 border shadow-sm border-top-success">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-success fw-semibold" style={{ fontSize: '0.75rem' }}>Resolved</span>
+                <div className="rounded-circle p-1.5 bg-success-subtle text-success d-none d-sm-block">
+                  <i className="bi bi-check-circle fs-6"></i>
+                </div>
+              </div>
+              <h4 className="fw-bold mb-0 text-success">{counts.resolved}</h4>
+              <span className="small text-success fw-semibold" style={{ fontSize: '0.7rem' }}>Completed fixes</span>
+            </div>
           </div>
         </div>
-
-        <div className="col-6 col-xl-3">
-          <div className="stat-box h-100 bg-white p-2.5 p-md-3 rounded-4 border shadow-sm">
-            <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-warning-emphasis fw-semibold" style={{ fontSize: '0.75rem' }}>Open</span>
-              <div className="rounded-circle p-1.5 bg-warning-subtle text-warning d-none d-sm-block">
-                <i className="bi bi-exclamation-circle fs-6"></i>
-              </div>
-            </div>
-            <h4 className="fw-bold mb-0 text-warning">{counts.open}</h4>
-            <span className="small text-warning fw-semibold" style={{ fontSize: '0.7rem' }}>Needs attention</span>
-          </div>
-        </div>
-
-        <div className="col-6 col-xl-3">
-          <div className="stat-box h-100 bg-white p-2.5 p-md-3 rounded-4 border shadow-sm">
-            <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-primary fw-semibold" style={{ fontSize: '0.75rem' }}>In Progress</span>
-              <div className="rounded-circle p-1.5 bg-primary-subtle text-primary d-none d-sm-block">
-                <i className="bi bi-gear-wide-connected fs-6"></i>
-              </div>
-            </div>
-            <h4 className="fw-bold mb-0 text-primary">{counts.in_progress}</h4>
-            <span className="small text-primary fw-semibold" style={{ fontSize: '0.7rem' }}>Being resolved</span>
-          </div>
-        </div>
-
-        <div className="col-6 col-xl-3">
-          <div className="stat-box h-100 bg-white p-2.5 p-md-3 rounded-4 border shadow-sm">
-            <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-success fw-semibold" style={{ fontSize: '0.75rem' }}>Resolved</span>
-              <div className="rounded-circle p-1.5 bg-success-subtle text-success d-none d-sm-block">
-                <i className="bi bi-check-circle fs-6"></i>
-              </div>
-            </div>
-            <h4 className="fw-bold mb-0 text-success">{counts.resolved}</h4>
-            <span className="small text-success fw-semibold" style={{ fontSize: '0.7rem' }}>Completed fixes</span>
-          </div>
-        </div>
-      </div>
+      </AdminOverviewHeader>
 
       {/* Filter and Search Bar */}
       <div className="bg-white p-3 p-md-4 rounded-4 border shadow-sm">
@@ -312,79 +325,94 @@ export default function AdminReports() {
             </p>
           </div>
         ) : (
-          <div className="table-responsive">
-            <table className="table table-hover align-middle mb-0">
-              <thead className="table-light small text-muted text-uppercase">
-                <tr>
-                  <th scope="col" style={{ letterSpacing: '0.04em' }}>Report ID</th>
-                  <th scope="col" style={{ letterSpacing: '0.04em' }}>Resident</th>
-                  <th scope="col" style={{ letterSpacing: '0.04em' }}>Room / Bed</th>
-                  <th scope="col" style={{ letterSpacing: '0.04em' }}>Category</th>
-                  <th scope="col" style={{ letterSpacing: '0.04em' }}>Reported At</th>
-                  <th scope="col" style={{ letterSpacing: '0.04em' }}>Status</th>
-                  <th scope="col" className="text-end" style={{ letterSpacing: '0.04em' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody className="small">
-                {reports.map((rep) => (
-                  <tr
-                    key={rep.id}
-                    className={selectedReport?.id === rep.id ? 'table-warning' : ''}
-                  >
-                    <td>
-                      <span className="fw-bold text-dark font-monospace">{rep.report_code}</span>
-                    </td>
-                    <td>
-                      <div className="fw-bold text-dark">{rep.resident_name}</div>
-                      <div className="text-muted" style={{ fontSize: '0.75rem' }}>
-                        {rep.resident_code ? `${rep.resident_code} • ` : ''}{rep.resident_phone}
-                      </div>
-                    </td>
-                    <td>
-                      {rep.room_number ? (
-                        <div>
-                          <span className="badge bg-light text-dark border">
-                            Room {rep.room_number}
-                          </span>
-                          <div className="text-muted" style={{ fontSize: '0.75rem' }}>
-                            {rep.bed_number ? `Bed ${rep.bed_number}` : ''} {rep.floor_number !== null ? `(Fl ${rep.floor_number})` : ''}
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-muted fst-italic">No active bed</span>
-                      )}
-                    </td>
-                    <td>
-                      <div className="fw-semibold text-dark">{rep.issue_category}</div>
-                      {rep.description && (
-                        <div className="text-muted truncate" style={{ maxWidth: '260px', fontSize: '0.78rem' }} title={rep.description}>
-                          {rep.description}
-                        </div>
-                      )}
-                    </td>
-                    <td className="text-nowrap text-secondary">
-                      {new Date(rep.created_at).toLocaleDateString('en-IN', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </td>
-                    <td>{getStatusBadge(rep.status)}</td>
-                    <td className="text-end text-nowrap">
-                      <button
-                        className="btn btn-sm btn-outline-primary fw-semibold px-2.5 py-1"
-                        onClick={() => openDetailModal(rep)}
-                      >
-                        <i className="bi bi-pencil-square me-1"></i> Manage
-                      </button>
-                    </td>
+          <>
+            <div className="table-responsive">
+              <table className="table table-hover align-middle mb-0">
+                <thead className="table-light small text-muted text-uppercase">
+                  <tr>
+                    <th scope="col" style={{ letterSpacing: '0.04em' }}>Report ID</th>
+                    <th scope="col" style={{ letterSpacing: '0.04em' }}>Resident</th>
+                    <th scope="col" style={{ letterSpacing: '0.04em' }}>Room / Bed</th>
+                    <th scope="col" style={{ letterSpacing: '0.04em' }}>Category</th>
+                    <th scope="col" style={{ letterSpacing: '0.04em' }}>Reported At</th>
+                    <th scope="col" style={{ letterSpacing: '0.04em' }}>Status</th>
+                    <th scope="col" className="text-end" style={{ letterSpacing: '0.04em' }}>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="small">
+                  {paginatedReports.map((rep) => (
+                    <tr
+                      key={rep.id}
+                      className={selectedReport?.id === rep.id ? 'table-warning' : ''}
+                    >
+                      <td>
+                        <span className="fw-bold text-dark font-monospace">{rep.report_code}</span>
+                      </td>
+                      <td>
+                        <div className="fw-bold text-dark">{rep.resident_name}</div>
+                        <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                          {rep.resident_code ? `${rep.resident_code} • ` : ''}{rep.resident_phone}
+                        </div>
+                      </td>
+                      <td>
+                        {rep.room_number ? (
+                          <div>
+                            <span className="badge bg-light text-dark border">
+                              Room {rep.room_number}
+                            </span>
+                            <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                              {rep.bed_number ? `Bed ${rep.bed_number}` : ''} {rep.floor_number !== null ? `(Fl ${rep.floor_number})` : ''}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-muted fst-italic">No active bed</span>
+                        )}
+                      </td>
+                      <td>
+                        <div className="fw-semibold text-dark">{rep.issue_category}</div>
+                        {rep.description && (
+                          <div className="text-muted truncate" style={{ maxWidth: '260px', fontSize: '0.78rem' }} title={rep.description}>
+                            {rep.description}
+                          </div>
+                        )}
+                      </td>
+                      <td className="text-nowrap text-secondary">
+                        {new Date(rep.created_at).toLocaleDateString('en-IN', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </td>
+                      <td>{getStatusBadge(rep.status)}</td>
+                      <td className="text-end text-nowrap">
+                        <button
+                          className="btn btn-sm btn-outline-primary fw-semibold px-2.5 py-1"
+                          onClick={() => openDetailModal(rep)}
+                        >
+                          <i className="bi bi-pencil-square me-1"></i> Manage
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination for Reports */}
+            <TablePagination
+              currentPage={page}
+              pageSize={pageSize}
+              totalItems={reports.length}
+              itemLabel="issue reports"
+              onPageChange={setPage}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setPage(1);
+              }}
+            />
+          </>
         )}
       </div>
 

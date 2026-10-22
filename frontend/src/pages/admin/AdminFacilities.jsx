@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
+import AdminOverviewHeader from '../../components/AdminOverviewHeader';
 
 export default function AdminFacilities() {
   const [facilities, setFacilities] = useState([]);
@@ -91,35 +92,79 @@ export default function AdminFacilities() {
     }
   };
 
+  const activeCount = facilities.filter((f) => f.is_active).length;
+  const hiddenCount = facilities.filter((f) => !f.is_active).length;
+
   return (
-    <div className="bg-white p-4 rounded-4 border shadow-sm">
-      <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
-        <div>
-          <h4 className="fw-bold mb-1">PG Amenities & Facilities Configuration</h4>
-          <p className="text-secondary small mb-0">
-            Control which facilities appear on the homepage and facilities page dynamically.
-          </p>
+    <div>
+      <AdminOverviewHeader
+        title="Amenities & Facilities"
+        badge="Content CMS"
+        subtitle="Control which facilities appear on the homepage and facilities page dynamically."
+        storageKey="admin_overview_facilities"
+        defaultCollapsed={true}
+        summaryItems={[
+          { label: 'Active Facilities', value: activeCount, colorClass: 'badge bg-success-subtle text-success px-1.5 py-0.5 rounded-pill' },
+          { label: 'Hidden', value: hiddenCount, colorClass: 'text-secondary' },
+          { label: 'Total', value: facilities.length, colorClass: 'text-dark' },
+        ]}
+        rightActions={
+          <div className="d-flex align-items-center gap-2">
+            <a href="/admin/gallery" className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1.5" style={{ height: '36px' }}>
+              <i className="bi bi-images"></i>
+              <span className="d-none d-sm-inline">Gallery</span>
+            </a>
+            <button onClick={openAdd} className="btn btn-sm btn-pg-primary fw-semibold d-flex align-items-center gap-1.5" style={{ height: '36px' }}>
+              <i className="bi bi-plus-lg"></i>
+              <span>Add Facility</span>
+            </button>
+          </div>
+        }
+      >
+        <div className="row g-2.5 g-md-3">
+          <div className="col-4">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-top-success">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Active & Visible</span>
+                <i className="bi bi-check-circle-fill text-success fs-6"></i>
+              </div>
+              <h4 className="fw-bold mb-0 text-success">{activeCount}</h4>
+              <span className="small text-muted" style={{ fontSize: '0.72rem' }}>Published on website</span>
+            </div>
+          </div>
+          <div className="col-4">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-top-secondary">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Hidden / Draft</span>
+                <i className="bi bi-eye-slash-fill text-secondary fs-6"></i>
+              </div>
+              <h4 className="fw-bold mb-0 text-secondary">{hiddenCount}</h4>
+              <span className="small text-muted" style={{ fontSize: '0.72rem' }}>Not shown to public</span>
+            </div>
+          </div>
+          <div className="col-4">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-top-primary">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Total Facilities</span>
+                <i className="bi bi-stars text-primary fs-6"></i>
+              </div>
+              <h4 className="fw-bold mb-0 text-primary">{facilities.length}</h4>
+              <span className="small text-muted" style={{ fontSize: '0.72rem' }}>Configured items</span>
+            </div>
+          </div>
         </div>
+      </AdminOverviewHeader>
 
-        <div className="d-flex align-items-center gap-2">
-          <a href="/admin/gallery" className="btn btn-sm btn-outline-secondary">
-            <i className="bi bi-images me-1"></i> Open Gallery
+      <div className="bg-white p-3 p-md-4 rounded-4 border shadow-sm">
+        {/* Facilities & Gallery Sub-navigation Tabs */}
+        <div className="d-flex gap-2 border-bottom pb-2 mb-3">
+          <a href="/admin/facilities" className="btn btn-sm btn-dark fw-bold">
+            <i className="bi bi-stars me-1"></i> Facilities ({facilities.length})
           </a>
-          <button onClick={openAdd} className="btn btn-sm btn-pg-primary fw-semibold">
-            <i className="bi bi-plus-lg me-1"></i> Add Facility
-          </button>
+          <a href="/admin/gallery" className="btn btn-sm btn-outline-secondary">
+            <i className="bi bi-images me-1"></i> Photo Gallery
+          </a>
         </div>
-      </div>
-
-      {/* Facilities & Gallery Sub-navigation Tabs */}
-      <div className="d-flex gap-2 border-bottom pb-2 mb-3">
-        <a href="/admin/facilities" className="btn btn-sm btn-dark fw-bold">
-          <i className="bi bi-stars me-1"></i> Facilities ({facilities.length})
-        </a>
-        <a href="/admin/gallery" className="btn btn-sm btn-outline-secondary">
-          <i className="bi bi-images me-1"></i> Photo Gallery
-        </a>
-      </div>
 
       {loading ? (
         <div className="text-center py-5">
@@ -290,6 +335,7 @@ export default function AdminFacilities() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

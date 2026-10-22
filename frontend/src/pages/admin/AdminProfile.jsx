@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import AdminOverviewHeader from '../../components/AdminOverviewHeader';
 
 export default function AdminProfile() {
   const { user, updateUser } = useAuth();
@@ -72,7 +73,52 @@ export default function AdminProfile() {
   };
 
   return (
-    <div className="d-flex flex-column gap-4">
+    <div className="d-flex flex-column gap-3">
+      <AdminOverviewHeader
+        title="Admin Profile & Security"
+        badge="Account Settings"
+        subtitle="Manage credentials, contact info, and security for Sri Lakshmi Srinivasa Gents PG."
+        storageKey="admin_overview_profile"
+        defaultCollapsed={true}
+        summaryItems={[
+          { label: 'Role', value: 'Administrator', colorClass: 'badge bg-danger-subtle text-danger px-1.5 py-0.5 rounded-pill' },
+          { label: 'Account', value: user?.full_name || 'Admin', colorClass: 'text-dark fw-bold' },
+          { label: 'Audit Logs', value: auditLogs.length, colorClass: 'text-primary' },
+          { label: 'Status', value: 'Active Session', colorClass: 'text-success' },
+        ]}
+      >
+        <div className="row g-2.5 g-md-3">
+          <div className="col-sm-6 col-md-3">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-top-danger">
+              <span className="small text-muted fw-semibold">Access Level</span>
+              <h5 className="fw-bold mb-0 text-danger mt-1">Super Admin</h5>
+              <span className="small text-muted" style={{ fontSize: '0.72rem' }}>Full ERP permissions</span>
+            </div>
+          </div>
+          <div className="col-sm-6 col-md-3">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-top-primary">
+              <span className="small text-muted fw-semibold">Registered Email</span>
+              <h6 className="fw-bold mb-0 text-dark mt-1 text-truncate">{user?.email || 'admin@srilakshmipg.com'}</h6>
+              <span className="small text-muted" style={{ fontSize: '0.72rem' }}>Primary login identity</span>
+            </div>
+          </div>
+          <div className="col-sm-6 col-md-3">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-top-success">
+              <span className="small text-muted fw-semibold">Security State</span>
+              <h6 className="fw-bold mb-0 text-success mt-1">256-bit JWT Active</h6>
+              <span className="small text-muted" style={{ fontSize: '0.72rem' }}>Encrypted session</span>
+            </div>
+          </div>
+          <div className="col-sm-6 col-md-3">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-top-secondary">
+              <span className="small text-muted fw-semibold">Audit Events Logged</span>
+              <h5 className="fw-bold mb-0 text-dark mt-1">{auditLogs.length}</h5>
+              <span className="small text-muted" style={{ fontSize: '0.72rem' }}>Recent system actions</span>
+            </div>
+          </div>
+        </div>
+      </AdminOverviewHeader>
+
       <div className="bg-white p-4 p-md-5 rounded-4 border shadow-sm">
         <h4 className="fw-bold mb-1">Estate Manager & Admin Profile</h4>
         <p className="text-secondary small mb-4">

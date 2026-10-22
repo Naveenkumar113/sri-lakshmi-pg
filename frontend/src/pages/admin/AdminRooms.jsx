@@ -7,6 +7,8 @@ import BusSeatMap, {
   capacityToSharingType,
   getRoomSharingLabel,
 } from '../../components/BusSeatMap';
+import AdminOverviewHeader from '../../components/AdminOverviewHeader';
+import TablePagination from '../../components/TablePagination';
 
 const sanitizePhone = (val) => (val || '').replace(/\D/g, '').slice(0, 10);
 
@@ -23,6 +25,10 @@ export default function AdminRooms() {
   const [acFilter, setAcFilter] = useState('ALL');
   const [sharingFilter, setSharingFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
+
+  // Pagination state (10 default)
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Modals state
   const [showRoomFormModal, setShowRoomFormModal] = useState(false);
@@ -210,12 +216,24 @@ export default function AdminRooms() {
     return true;
   });
 
+  // Reset to page 1 when search or filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [search, acFilter, sharingFilter, statusFilter]);
+
   // Overall metrics
   const totalRooms = rooms.length;
   const totalBeds = rooms.reduce((acc, r) => acc + (r.capacity || 0), 0);
   const occupiedBeds = rooms.reduce((acc, r) => acc + (r.occupied_beds || 0), 0);
   const availableBeds = rooms.reduce((acc, r) => acc + (r.available_beds || 0), 0);
+  const maintenanceBeds = rooms.reduce((acc, r) => {
+    const maintInRoom = r.beds?.filter((b) => b.bed_status === 'MAINTENANCE').length || 0;
+    return acc + maintInRoom;
+  }, 0);
   const occupancyRate = totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0;
+
+  // Paginated rooms
+  const paginatedRooms = filteredRooms.slice((page - 1) * pageSize, page * pageSize);
 
   // Open Room Add
   const handleOpenAdd = () => {
@@ -525,99 +543,109 @@ export default function AdminRooms() {
 
   return (
     <div className="d-flex flex-column gap-3">
-      {/* Top Title & Actions (Compact on Mobile) */}
-      <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
-        <div>
-          <h4 className="fw-bold mb-0">Room & Bed Management</h4>
-          <span className="text-secondary small d-none d-sm-inline">
-            Create rooms, assign beds, and monitor occupancy.
-          </span>
-        </div>
+      {/* Reusable AdminOverviewHeader for Rooms & Beds */}
+      <AdminOverviewHeader
+        title="Rooms & Beds Management"
+        subtitle="Manage room capacities, bed layouts, allocations, and live occupancy."
+        badge={`${totalRooms} Rooms`}
+        storageKey="rooms"
+        defaultCollapsed={true}
+        summaryItems={[
+          { label: 'Rooms', value: totalRooms, colorClass: 'text-dark' },
+          { label: 'Total Beds', value: totalBeds, colorClass: 'text-dark' },
+          { label: 'Occupied', value: occupiedBeds, colorClass: 'text-danger' },
+          { label: 'Available', value: availableBeds, colorClass: 'text-success' },
+          { label: 'Maintenance', value: maintenanceBeds, colorClass: 'text-secondary', isHiddenOnMobile: true },
+          { label: 'Occupancy', value: `${occupancyRate}%`, colorClass: 'text-warning' },
+        ]}
+        rightActions={
+          <div className="d-flex align-items-center gap-1.5">
+            <div className="btn-group btn-group-sm" role="group">
+              <button
+                type="button"
+                onClick={() => setViewMode('CARDS')}
+                className={`btn btn-sm ${viewMode === 'CARDS' ? 'btn-dark' : 'btn-outline-secondary'}`}
+                style={{ minHeight: '36px', fontSize: '0.78rem' }}
+                title="Card View"
+              >
+                <i className="bi bi-grid-fill me-1"></i> Cards
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('TABLE')}
+                className={`btn btn-sm ${viewMode === 'TABLE' ? 'btn-dark' : 'btn-outline-secondary'}`}
+                style={{ minHeight: '36px', fontSize: '0.78rem' }}
+                title="Table View"
+              >
+                <i className="bi bi-table me-1"></i> Table
+              </button>
+            </div>
 
-        <div className="d-flex align-items-center gap-1.5 ms-auto">
-          {/* View toggle */}
-          <div className="btn-group btn-group-sm" role="group">
             <button
-              onClick={() => setViewMode('CARDS')}
-              className={`btn btn-sm ${viewMode === 'CARDS' ? 'btn-dark' : 'btn-outline-secondary'}`}
-              style={{ minHeight: '34px', fontSize: '0.78rem' }}
-              title="Card View"
+              type="button"
+              onClick={handleOpenAdd}
+              className="btn btn-sm btn-pg-primary fw-semibold d-flex align-items-center gap-1 text-white shadow-xs"
+              style={{ minHeight: '36px', fontSize: '0.78rem', padding: '4px 12px' }}
             >
-              <i className="bi bi-grid-fill me-1"></i> Cards
-            </button>
-            <button
-              onClick={() => setViewMode('TABLE')}
-              className={`btn btn-sm ${viewMode === 'TABLE' ? 'btn-dark' : 'btn-outline-secondary'}`}
-              style={{ minHeight: '34px', fontSize: '0.78rem' }}
-              title="Table View"
-            >
-              <i className="bi bi-table me-1"></i> Table
+              <i className="bi bi-plus-lg"></i>
+              <span>Create</span>
             </button>
           </div>
-
-          <button
-            onClick={handleOpenAdd}
-            className="btn btn-sm btn-pg-primary fw-semibold d-flex align-items-center gap-1"
-            style={{ minHeight: '34px', fontSize: '0.78rem', padding: '4px 12px' }}
-          >
-            <i className="bi bi-plus-lg"></i>
-            <span>Create</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Metric Stat Cards (Responsive 2-column mobile, 4-column desktop) */}
-      <div className="row g-2.5 g-md-3">
-        <div className="col-6 col-md-3">
-          <div className="stat-box border-top-primary h-100">
-            <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-muted fw-semibold">Total Inventory</span>
-              <i className="bi bi-building text-primary fs-6"></i>
+        }
+      >
+        {/* Metric Stat Cards (Responsive 2-column mobile, 4-column desktop) */}
+        <div className="row g-2.5 g-md-3">
+          <div className="col-6 col-md-3">
+            <div className="stat-box border-top-primary h-100 p-3 bg-white rounded-3 border shadow-xs">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Total Inventory</span>
+                <i className="bi bi-building text-primary fs-6"></i>
+              </div>
+              <h4 className="fw-bold mb-0 text-dark">{totalRooms} Rooms</h4>
+              <div className="small text-muted" style={{ fontSize: '0.72rem' }}>{totalBeds} Total Beds</div>
             </div>
-            <h4 className="fw-bold mb-0 text-dark">{totalRooms} Rooms</h4>
-            <div className="small text-muted" style={{ fontSize: '0.72rem' }}>{totalBeds} Total Beds</div>
           </div>
-        </div>
 
-        <div className="col-6 col-md-3">
-          <div className="stat-box border-top-danger h-100">
-            <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-muted fw-semibold">Occupied Beds</span>
-              <i className="bi bi-person-fill-lock text-danger fs-6"></i>
+          <div className="col-6 col-md-3">
+            <div className="stat-box border-top-danger h-100 p-3 bg-white rounded-3 border shadow-xs">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Occupied Beds</span>
+                <i className="bi bi-person-fill-lock text-danger fs-6"></i>
+              </div>
+              <h4 className="fw-bold mb-0 text-danger">{occupiedBeds}</h4>
+              <div className="small text-muted" style={{ fontSize: '0.72rem' }}>{occupancyRate}% PG Occupancy</div>
             </div>
-            <h4 className="fw-bold mb-0 text-danger">{occupiedBeds}</h4>
-            <div className="small text-muted" style={{ fontSize: '0.72rem' }}>{occupancyRate}% PG Occupancy</div>
           </div>
-        </div>
 
-        <div className="col-6 col-md-3">
-          <div className="stat-box border-top-success h-100">
-            <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-muted fw-semibold">Available Beds</span>
-              <i className="bi bi-door-open-fill text-success fs-6"></i>
+          <div className="col-6 col-md-3">
+            <div className="stat-box border-top-success h-100 p-3 bg-white rounded-3 border shadow-xs">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Available Beds</span>
+                <i className="bi bi-door-open-fill text-success fs-6"></i>
+              </div>
+              <h4 className="fw-bold mb-0 text-success">{availableBeds}</h4>
+              <div className="small text-muted" style={{ fontSize: '0.72rem' }}>Vacant for intake</div>
             </div>
-            <h4 className="fw-bold mb-0 text-success">{availableBeds}</h4>
-            <div className="small text-muted" style={{ fontSize: '0.72rem' }}>Vacant for intake</div>
           </div>
-        </div>
 
-        <div className="col-6 col-md-3">
-          <div className="stat-box border-top-warning h-100">
-            <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-muted fw-semibold">Occupancy Rate</span>
-              <i className="bi bi-pie-chart-fill text-warning fs-6"></i>
-            </div>
-            <h4 className="fw-bold mb-0 text-dark">{occupancyRate}%</h4>
-            <div className="progress mt-1.5" style={{ height: '4px' }}>
-              <div
-                className="progress-bar bg-warning"
-                role="progressbar"
-                style={{ width: `${occupancyRate}%` }}
-              ></div>
+          <div className="col-6 col-md-3">
+            <div className="stat-box border-top-warning h-100 p-3 bg-white rounded-3 border shadow-xs">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Occupancy Rate</span>
+                <i className="bi bi-pie-chart-fill text-warning fs-6"></i>
+              </div>
+              <h4 className="fw-bold mb-0 text-dark">{occupancyRate}%</h4>
+              <div className="progress mt-1.5" style={{ height: '4px' }}>
+                <div
+                  className="progress-bar bg-warning"
+                  role="progressbar"
+                  style={{ width: `${occupancyRate}%` }}
+                ></div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </AdminOverviewHeader>
 
       {/* Filter and Search Bar */}
       <div className="bg-white p-3 rounded-4 border shadow-sm">
@@ -715,8 +743,9 @@ export default function AdminRooms() {
         </div>
       ) : viewMode === 'CARDS' ? (
         /* Visual Room Cards Grid (Matching Prompt Section 5) */
-        <div className="row g-3">
-          {filteredRooms.map((room) => {
+        <div>
+          <div className="row g-3">
+            {paginatedRooms.map((room) => {
             const isFull = room.available_beds === 0;
             const isPartiallyAvailable = room.available_beds > 0 && room.occupied_beds > 0;
 
@@ -818,6 +847,20 @@ export default function AdminRooms() {
             );
           })}
         </div>
+
+        {/* Pagination for Card View */}
+        <TablePagination
+          currentPage={page}
+          pageSize={pageSize}
+          totalItems={filteredRooms.length}
+          itemLabel="rooms"
+          onPageChange={setPage}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setPage(1);
+          }}
+        />
+      </div>
       ) : (
         /* Table View */
         <div className="bg-white p-4 rounded-4 border shadow-sm">
@@ -838,7 +881,7 @@ export default function AdminRooms() {
                 </tr>
               </thead>
               <tbody className="small">
-                {filteredRooms.map((r) => (
+                {paginatedRooms.map((r) => (
                   <tr key={r.id}>
                     <td className="fw-bold text-dark fs-6">Room {r.room_number}</td>
                     <td>Floor {r.floor}</td>
@@ -895,6 +938,19 @@ export default function AdminRooms() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination for Table View */}
+          <TablePagination
+            currentPage={page}
+            pageSize={pageSize}
+            totalItems={filteredRooms.length}
+            itemLabel="rooms"
+            onPageChange={setPage}
+            onPageSizeChange={(newSize) => {
+              setPageSize(newSize);
+              setPage(1);
+            }}
+          />
         </div>
       )}
 

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import api, { cachedGet, invalidateClientCache } from '../../services/api';
 import { smartScrollTo, scrollToFirstError } from '../../utils/scrollHelper';
+import AdminOverviewHeader from '../../components/AdminOverviewHeader';
+import TablePagination from '../../components/TablePagination';
 
 export default function AdminResidents() {
   const [searchParams] = useSearchParams();
@@ -109,6 +111,18 @@ export default function AdminResidents() {
     }
     return true;
   });
+
+  // Pagination state (default 10)
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Reset to page 1 on search or filter change
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter, roomFilter, acFilter]);
+
+  // Paginated slice
+  const paginatedResidents = filteredResidents.slice((page - 1) * pageSize, page * pageSize);
 
   // Metrics
   const activeResidentsCount = residents.filter((r) => r.resident_status === 'ACTIVE').length;
@@ -306,85 +320,75 @@ export default function AdminResidents() {
 
   return (
     <div className="d-flex flex-column gap-4">
-      {/* Header and Add Button */}
-      <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <div>
-          <h4 className="fw-bold mb-1">Resident Management</h4>
-          <p className="text-secondary small mb-0">
-            Maintain resident records, automatically generate unique resident IDs, track room allocations, and handle transfers.
-          </p>
-        </div>
-
-        <button onClick={handleOpenAdd} className="btn btn-sm btn-pg-primary fw-semibold">
-          <i className="bi bi-person-plus-fill me-1"></i> Add Resident
-        </button>
-      </div>
-
-      {/* Success banner if new resident was just created */}
-      {recentGeneratedCode && (
-        <div id="resident-success-banner" className="alert alert-success alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-3 mb-0" role="alert">
-          <div className="rounded-circle bg-success text-white p-2 d-flex align-items-center justify-content-center">
-            <i className="bi bi-check2-circle fs-4"></i>
-          </div>
-          <div>
-            <h6 className="fw-bold mb-0">Resident Successfully Registered!</h6>
-            <div className="small">
-              Generated Unique Resident ID: <strong>{recentGeneratedCode.code}</strong> for <strong>{recentGeneratedCode.name}</strong>
-              {recentGeneratedCode.room ? ` • Allocated to Room ${recentGeneratedCode.room} (${recentGeneratedCode.bed})` : ' • Bed not yet assigned'}
+      {/* Reusable AdminOverviewHeader for Residents */}
+      <AdminOverviewHeader
+        title="Residents Management"
+        subtitle="Manage resident profiles, ID assignments, room & bed allocations, and checkout history."
+        badge={`${activeResidentsCount} Active`}
+        storageKey="residents"
+        defaultCollapsed={true}
+        summaryItems={[
+          { label: 'Active', value: activeResidentsCount, colorClass: 'text-success' },
+          { label: 'Checked Out', value: checkedOutCount, colorClass: 'text-secondary' },
+          { label: 'Total Registered', value: residents.length, colorClass: 'text-primary' },
+          { label: 'Rooms Available', value: rooms.filter((r) => r.available_beds > 0 && r.status !== 'MAINTENANCE').length, colorClass: 'text-warning' },
+        ]}
+        rightActions={
+          <button onClick={handleOpenAdd} className="btn btn-sm btn-pg-primary fw-semibold text-white d-flex align-items-center gap-1 shadow-xs" style={{ minHeight: '36px' }}>
+            <i className="bi bi-person-plus-fill"></i>
+            <span>Add Resident</span>
+          </button>
+        }
+      >
+        {/* Quick Stats Cards */}
+        <div className="row g-2.5 g-md-3">
+          <div className="col-sm-6 col-xl-3">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-start border-4 border-success">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Active Residents</span>
+                <i className="bi bi-person-check-fill text-success fs-5"></i>
+              </div>
+              <h3 className="fw-bold mb-0 text-success">{activeResidentsCount}</h3>
+              <span className="small text-muted">Currently staying in PG</span>
             </div>
           </div>
-          <button type="button" className="btn-close" onClick={() => setRecentGeneratedCode(null)}></button>
-        </div>
-      )}
 
-      {/* Quick Stats Cards */}
-      <div className="row g-3">
-        <div className="col-sm-6 col-xl-3">
-          <div className="stat-box h-100 border-start border-4 border-success">
-            <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-muted fw-semibold">Active Residents</span>
-              <i className="bi bi-person-check-fill text-success fs-5"></i>
+          <div className="col-sm-6 col-xl-3">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-start border-4 border-secondary">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Checked-Out Residents</span>
+                <i className="bi bi-box-arrow-right text-secondary fs-5"></i>
+              </div>
+              <h3 className="fw-bold mb-0 text-secondary">{checkedOutCount}</h3>
+              <span className="small text-muted">Historical records preserved</span>
             </div>
-            <h3 className="fw-bold mb-0 text-success">{activeResidentsCount}</h3>
-            <span className="small text-muted">Currently staying in PG</span>
+          </div>
+
+          <div className="col-sm-6 col-xl-3">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-start border-4 border-primary">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Total Registered Residents</span>
+                <i className="bi bi-people-fill text-primary fs-5"></i>
+              </div>
+              <h3 className="fw-bold mb-0 text-primary">{residents.length}</h3>
+              <span className="small text-muted">Total resident profiles</span>
+            </div>
+          </div>
+
+          <div className="col-sm-6 col-xl-3">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-start border-4 border-warning">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Available Rooms</span>
+                <i className="bi bi-door-open-fill text-warning fs-5"></i>
+              </div>
+              <h3 className="fw-bold mb-0 text-warning">
+                {rooms.filter((r) => r.available_beds > 0 && r.status !== 'MAINTENANCE').length}
+              </h3>
+              <span className="small text-muted">Rooms ready for intake</span>
+            </div>
           </div>
         </div>
-
-        <div className="col-sm-6 col-xl-3">
-          <div className="stat-box h-100 border-start border-4 border-secondary">
-            <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-muted fw-semibold">Checked-Out Residents</span>
-              <i className="bi bi-box-arrow-right text-secondary fs-5"></i>
-            </div>
-            <h3 className="fw-bold mb-0 text-secondary">{checkedOutCount}</h3>
-            <span className="small text-muted">Historical records preserved</span>
-          </div>
-        </div>
-
-        <div className="col-sm-6 col-xl-3">
-          <div className="stat-box h-100 border-start border-4 border-primary">
-            <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-muted fw-semibold">Total Registered Residents</span>
-              <i className="bi bi-people-fill text-primary fs-5"></i>
-            </div>
-            <h3 className="fw-bold mb-0 text-primary">{residents.length}</h3>
-            <span className="small text-muted">Total resident profiles</span>
-          </div>
-        </div>
-
-        <div className="col-sm-6 col-xl-3">
-          <div className="stat-box h-100 border-start border-4 border-warning">
-            <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-muted fw-semibold">Available Rooms</span>
-              <i className="bi bi-door-open-fill text-warning fs-5"></i>
-            </div>
-            <h3 className="fw-bold mb-0 text-warning">
-              {rooms.filter((r) => r.available_beds > 0 && r.status !== 'MAINTENANCE').length}
-            </h3>
-            <span className="small text-muted">Rooms ready for intake</span>
-          </div>
-        </div>
-      </div>
+      </AdminOverviewHeader>
 
       {/* Filter and Search Bar */}
       <div className="bg-white p-3 rounded-4 border shadow-sm">
@@ -476,7 +480,8 @@ export default function AdminResidents() {
             </button>
           </div>
         ) : (
-          <div className="table-responsive">
+          <>
+            <div className="table-responsive">
             <table className="table table-hover align-middle mb-0">
               <thead className="table-light small">
                 <tr>
@@ -493,7 +498,7 @@ export default function AdminResidents() {
                 </tr>
               </thead>
               <tbody className="small">
-                {filteredResidents.map((r) => (
+                {paginatedResidents.map((r) => (
                   <tr key={r.id}>
                     <td>
                       <span className="badge bg-dark px-2 py-1 font-monospace">
@@ -597,6 +602,20 @@ export default function AdminResidents() {
               </tbody>
             </table>
           </div>
+
+            {/* Pagination for Residents */}
+            <TablePagination
+              currentPage={page}
+              pageSize={pageSize}
+              totalItems={filteredResidents.length}
+              itemLabel="residents"
+              onPageChange={setPage}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setPage(1);
+              }}
+            />
+          </>
         )}
       </div>
 

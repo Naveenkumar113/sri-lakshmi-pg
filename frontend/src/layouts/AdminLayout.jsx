@@ -61,7 +61,7 @@ export default function AdminLayout() {
           width: desktopCollapsed ? '68px' : '230px',
           minWidth: desktopCollapsed ? '68px' : '230px',
           maxWidth: desktopCollapsed ? '68px' : '230px',
-          backgroundColor: '#0A0F1D', // Deep navy/charcoal background
+          backgroundColor: '#0B1220', // Clean dark navy background
           borderRight: '1px solid rgba(255, 255, 255, 0.08)',
           zIndex: 1050,
           position: sidebarOpen ? 'fixed' : 'sticky',
@@ -84,7 +84,7 @@ export default function AdminLayout() {
                 style={{
                   width: '32px',
                   height: '32px',
-                  background: 'linear-gradient(135deg, #EA580C 0%, #C2410C 100%)',
+                  backgroundColor: '#F45B0B',
                   fontSize: '0.88rem',
                 }}
               >
@@ -96,7 +96,7 @@ export default function AdminLayout() {
                     Sri Lakshmi PG
                   </div>
                   <div className="text-white-50 text-truncate" style={{ fontSize: '0.65rem' }}>
-                    Admin ERP Panel
+                    Admin ERP
                   </div>
                 </div>
               )}
@@ -140,8 +140,8 @@ export default function AdminLayout() {
                     isActive ||
                     (item.aliases && item.aliases.some((alias) => window.location.pathname.startsWith(alias)));
                   return {
-                    backgroundColor: isCurrentActive ? 'rgba(234, 88, 12, 0.95)' : 'transparent',
-                    borderLeft: isCurrentActive ? '3px solid #FDBA74' : '3px solid transparent',
+                    backgroundColor: isCurrentActive ? '#F45B0B' : 'transparent',
+                    borderLeft: isCurrentActive ? '3px solid #FED7AA' : '3px solid transparent',
                     height: '38px',
                     minHeight: '38px',
                   };
@@ -159,53 +159,106 @@ export default function AdminLayout() {
             ))}
           </nav>
 
-          {/* Compact Bottom Section: Collapse Toggle, Profile & Logout */}
-          <div className="p-2 border-top border-white border-opacity-10 mt-auto bg-black bg-opacity-25 d-flex flex-column gap-1.5">
-            {/* Collapse / Expand Toggle Button on Desktop */}
+          {/* Redesigned Sidebar Footer: Divider, Admin Profile, Full-Width Logout, Collapse Control */}
+          <div
+            className="p-2.5 border-top mt-auto d-flex flex-column gap-2"
+            style={{
+              borderColor: 'rgba(255, 255, 255, 0.08)',
+              backgroundColor: '#070C16', // darker navy base
+            }}
+          >
+            {/* Admin Profile Row */}
+            {!desktopCollapsed ? (
+              <div className="d-flex align-items-center gap-2 px-1 py-1">
+                {/* Small circular admin avatar */}
+                <div
+                  className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold flex-shrink-0"
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    backgroundColor: '#1E293B',
+                    border: '1.5px solid #F45B0B',
+                    fontSize: '0.78rem',
+                  }}
+                  title="Sri Lakshmi PG Admin"
+                >
+                  <i className="bi bi-person-fill text-warning" style={{ fontSize: '1rem' }}></i>
+                </div>
+
+                <div className="overflow-hidden flex-grow-1" style={{ minWidth: 0 }}>
+                  <div className="fw-semibold text-white text-truncate lh-1 mb-0.5" style={{ fontSize: '0.8rem' }}>
+                    {user?.full_name || 'Sri Lakshmi PG Admin'}
+                  </div>
+                  <div className="text-white-50 text-truncate" style={{ fontSize: '0.68rem' }}>
+                    Administrator
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="d-flex justify-content-center py-1">
+                <div
+                  className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    backgroundColor: '#1E293B',
+                    border: '1.5px solid #F45B0B',
+                    fontSize: '0.78rem',
+                  }}
+                  title={`Sri Lakshmi PG Admin (Administrator)`}
+                >
+                  <i className="bi bi-person-fill text-warning"></i>
+                </div>
+              </div>
+            )}
+
+            {/* Full-Width Logout Button */}
+            <button
+              type="button"
+              onClick={handleLogout}
+              className={`btn btn-sm d-flex align-items-center ${
+                desktopCollapsed ? 'justify-content-center p-0' : 'justify-content-center gap-2 px-2.5'
+              } py-1.5 rounded-2 text-danger fw-semibold transition-all`}
+              style={{
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                height: '34px',
+                minHeight: '34px',
+                fontSize: '0.8rem',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
+                e.currentTarget.style.borderColor = '#EF4444';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+              }}
+              title="Logout from Admin ERP"
+              aria-label="Logout"
+            >
+              <i className="bi bi-box-arrow-right fs-6"></i>
+              {!desktopCollapsed && <span>Logout</span>}
+            </button>
+
+            {/* Separate Compact Collapse / Expand Control (Desktop only) */}
             <button
               type="button"
               onClick={() => setDesktopCollapsed(!desktopCollapsed)}
               className="btn btn-sm text-white-50 hover-text-white w-100 d-none d-lg-flex align-items-center justify-content-center gap-1.5 py-1 rounded-2"
-              style={{ backgroundColor: 'rgba(255,255,255,0.05)', height: '30px', fontSize: '0.74rem' }}
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
+                height: '28px',
+                minHeight: '28px',
+                fontSize: '0.72rem',
+              }}
               title={desktopCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               aria-label={desktopCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               <i className={`bi ${desktopCollapsed ? 'bi-chevron-double-right' : 'bi-chevron-double-left'}`}></i>
               {!desktopCollapsed && <span>Collapse Menu</span>}
             </button>
-
-            {/* Compact Admin Info & Logout in Single Clean Row */}
-            {!desktopCollapsed ? (
-              <div className="d-flex align-items-center justify-content-between px-1.5 py-1 bg-white bg-opacity-5 rounded-2">
-                <div className="overflow-hidden pe-1" style={{ maxWidth: '135px' }}>
-                  <div className="fw-semibold text-white text-truncate lh-1" style={{ fontSize: '0.78rem' }}>
-                    {user?.full_name || 'PG Admin'}
-                  </div>
-                  <span className="text-white-50" style={{ fontSize: '0.64rem' }}>
-                    Administrator
-                  </span>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="btn btn-sm btn-outline-danger p-0 d-flex align-items-center justify-content-center rounded-2"
-                  style={{ width: '28px', height: '28px' }}
-                  title="Logout"
-                  aria-label="Logout"
-                >
-                  <i className="bi bi-box-arrow-right fs-6"></i>
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={handleLogout}
-                className="btn btn-sm btn-outline-danger p-0 d-flex align-items-center justify-content-center w-100 rounded-2"
-                style={{ height: '32px' }}
-                title="Logout"
-                aria-label="Logout"
-              >
-                <i className="bi bi-box-arrow-right fs-6"></i>
-              </button>
-            )}
           </div>
         </div>
       </aside>

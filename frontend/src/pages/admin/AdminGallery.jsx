@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
+import AdminOverviewHeader from '../../components/AdminOverviewHeader';
 
 export default function AdminGallery() {
   const [gallery, setGallery] = useState([]);
@@ -71,35 +72,83 @@ export default function AdminGallery() {
     }
   };
 
+  const authenticCount = gallery.filter((g) => g.is_authentic).length;
+  const categoriesCount = new Set(gallery.map((g) => g.category)).size;
+
   return (
-    <div className="bg-white p-4 rounded-4 border shadow-sm">
-      <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
-        <div>
-          <h4 className="fw-bold mb-1">Property Gallery Management</h4>
-          <p className="text-secondary small mb-0">
-            Upload and manage authentic photographs of Sri Lakshmi Srinivasa Gents PG.
-          </p>
+    <div>
+      <AdminOverviewHeader
+        title="Property Photo Gallery"
+        badge="Media CMS"
+        subtitle="Upload and manage authentic photographs of Sri Lakshmi Srinivasa Gents PG."
+        storageKey="admin_overview_gallery"
+        defaultCollapsed={true}
+        summaryItems={[
+          { label: 'Photos Uploaded', value: gallery.length, colorClass: 'badge bg-primary-subtle text-primary px-1.5 py-0.5 rounded-pill' },
+          { label: 'Real Photos', value: authenticCount, colorClass: 'text-success' },
+          { label: 'Categories', value: categoriesCount, colorClass: 'text-dark' },
+        ]}
+        rightActions={
+          <div className="d-flex align-items-center gap-2">
+            <a href="/admin/facilities" className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1.5" style={{ height: '36px' }}>
+              <i className="bi bi-stars"></i>
+              <span className="d-none d-sm-inline">Facilities</span>
+            </a>
+            <button
+              onClick={() => setUploadModalOpen(true)}
+              className="btn btn-sm btn-pg-primary fw-semibold d-flex align-items-center gap-1.5"
+              style={{ height: '36px' }}
+            >
+              <i className="bi bi-cloud-arrow-up-fill"></i>
+              <span>Upload Photo</span>
+            </button>
+          </div>
+        }
+      >
+        <div className="row g-2.5 g-md-3">
+          <div className="col-4">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-top-primary">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Total Gallery Photos</span>
+                <i className="bi bi-images text-primary fs-6"></i>
+              </div>
+              <h4 className="fw-bold mb-0 text-primary">{gallery.length}</h4>
+              <span className="small text-muted" style={{ fontSize: '0.72rem' }}>Published pictures</span>
+            </div>
+          </div>
+          <div className="col-4">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-top-success">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Authentic Real Photos</span>
+                <i className="bi bi-patch-check-fill text-success fs-6"></i>
+              </div>
+              <h4 className="fw-bold mb-0 text-success">{authenticCount}</h4>
+              <span className="small text-muted" style={{ fontSize: '0.72rem' }}>Verified property views</span>
+            </div>
+          </div>
+          <div className="col-4">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-top-secondary">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Media Categories</span>
+                <i className="bi bi-folder-fill text-secondary fs-6"></i>
+              </div>
+              <h4 className="fw-bold mb-0 text-dark">{categoriesCount}</h4>
+              <span className="small text-muted" style={{ fontSize: '0.72rem' }}>Bedrooms, Exterior, etc.</span>
+            </div>
+          </div>
         </div>
+      </AdminOverviewHeader>
 
-        <div className="d-flex align-items-center gap-2">
+      <div className="bg-white p-3 p-md-4 rounded-4 border shadow-sm">
+        {/* Facilities & Gallery Sub-navigation Tabs */}
+        <div className="d-flex gap-2 border-bottom pb-2 mb-3">
           <a href="/admin/facilities" className="btn btn-sm btn-outline-secondary">
-            <i className="bi bi-stars me-1"></i> Open Facilities
+            <i className="bi bi-stars me-1"></i> Facilities
           </a>
-          <button onClick={() => setUploadModalOpen(true)} className="btn btn-sm btn-pg-primary fw-semibold">
-            <i className="bi bi-cloud-arrow-up-fill me-1"></i> Upload New Photo
-          </button>
+          <a href="/admin/gallery" className="btn btn-sm btn-dark fw-bold">
+            <i className="bi bi-images me-1"></i> Photo Gallery ({gallery.length})
+          </a>
         </div>
-      </div>
-
-      {/* Facilities & Gallery Sub-navigation Tabs */}
-      <div className="d-flex gap-2 border-bottom pb-2 mb-3">
-        <a href="/admin/facilities" className="btn btn-sm btn-outline-secondary">
-          <i className="bi bi-stars me-1"></i> Facilities
-        </a>
-        <a href="/admin/gallery" className="btn btn-sm btn-dark fw-bold">
-          <i className="bi bi-images me-1"></i> Photo Gallery ({gallery.length})
-        </a>
-      </div>
 
       {loading ? (
         <div className="text-center py-5">
@@ -249,6 +298,7 @@ export default function AdminGallery() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

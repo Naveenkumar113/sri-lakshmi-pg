@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
+import AdminOverviewHeader from '../../components/AdminOverviewHeader';
+import TablePagination from '../../components/TablePagination';
 
 export default function AdminMessages() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Pagination state (default 10)
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const fetchMessages = async () => {
     try {
@@ -39,14 +45,71 @@ export default function AdminMessages() {
     }
   };
 
+  const unreadCount = messages.filter((m) => !m.is_read).length;
+  const readCount = messages.filter((m) => m.is_read).length;
+  const paginatedMessages = messages.slice((page - 1) * pageSize, page * pageSize);
+
   return (
-    <div className="bg-white p-4 rounded-4 border shadow-sm">
-      <div className="mb-4">
-        <h4 className="fw-bold mb-1">Contact Messages & Enquiries</h4>
-        <p className="text-secondary small mb-0">
-          Inquiries submitted via the public contact form by prospective residents.
-        </p>
-      </div>
+    <div className="d-flex flex-column gap-3">
+      {/* Reusable AdminOverviewHeader for Contact Inquiries */}
+      <AdminOverviewHeader
+        title="Contact Messages & Enquiries"
+        subtitle="Manage inquiries submitted via public contact forms by prospective residents."
+        badge={`${unreadCount} Unread`}
+        storageKey="messages"
+        defaultCollapsed={true}
+        summaryItems={[
+          { label: 'Unread', value: unreadCount, colorClass: 'badge bg-warning text-dark rounded-pill px-1.5 py-0.5' },
+          { label: 'Read', value: readCount, colorClass: 'text-success' },
+          { label: 'Total Inquiries', value: messages.length, colorClass: 'text-dark' },
+        ]}
+        rightActions={
+          <button
+            onClick={fetchMessages}
+            className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1.5 px-2.5"
+            style={{ height: '36px' }}
+            title="Refresh inquiries"
+          >
+            <i className="bi bi-arrow-clockwise"></i>
+            <span className="d-none d-sm-inline">Refresh</span>
+          </button>
+        }
+      >
+        <div className="row g-2.5 g-md-3">
+          <div className="col-sm-4">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-top-warning">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Pending / Unread</span>
+                <span className="badge bg-warning text-dark rounded-pill">{unreadCount}</span>
+              </div>
+              <h4 className="fw-bold mb-0 text-warning">{unreadCount}</h4>
+              <span className="small text-muted" style={{ fontSize: '0.72rem' }}>Needs response</span>
+            </div>
+          </div>
+          <div className="col-sm-4">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-top-success">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Resolved / Read</span>
+                <i className="bi bi-check-circle-fill text-success fs-6"></i>
+              </div>
+              <h4 className="fw-bold mb-0 text-success">{readCount}</h4>
+              <span className="small text-muted" style={{ fontSize: '0.72rem' }}>Viewed messages</span>
+            </div>
+          </div>
+          <div className="col-sm-4">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-top-primary">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Total Inquiries</span>
+                <i className="bi bi-chat-left-dots-fill text-primary fs-6"></i>
+              </div>
+              <h4 className="fw-bold mb-0 text-primary">{messages.length}</h4>
+              <span className="small text-muted" style={{ fontSize: '0.72rem' }}>All-time public contacts</span>
+            </div>
+          </div>
+        </div>
+      </AdminOverviewHeader>
+
+      <div className="bg-white p-3 p-md-4 rounded-4 border shadow-sm">
 
       {loading ? (
         <div className="text-center py-5">
@@ -59,7 +122,7 @@ export default function AdminMessages() {
         </div>
       ) : (
         <div className="d-flex flex-column gap-3">
-          {messages.map((msg) => (
+          {paginatedMessages.map((msg) => (
             <div
               key={msg.id}
               className={`p-3 p-md-4 rounded-3 border transition-all ${
@@ -107,8 +170,21 @@ export default function AdminMessages() {
               </p>
             </div>
           ))}
+
+          <TablePagination
+            currentPage={page}
+            pageSize={pageSize}
+            totalItems={messages.length}
+            itemLabel="inquiries"
+            onPageChange={setPage}
+            onPageSizeChange={(newSize) => {
+              setPageSize(newSize);
+              setPage(1);
+            }}
+          />
         </div>
       )}
+      </div>
     </div>
   );
 }

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
+import AdminOverviewHeader from '../../components/AdminOverviewHeader';
+import TablePagination from '../../components/TablePagination';
 
 export default function AdminBookings() {
   const [searchParams] = useSearchParams();
@@ -8,6 +10,10 @@ export default function AdminBookings() {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState(searchParams.get('status') || 'ALL');
+
+  // Pagination state (default 10)
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Modal states
   const [activeBooking, setActiveBooking] = useState(null);
@@ -110,44 +116,115 @@ export default function AdminBookings() {
   };
 
 
+  // Reset to page 1 on filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [filterStatus]);
+
   const filtered = bookings.filter((b) => {
     if (filterStatus === 'ALL') return true;
     return b.status === filterStatus;
   });
 
+  const paginatedBookings = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  const pendingCount = bookings.filter((b) => b.status === 'PENDING').length;
+  const approvedCount = bookings.filter((b) => b.status === 'APPROVED').length;
+  const rejectedCount = bookings.filter((b) => b.status === 'REJECTED').length;
+  const cancelledCount = bookings.filter((b) => b.status === 'CANCELLED').length;
+
   return (
-    <div className="bg-white p-4 rounded-4 border shadow-sm">
-      <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
-        <div>
-          <h4 className="fw-bold mb-1">Room Booking & Bed Allocation</h4>
-          <p className="text-secondary small mb-0">
-            Review applicant profiles, perform real-time room availability verification, and assign beds.
-          </p>
-        </div>
+    <div className="d-flex flex-column gap-3">
+      {/* Reusable AdminOverviewHeader for Bookings & Visits */}
+      <AdminOverviewHeader
+        title="Bookings & Bed Allocation"
+        subtitle="Review prospective resident applications, verify room availability, and allocate beds."
+        badge={`${pendingCount} Pending`}
+        storageKey="bookings"
+        defaultCollapsed={true}
+        summaryItems={[
+          { label: 'Pending', value: pendingCount, colorClass: 'badge bg-danger rounded-pill px-1.5 py-0.5' },
+          { label: 'Confirmed', value: approvedCount, colorClass: 'text-success' },
+          { label: 'Rejected', value: rejectedCount, colorClass: 'text-secondary', isHiddenOnMobile: true },
+          { label: 'Cancelled', value: cancelledCount, colorClass: 'text-muted', isHiddenOnMobile: true },
+          { label: 'Total Bookings', value: bookings.length, colorClass: 'text-dark' },
+        ]}
+      >
+        {/* Detailed KPI Metric Cards */}
+        <div className="row g-2.5 g-md-3">
+          <div className="col-6 col-md-3">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-top-danger">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Pending Bookings</span>
+                <span className="badge bg-danger rounded-pill">{pendingCount}</span>
+              </div>
+              <h4 className="fw-bold mb-0 text-danger">{pendingCount}</h4>
+              <span className="small text-muted" style={{ fontSize: '0.72rem' }}>Awaiting bed allocation</span>
+            </div>
+          </div>
 
-        {/* Filter buttons */}
-        <div className="d-flex flex-wrap gap-2">
-          {['ALL', 'PENDING', 'APPROVED', 'REJECTED', 'CANCELLED'].map((st) => (
-            <button
-              key={st}
-              onClick={() => setFilterStatus(st)}
-              className={`btn btn-sm ${filterStatus === st ? 'btn-dark fw-bold' : 'btn-outline-secondary'}`}
-            >
-              {st}
-            </button>
-          ))}
-        </div>
-      </div>
+          <div className="col-6 col-md-3">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-top-success">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Confirmed Bookings</span>
+                <i className="bi bi-check-circle-fill text-success fs-6"></i>
+              </div>
+              <h4 className="fw-bold mb-0 text-success">{approvedCount}</h4>
+              <span className="small text-muted" style={{ fontSize: '0.72rem' }}>Beds confirmed</span>
+            </div>
+          </div>
 
-      {/* Bookings & Visits Sub-navigation Tabs */}
-      <div className="d-flex gap-2 border-bottom pb-2 mb-3">
-        <a href="/admin/bookings" className="btn btn-sm btn-dark fw-bold">
-          <i className="bi bi-door-open me-1"></i> Room Bookings ({bookings.length})
-        </a>
-        <a href="/admin/visits" className="btn btn-sm btn-outline-secondary">
-          <i className="bi bi-calendar-check me-1"></i> Visit Requests
-        </a>
-      </div>
+          <div className="col-6 col-md-3">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-top-secondary">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Rejected Requests</span>
+                <i className="bi bi-x-circle text-secondary fs-6"></i>
+              </div>
+              <h4 className="fw-bold mb-0 text-secondary">{rejectedCount}</h4>
+              <span className="small text-muted" style={{ fontSize: '0.72rem' }}>Application declined</span>
+            </div>
+          </div>
+
+          <div className="col-6 col-md-3">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-top-primary">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <span className="small text-muted fw-semibold">Total Applications</span>
+                <i className="bi bi-door-open-fill text-primary fs-6"></i>
+              </div>
+              <h4 className="fw-bold mb-0 text-primary">{bookings.length}</h4>
+              <span className="small text-muted" style={{ fontSize: '0.72rem' }}>All-time bookings</span>
+            </div>
+          </div>
+        </div>
+      </AdminOverviewHeader>
+
+      <div className="bg-white p-3 p-md-4 rounded-4 border shadow-sm">
+        {/* Bookings & Visits Sub-navigation Tabs + Filter Buttons */}
+        <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom pb-3 mb-3">
+          <div className="d-flex gap-2">
+            <a href="/admin/bookings" className="btn btn-sm btn-dark fw-bold" style={{ minHeight: '34px' }}>
+              <i className="bi bi-door-open me-1"></i> Room Bookings ({bookings.length})
+            </a>
+            <a href="/admin/visits" className="btn btn-sm btn-outline-secondary" style={{ minHeight: '34px' }}>
+              <i className="bi bi-calendar-check me-1"></i> Visit Requests
+            </a>
+          </div>
+
+          {/* Filter buttons */}
+          <div className="d-flex flex-wrap gap-1.5">
+            {['ALL', 'PENDING', 'APPROVED', 'REJECTED', 'CANCELLED'].map((st) => (
+              <button
+                key={st}
+                type="button"
+                onClick={() => setFilterStatus(st)}
+                className={`btn btn-sm ${filterStatus === st ? 'btn-dark fw-bold' : 'btn-outline-secondary'}`}
+                style={{ fontSize: '0.78rem', minHeight: '32px' }}
+              >
+                {st}
+              </button>
+            ))}
+          </div>
+        </div>
 
       {loading ? (
         <div className="text-center py-5">
@@ -162,7 +239,7 @@ export default function AdminBookings() {
         <>
           {/* Mobile Card List (< 768px) */}
           <div className="d-md-none d-flex flex-column gap-2">
-            {filtered.map((b) => (
+            {paginatedBookings.map((b) => (
               <div key={b.id} className="p-3 bg-white rounded-3 border shadow-xs d-flex flex-column gap-2">
                 <div className="d-flex justify-content-between align-items-start">
                   <div>
@@ -240,7 +317,7 @@ export default function AdminBookings() {
                 </tr>
               </thead>
               <tbody className="small">
-                {filtered.map((b) => (
+                {paginatedBookings.map((b) => (
                   <tr key={b.id}>
                     <td>
                       <div className="fw-bold text-dark">{b.user?.full_name || 'Resident'}</div>
@@ -297,6 +374,19 @@ export default function AdminBookings() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination for Bookings */}
+          <TablePagination
+            currentPage={page}
+            pageSize={pageSize}
+            totalItems={filtered.length}
+            itemLabel="bookings"
+            onPageChange={setPage}
+            onPageSizeChange={(newSize) => {
+              setPageSize(newSize);
+              setPage(1);
+            }}
+          />
         </>
       )}
 
@@ -430,6 +520,7 @@ export default function AdminBookings() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

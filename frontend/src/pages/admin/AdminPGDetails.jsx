@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { smartScrollTo, scrollToFirstError } from '../../utils/scrollHelper';
+import AdminOverviewHeader from '../../components/AdminOverviewHeader';
 
 export default function AdminPGDetails() {
   const [formData, setFormData] = useState({
@@ -52,15 +53,53 @@ export default function AdminPGDetails() {
   };
 
   return (
-    <div className="bg-white p-4 p-md-5 rounded-4 border shadow-sm">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h4 className="fw-bold mb-1">PG Business Information & CMS</h4>
-          <p className="text-secondary small mb-0">
-            Dynamically update property name, address, contact numbers, hours, and descriptions.
-          </p>
+    <div>
+      <AdminOverviewHeader
+        title="PG Business Information"
+        badge="Live Configuration"
+        subtitle="Dynamically update property name, address, contact numbers, hours, and descriptions."
+        storageKey="admin_overview_pgdetails"
+        defaultCollapsed={true}
+        summaryItems={[
+          { label: 'Name', value: formData.name || 'Sri Lakshmi PG', colorClass: 'text-dark fw-bold' },
+          { label: 'Phone', value: formData.phone || '+91 9361840263', colorClass: 'text-primary' },
+          { label: 'Rating', value: `${formData.google_rating || '4.8'} ⭐`, colorClass: 'text-warning fw-bold' },
+          { label: 'Location', value: 'Velachery, Chennai', colorClass: 'text-secondary' },
+        ]}
+      >
+        <div className="row g-2.5 g-md-3">
+          <div className="col-sm-6 col-md-3">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-top-primary">
+              <span className="small text-muted fw-semibold">PG Brand Name</span>
+              <h6 className="fw-bold mb-0 text-dark mt-1">{formData.name || 'Sri Lakshmi Srinivasa Gents PG'}</h6>
+              <span className="small text-muted" style={{ fontSize: '0.72rem' }}>{formData.tagline || 'Velachery Premium Stay'}</span>
+            </div>
+          </div>
+          <div className="col-sm-6 col-md-3">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-top-success">
+              <span className="small text-muted fw-semibold">Primary Contact</span>
+              <h6 className="fw-bold mb-0 text-success mt-1">{formData.phone || '9361840263'}</h6>
+              <span className="small text-muted" style={{ fontSize: '0.72rem' }}>{formData.email || 'contact@srilakshmipg.com'}</span>
+            </div>
+          </div>
+          <div className="col-sm-6 col-md-3">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-top-warning">
+              <span className="small text-muted fw-semibold">Google Rating</span>
+              <h6 className="fw-bold mb-0 text-warning mt-1">{formData.google_rating || '4.8'} / 5.0 ⭐</h6>
+              <span className="small text-muted" style={{ fontSize: '0.72rem' }}>Public review score</span>
+            </div>
+          </div>
+          <div className="col-sm-6 col-md-3">
+            <div className="stat-box h-100 p-3 bg-white rounded-3 border shadow-xs border-top-secondary">
+              <span className="small text-muted fw-semibold">Visiting Hours</span>
+              <h6 className="fw-bold mb-0 text-dark mt-1">{formData.opening_hours || '6:00 AM - 10:30 PM'}</h6>
+              <span className="small text-muted" style={{ fontSize: '0.72rem' }}>Gate operating time</span>
+            </div>
+          </div>
         </div>
-      </div>
+      </AdminOverviewHeader>
+
+      <div className="bg-white p-4 p-md-5 rounded-4 border shadow-sm">
 
       {success && (
         <div id="pg-details-success" className="alert alert-success border-0 small py-2 mb-4 d-flex align-items-center gap-2">
@@ -192,6 +231,7 @@ export default function AdminPGDetails() {
           </div>
         </form>
       )}
+      </div>
     </div>
   );
 }
