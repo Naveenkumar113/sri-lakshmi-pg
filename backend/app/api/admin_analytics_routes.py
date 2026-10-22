@@ -11,12 +11,14 @@ router = APIRouter(prefix="/api/admin", tags=["Admin Operations & Analytics"])
 
 @router.get("/analytics")
 def get_admin_analytics(
+    month: Optional[str] = Query(None),
     current_admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    from ..models.models import Resident, BedAllocation, RentRecord, WhatsAppReminderLog
+    from ..models.models import Resident, BedAllocation, RentRecord, WhatsAppReminderLog, IssueReport
     from ..utils.rent_calculator import get_ist_today
     from sqlalchemy.orm import joinedload
+    from sqlalchemy import or_
 
     total_users = db.query(User).filter(User.role == "USER").count()
     total_rooms = db.query(Room).count()
@@ -35,6 +37,12 @@ def get_admin_analytics(
     
     unread_messages = db.query(ContactMessage).filter(ContactMessage.is_read == False).count()
 
+    # Maintenance issue reports
+    open_reports = db.query(IssueReport).filter(IssueReport.status == "OPEN").count()
+    in_progress_reports = db.query(IssueReport).filter(IssueReport.status == "IN_PROGRESS").count()
+    resolved_reports = db.query(IssueReport).filter(IssueReport.status == "RESOLVED").count()
+    total_reports = open_reports + in_progress_reports + resolved_reports
+
     occupancy_rate = round((occupied_beds / total_beds * 100), 1) if total_beds > 0 else 0
 
     recent_visits = db.query(VisitRequest).order_by(VisitRequest.created_at.desc()).limit(5).all()
@@ -44,23 +52,28 @@ def get_admin_analytics(
     room_types_summary = db.query(Room.room_type, func.count(Room.id)).group_by(Room.room_type).all()
 
     today = get_ist_today()
-    current_period = today.strftime("%Y-%m")
+    if month and len(month) == 7 and "-" in month:
+        selected_period = month
+    else:
+        selected_period = today.strftime("%Y-%m")
     
-    # Efficient SQL aggregation
-    rent_agg = db.query(
-        func.coalesce(func.sum(RentRecord.rent_amount), 0.0),
-        func.coalesce(func.sum(RentRecord.amount_paid), 0.0),
-        func.coalesce(func.sum(RentRecord.balance_due), 0.0)
-    ).filter(RentRecord.rent_period == current_period).first()
+    # Rent records for selected period
+    rent_records = db.query(RentRecord).filter(RentRecord.rent_period == selected_period).all()
     
-    expected_rent = rent_agg[0] if rent_agg else 0.0
-    collected_rent = rent_agg[1] if rent_agg else 0.0
-    outstanding_rent = rent_agg[2] if rent_agg else 0.0
+    expected_rent = sum(r.rent_amount for r in rent_records)
+    collected_rent = sum(r.amount_paid for r in rent_records)
+    outstanding_rent = sum(r.balance_due for r in rent_records)
 
-    overdue_count = db.query(RentRecord).filter(RentRecord.payment_status == "OVERDUE").count()
-    reminders_sent_count = db.query(WhatsAppReminderLog).filter(WhatsAppReminderLog.delivery_status.in_(["SENT", "DELIVERED"])).count()
+    paid_count = sum(1 for r in rent_records if r.payment_status == "PAID")
+    partial_count = sum(1 for r in rent_records if r.payment_status == "PARTIALLY_PAID")
+    pending_count = sum(1 for r in rent_records if r.payment_status == "PENDING")
+    overdue_count = sum(1 for r in rent_records if r.payment_status == "OVERDUE")
+    overdue_amount = sum(r.balance_due for r in rent_records if r.payment_status == "OVERDUE")
+
+    reminders_sent_count = db.query(WhatsAppReminderLog).filter(WhatsAppReminderLog.delivery_status.in_(["SENT", "DELIVERED", "CONFIRMED_SENT"])).count()
 
     return {
+        "selected_month": selected_period,
         "total_users": total_users,
         "total_rooms": total_rooms,
         "available_rooms": available_rooms,
@@ -69,10 +82,15 @@ def get_admin_analytics(
         "active_residents": active_residents,
         "occupancy_rate": occupancy_rate,
 
-        "expected_rent": expected_rent,
-        "collected_rent": collected_rent,
-        "outstanding_rent": outstanding_rent,
+        "expected_rent": round(expected_rent, 2),
+        "collected_rent": round(collected_rent, 2),
+        "outstanding_rent": round(outstanding_rent, 2),
+        "paid_residents": paid_count,
+        "pending_residents": pending_count,
+        "partially_paid_residents": partial_count,
+        "pending_and_partial_residents": pending_count + partial_count,
         "overdue_count": overdue_count,
+        "overdue_amount": round(overdue_amount, 2),
         "reminders_sent_count": reminders_sent_count,
 
         "pending_visits": pending_visits,
@@ -80,6 +98,12 @@ def get_admin_analytics(
         "pending_bookings": pending_bookings,
         "approved_bookings": approved_bookings,
         "unread_messages": unread_messages,
+
+        "open_reports": open_reports,
+        "in_progress_reports": in_progress_reports,
+        "resolved_reports": resolved_reports,
+        "total_reports": total_reports,
+
         "room_types_distribution": {t: c for t, c in room_types_summary},
         "recent_visits": [
             {

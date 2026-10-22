@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
 
 export default function AdminVisits() {
+  const [searchParams] = useSearchParams();
   const [visits, setVisits] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState('ALL');
+  const [filterStatus, setFilterStatus] = useState(searchParams.get('status') || 'ALL');
 
   // Modal action states
   const [activeVisit, setActiveVisit] = useState(null);
@@ -85,7 +87,7 @@ export default function AdminVisits() {
 
   return (
     <div className="bg-white p-4 rounded-4 border shadow-sm">
-      <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+      <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
         <div>
           <h4 className="fw-bold mb-1">PG Visit Appointments Management</h4>
           <p className="text-secondary small mb-0">
@@ -107,6 +109,16 @@ export default function AdminVisits() {
         </div>
       </div>
 
+      {/* Bookings & Visits Sub-navigation Tabs */}
+      <div className="d-flex gap-2 border-bottom pb-2 mb-3">
+        <a href="/admin/bookings" className="btn btn-sm btn-outline-secondary">
+          <i className="bi bi-door-open me-1"></i> Room Bookings
+        </a>
+        <a href="/admin/visits" className="btn btn-sm btn-dark fw-bold">
+          <i className="bi bi-calendar-check me-1"></i> Visit Requests ({visits.length})
+        </a>
+      </div>
+
       {loading ? (
         <div className="text-center py-5">
           <div className="spinner-border text-primary" role="status"></div>
@@ -117,86 +129,153 @@ export default function AdminVisits() {
           <h6 className="fw-bold mt-2">No visits match this status</h6>
         </div>
       ) : (
-        <div className="table-responsive">
-          <table className="table table-hover align-middle mb-0">
-            <thead className="table-light small">
-              <tr>
-                <th>Visitor Name</th>
-                <th>Contact Phone</th>
-                <th>Requested Date & Time</th>
-                <th>Purpose</th>
-                <th>Confirmed Schedule</th>
-                <th>Status</th>
-                <th className="text-end">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="small">
-              {filtered.map((v) => (
-                <tr key={v.id}>
-                  <td>
-                    <div className="fw-bold text-dark">{v.full_name}</div>
-                    <div className="text-muted" style={{ fontSize: '0.72rem' }}>{v.email}</div>
-                  </td>
-                  <td>
-                    <a href={`tel:${v.phone}`} className="text-decoration-none fw-semibold text-dark">
-                      {v.phone}
-                    </a>
-                  </td>
-                  <td>
-                    <div className="fw-semibold">{v.preferred_date}</div>
-                    <div className="text-muted" style={{ fontSize: '0.72rem' }}>{v.preferred_time}</div>
-                  </td>
-                  <td>
-                    {v.purpose} ({v.number_of_visitors}p)
-                  </td>
-                  <td>
-                    {v.confirmed_date ? (
-                      <span className="text-success fw-bold">
-                        {v.confirmed_date} @ {v.confirmed_time}
-                      </span>
-                    ) : (
-                      <span className="text-muted">-</span>
-                    )}
-                  </td>
-                  <td>
-                    <span className={`status-pill status-${v.status.toLowerCase()}`}>
-                      {v.status}
-                    </span>
-                  </td>
-                  <td className="text-end">
-                    <div className="d-flex justify-content-end gap-1">
-                      {v.status !== 'APPROVED' && (
-                        <button
-                          onClick={() => openActionModal(v, 'APPROVE')}
-                          className="btn btn-sm btn-success py-1 px-2"
-                          title="Approve Visit"
-                        >
-                          <i className="bi bi-check-lg"></i> Approve
-                        </button>
-                      )}
-                      <button
-                        onClick={() => openActionModal(v, 'RESCHEDULE')}
-                        className="btn btn-sm btn-outline-primary py-1 px-2"
-                        title="Reschedule Visit"
-                      >
-                        <i className="bi bi-calendar-range"></i> Reschedule
-                      </button>
-                      {v.status !== 'REJECTED' && (
-                        <button
-                          onClick={() => openActionModal(v, 'REJECT')}
-                          className="btn btn-sm btn-outline-danger py-1 px-2"
-                          title="Reject Visit"
-                        >
-                          <i className="bi bi-x-lg"></i> Reject
-                        </button>
-                      )}
+        <>
+          {/* Mobile Card List (< 768px) */}
+          <div className="d-md-none d-flex flex-column gap-2">
+            {filtered.map((v) => (
+              <div key={v.id} className="p-3 bg-white rounded-3 border shadow-xs d-flex flex-column gap-2">
+                <div className="d-flex justify-content-between align-items-start">
+                  <div>
+                    <h6 className="fw-bold mb-0 text-dark">{v.full_name}</h6>
+                    <div className="text-muted small" style={{ fontSize: '0.72rem' }}>
+                      <a href={`tel:${v.phone}`} className="text-decoration-none text-dark fw-semibold">
+                        <i className="bi bi-telephone text-primary me-1"></i>{v.phone}
+                      </a>
+                      {v.email && ` • ${v.email}`}
                     </div>
-                  </td>
+                  </div>
+                  <span className={`status-pill status-${v.status.toLowerCase()}`}>
+                    {v.status}
+                  </span>
+                </div>
+
+                <div className="p-2 bg-light rounded-2 small text-secondary d-flex flex-column gap-1" style={{ fontSize: '0.75rem' }}>
+                  <div className="d-flex justify-content-between">
+                    <span>Requested:</span>
+                    <strong className="text-dark">{v.preferred_date} • {v.preferred_time}</strong>
+                  </div>
+                  {v.confirmed_date && (
+                    <div className="d-flex justify-content-between">
+                      <span>Confirmed:</span>
+                      <strong className="text-success">{v.confirmed_date} @ {v.confirmed_time}</strong>
+                    </div>
+                  )}
+                  <div className="d-flex justify-content-between">
+                    <span>Purpose:</span>
+                    <span>{v.purpose} ({v.number_of_visitors || 1} person)</span>
+                  </div>
+                </div>
+
+                <div className="d-flex flex-wrap gap-1.5 pt-1">
+                  {v.status !== 'APPROVED' && (
+                    <button
+                      onClick={() => openActionModal(v, 'APPROVE')}
+                      className="btn btn-sm btn-success flex-fill py-1 px-2"
+                    >
+                      <i className="bi bi-check-lg me-1"></i>Approve
+                    </button>
+                  )}
+                  <button
+                    onClick={() => openActionModal(v, 'RESCHEDULE')}
+                    className="btn btn-sm btn-outline-primary flex-fill py-1 px-2"
+                  >
+                    <i className="bi bi-calendar-range me-1"></i>Reschedule
+                  </button>
+                  {v.status !== 'REJECTED' && (
+                    <button
+                      onClick={() => openActionModal(v, 'REJECT')}
+                      className="btn btn-sm btn-outline-danger flex-fill py-1 px-2"
+                    >
+                      <i className="bi bi-x-lg me-1"></i>Reject
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop & Tablet Table (>= 768px) */}
+          <div className="table-responsive d-none d-md-block">
+            <table className="table table-hover align-middle mb-0">
+              <thead className="table-light small">
+                <tr>
+                  <th>Visitor Name</th>
+                  <th>Contact Phone</th>
+                  <th>Requested Date & Time</th>
+                  <th>Purpose</th>
+                  <th>Confirmed Schedule</th>
+                  <th>Status</th>
+                  <th className="text-end">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="small">
+                {filtered.map((v) => (
+                  <tr key={v.id}>
+                    <td>
+                      <div className="fw-bold text-dark">{v.full_name}</div>
+                      <div className="text-muted" style={{ fontSize: '0.72rem' }}>{v.email}</div>
+                    </td>
+                    <td>
+                      <a href={`tel:${v.phone}`} className="text-decoration-none fw-semibold text-dark">
+                        {v.phone}
+                      </a>
+                    </td>
+                    <td>
+                      <div className="fw-semibold">{v.preferred_date}</div>
+                      <div className="text-muted" style={{ fontSize: '0.72rem' }}>{v.preferred_time}</div>
+                    </td>
+                    <td>
+                      {v.purpose} ({v.number_of_visitors}p)
+                    </td>
+                    <td>
+                      {v.confirmed_date ? (
+                        <span className="text-success fw-bold">
+                          {v.confirmed_date} @ {v.confirmed_time}
+                        </span>
+                      ) : (
+                        <span className="text-muted">-</span>
+                      )}
+                    </td>
+                    <td>
+                      <span className={`status-pill status-${v.status.toLowerCase()}`}>
+                        {v.status}
+                      </span>
+                    </td>
+                    <td className="text-end">
+                      <div className="d-flex justify-content-end gap-1">
+                        {v.status !== 'APPROVED' && (
+                          <button
+                            onClick={() => openActionModal(v, 'APPROVE')}
+                            className="btn btn-sm btn-success py-1 px-2"
+                            title="Approve Visit"
+                          >
+                            <i className="bi bi-check-lg"></i> Approve
+                          </button>
+                        )}
+                        <button
+                          onClick={() => openActionModal(v, 'RESCHEDULE')}
+                          className="btn btn-sm btn-outline-primary py-1 px-2"
+                          title="Reschedule Visit"
+                        >
+                          <i className="bi bi-calendar-range"></i> Reschedule
+                        </button>
+                        {v.status !== 'REJECTED' && (
+                          <button
+                            onClick={() => openActionModal(v, 'REJECT')}
+                            className="btn btn-sm btn-outline-danger py-1 px-2"
+                            title="Reject Visit"
+                          >
+                            <i className="bi bi-x-lg"></i> Reject
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {/* Action Modal (Approve / Reject / Reschedule) */}

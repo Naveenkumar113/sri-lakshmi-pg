@@ -1,242 +1,448 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api, { cachedGet } from '../../services/api';
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
+  const currentMonthKey = new Date().toISOString().slice(0, 7); // "YYYY-MM"
+  const [selectedMonth, setSelectedMonth] = useState(currentMonthKey);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Generate 6 months for month picker
+  const monthOptions = [];
+  const now = new Date();
+  for (let i = -1; i < 5; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const val = d.toISOString().slice(0, 7);
+    const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    monthOptions.push({ val, label });
+  }
+
+  const fetchAnalytics = async (monthVal, isRefresh = false) => {
+    try {
+      if (isRefresh) setRefreshing(true);
+      else setLoading(true);
+
+      const ttl = isRefresh ? 0 : 15000;
+      const data = await cachedGet(`/admin/analytics?month=${monthVal}`, {}, ttl);
+      setStats(data);
+    } catch (err) {
+      console.error('Failed to load admin analytics', err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchAnalytics = async () => {
-      try {
-        const data = await cachedGet('/admin/analytics', {}, 15000);
-        setStats(data);
-      } catch (err) {
-        console.error('Failed to load admin analytics', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAnalytics();
-  }, []);
+    fetchAnalytics(selectedMonth);
+  }, [selectedMonth]);
 
-  if (loading) {
+  if (loading && !stats) {
     return (
       <div className="text-center py-5">
         <div className="spinner-border text-primary" role="status"></div>
-        <p className="text-muted small mt-2">Loading administrative metrics...</p>
+        <p className="text-muted small mt-2">Loading overall operations and financial metrics...</p>
       </div>
     );
   }
 
   return (
     <div className="d-flex flex-column gap-3">
-      {/* Page Title */}
-      <div className="d-flex justify-content-between align-items-center">
+      {/* Top Banner / Month Selection */}
+      <div className="bg-white p-3 p-md-4 rounded-4 border shadow-sm d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
         <div>
-          <h4 className="fw-bold mb-0">Operations Dashboard</h4>
-          <p className="text-secondary small mb-0 d-none d-sm-block">
-            Real-time metrics for Sri Lakshmi Srinivasa Gents PG.
+          <div className="d-flex align-items-center gap-2">
+            <h4 className="fw-bold mb-0 text-dark">Overall Dashboard</h4>
+            <span className="badge bg-primary-subtle text-primary border border-primary-subtle">
+              Live Operations
+            </span>
+          </div>
+          <p className="text-secondary small mb-0 mt-1">
+            Comprehensive real-time overview of occupancy, monthly rent collections, requests, and maintenance.
           </p>
         </div>
-        <span className="badge bg-primary-subtle text-primary border border-primary-subtle d-sm-none">
-          Live PG
-        </span>
-      </div>
 
-      {/* 8 SaaS Metric Cards (2-column on mobile) */}
-      <div className="row g-2.5 g-md-3">
-        <div className="col-6 col-md-3">
-          <Link to="/admin/residents" className="text-decoration-none">
-            <div className="stat-box border-top-primary h-100">
-              <div className="d-flex justify-content-between align-items-center mb-1">
-                <span className="small text-muted fw-semibold">Active Residents</span>
-                <i className="bi bi-people text-primary fs-6"></i>
-              </div>
-              <h4 className="fw-bold mb-0 text-dark">{stats?.active_residents || stats?.total_users}</h4>
-              <span className="small text-primary fw-semibold">Manage &rarr;</span>
-            </div>
-          </Link>
-        </div>
-
-        <div className="col-6 col-md-3">
-          <Link to="/admin/rooms" className="text-decoration-none">
-            <div className="stat-box border-top-info h-100">
-              <div className="d-flex justify-content-between align-items-center mb-1">
-                <span className="small text-muted fw-semibold">Inventory</span>
-                <i className="bi bi-building text-info fs-6"></i>
-              </div>
-              <h4 className="fw-bold mb-0 text-dark">{stats?.total_rooms} Rooms</h4>
-              <span className="small text-info fw-semibold">{stats?.total_beds} Beds &rarr;</span>
-            </div>
-          </Link>
-        </div>
-
-        <div className="col-6 col-md-3">
-          <Link to="/admin/rooms" className="text-decoration-none">
-            <div className="stat-box border-top-success h-100">
-              <div className="d-flex justify-content-between align-items-center mb-1">
-                <span className="small text-muted fw-semibold">Available</span>
-                <i className="bi bi-door-open text-success fs-6"></i>
-              </div>
-              <h4 className="fw-bold mb-0 text-success">{stats?.available_rooms}</h4>
-              <span className="small text-muted">Ready rooms</span>
-            </div>
-          </Link>
-        </div>
-
-        <div className="col-6 col-md-3">
-          <Link to="/admin/rooms" className="text-decoration-none">
-            <div className="stat-box border-top-warning h-100">
-              <div className="d-flex justify-content-between align-items-center mb-1">
-                <span className="small text-muted fw-semibold">Occupied Beds</span>
-                <i className="bi bi-person-check text-warning fs-6"></i>
-              </div>
-              <h4 className="fw-bold mb-0 text-warning">{stats?.occupied_beds}</h4>
-              <span className="small text-muted">{stats?.occupancy_rate}% Occupied</span>
-            </div>
-          </Link>
-        </div>
-
-        <div className="col-6 col-md-3">
-          <Link to="/admin/visits" className="text-decoration-none">
-            <div className="stat-box h-100">
-              <div className="d-flex justify-content-between align-items-center mb-1">
-                <span className="small text-muted fw-semibold">Pending Visits</span>
-                <span className="badge bg-danger rounded-pill px-2">{stats?.pending_visits}</span>
-              </div>
-              <h4 className="fw-bold mb-0 text-danger">{stats?.pending_visits}</h4>
-              <span className="small text-muted">Review visits &rarr;</span>
-            </div>
-          </Link>
-        </div>
-
-        <div className="col-6 col-md-3">
-          <Link to="/admin/visits" className="text-decoration-none">
-            <div className="stat-box h-100">
-              <div className="d-flex justify-content-between align-items-center mb-1">
-                <span className="small text-muted fw-semibold">Approved Visits</span>
-                <i className="bi bi-check-all text-success fs-6 d-none d-sm-block"></i>
-              </div>
-              <h4 className="fw-bold mb-0 text-success">{stats?.approved_visits}</h4>
-              <span className="small text-muted">Confirmed</span>
-            </div>
-          </Link>
-        </div>
-
-        <div className="col-6 col-md-3">
-          <Link to="/admin/bookings" className="text-decoration-none">
-            <div className="stat-box h-100">
-              <div className="d-flex justify-content-between align-items-center mb-1">
-                <span className="small text-muted fw-semibold">Bookings Due</span>
-                <span className="badge bg-warning text-dark rounded-pill px-2">{stats?.pending_bookings}</span>
-              </div>
-              <h4 className="fw-bold mb-0 text-warning">{stats?.pending_bookings}</h4>
-              <span className="small text-muted">Allocate beds &rarr;</span>
-            </div>
-          </Link>
-        </div>
-
-        <div className="col-6 col-md-3">
-          <div className="stat-box h-100">
-            <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-muted fw-semibold">Bookings OK</span>
-              <i className="bi bi-key-fill text-primary fs-6 d-none d-sm-block"></i>
-            </div>
-            <h4 className="fw-bold mb-0 text-primary">{stats?.approved_bookings}</h4>
-            <span className="small text-muted">Allocated</span>
+        <div className="d-flex align-items-center gap-2">
+          <div className="input-group input-group-sm" style={{ width: 'auto' }}>
+            <span className="input-group-text bg-light text-muted border-end-0">
+              <i className="bi bi-calendar-month"></i>
+            </span>
+            <select
+              className="form-select form-select-sm fw-semibold"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              aria-label="Select billing month"
+            >
+              {monthOptions.map((m) => (
+                <option key={m.val} value={m.val}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
           </div>
+
+          <button
+            onClick={() => fetchAnalytics(selectedMonth, true)}
+            disabled={refreshing}
+            className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1"
+            title="Refresh analytics data"
+          >
+            <i className={`bi bi-arrow-clockwise ${refreshing ? 'spin' : ''}`}></i>
+            <span className="d-none d-sm-inline">Refresh</span>
+          </button>
         </div>
       </div>
 
-      {/* Monthly Rent & WhatsApp Overview */}
-      <div className="bg-white p-4 rounded-4 border shadow-sm">
-        <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
-          <div>
-            <div className="d-flex align-items-center gap-2">
-              <h6 className="fw-bold mb-0 text-dark">Monthly Rent & Automated WhatsApp Overview</h6>
-              <span className="badge bg-success-subtle text-success border border-success-subtle">PostgreSQL 18</span>
-            </div>
-            <p className="text-secondary small mb-0 mt-1">Current month dues, collections, and automated WhatsApp reminder logs.</p>
-          </div>
-          <Link to="/admin/rent" className="btn btn-sm btn-primary d-flex align-items-center gap-1 shadow-xs px-3">
-            <i className="bi bi-currency-rupee"></i>
-            <span>Open Rent Management &rarr;</span>
+      {/* SECTION 1: Rent & Collections Summary (Functional Cards) */}
+      <div>
+        <div className="d-flex justify-content-between align-items-center mb-2 px-1">
+          <h6 className="fw-bold text-dark mb-0">
+            <i className="bi bi-currency-rupee text-success me-1"></i>
+            Monthly Rent & Collection Overview ({selectedMonth})
+          </h6>
+          <Link to={`/admin/rent?month=${selectedMonth}`} className="small text-decoration-none fw-semibold">
+            Open Rent ERP &rarr;
           </Link>
         </div>
 
-        <div className="row g-3">
+        <div className="row g-2.5 g-md-3">
+          {/* Rent Expected */}
           <div className="col-6 col-md-3">
-            <div className="p-3 bg-light rounded-3 border">
-              <span className="small text-muted fw-semibold d-block mb-1">Expected Rent</span>
-              <h5 className="fw-bold mb-0 text-dark">₹{(stats?.expected_rent || 0).toLocaleString()}</h5>
-            </div>
+            <Link
+              to={`/admin/rent?month=${selectedMonth}&status=ALL`}
+              className="text-decoration-none text-dark"
+              title="Click to view all rent records for this month"
+            >
+              <div className="stat-box border-top-primary h-100 p-3 bg-white rounded-3 border shadow-xs transition-hover">
+                <div className="d-flex justify-content-between align-items-center mb-1">
+                  <span className="small text-muted fw-semibold">Total Rent Expected</span>
+                  <i className="bi bi-wallet2 text-primary fs-6"></i>
+                </div>
+                <h4 className="fw-bold mb-0 text-dark">
+                  ₹{(stats?.expected_rent || 0).toLocaleString()}
+                </h4>
+                <div className="d-flex justify-content-between align-items-center small text-primary fw-semibold mt-1" style={{ fontSize: '0.72rem' }}>
+                  <span>{selectedMonth}</span>
+                  <span>View All &rarr;</span>
+                </div>
+              </div>
+            </Link>
           </div>
+
+          {/* Rent Collected */}
           <div className="col-6 col-md-3">
-            <div className="p-3 bg-light rounded-3 border">
-              <span className="small text-muted fw-semibold d-block mb-1">Collected Rent</span>
-              <h5 className="fw-bold mb-0 text-success">₹{(stats?.collected_rent || 0).toLocaleString()}</h5>
-            </div>
+            <Link
+              to={`/admin/rent?month=${selectedMonth}&status=PAID`}
+              className="text-decoration-none text-dark"
+              title="Click to view settled payment records"
+            >
+              <div className="stat-box border-top-success h-100 p-3 bg-white rounded-3 border shadow-xs transition-hover">
+                <div className="d-flex justify-content-between align-items-center mb-1">
+                  <span className="small text-muted fw-semibold">Rent Collected</span>
+                  <i className="bi bi-cash-stack text-success fs-6"></i>
+                </div>
+                <h4 className="fw-bold mb-0 text-success">
+                  ₹{(stats?.collected_rent || 0).toLocaleString()}
+                </h4>
+                <div className="d-flex justify-content-between align-items-center small text-success fw-semibold mt-1" style={{ fontSize: '0.72rem' }}>
+                  <span>
+                    {stats?.expected_rent > 0
+                      ? `${Math.round(((stats?.collected_rent || 0) / stats?.expected_rent) * 100)}% collected`
+                      : '0%'}
+                  </span>
+                  <span>Payments &rarr;</span>
+                </div>
+              </div>
+            </Link>
           </div>
+
+          {/* Outstanding Balance */}
           <div className="col-6 col-md-3">
-            <div className="p-3 bg-light rounded-3 border">
-              <span className="small text-muted fw-semibold d-block mb-1">Outstanding Rent</span>
-              <h5 className="fw-bold mb-0 text-danger">₹{(stats?.outstanding_rent || 0).toLocaleString()}</h5>
-            </div>
+            <Link
+              to={`/admin/rent?month=${selectedMonth}&status=PENDING`}
+              className="text-decoration-none text-dark"
+              title="Click to view records with pending rent balance"
+            >
+              <div className="stat-box border-top-warning h-100 p-3 bg-white rounded-3 border shadow-xs transition-hover">
+                <div className="d-flex justify-content-between align-items-center mb-1">
+                  <span className="small text-muted fw-semibold">Outstanding Rent</span>
+                  <i className="bi bi-hourglass-split text-warning fs-6"></i>
+                </div>
+                <h4 className="fw-bold mb-0 text-warning">
+                  ₹{(stats?.outstanding_rent || 0).toLocaleString()}
+                </h4>
+                <div className="d-flex justify-content-between align-items-center small text-warning fw-semibold mt-1" style={{ fontSize: '0.72rem' }}>
+                  <span>Balance Due</span>
+                  <span>View &rarr;</span>
+                </div>
+              </div>
+            </Link>
           </div>
+
+          {/* Overdue Rent & Count */}
           <div className="col-6 col-md-3">
-            <div className="p-3 bg-light rounded-3 border">
-              <span className="small text-muted fw-semibold d-block mb-1">Overdue Payments</span>
-              <h5 className="fw-bold mb-0 text-danger">{stats?.overdue_count || 0} residents</h5>
-            </div>
+            <Link
+              to={`/admin/rent?month=${selectedMonth}&status=OVERDUE`}
+              className="text-decoration-none text-dark"
+              title="Click to filter residents with overdue rent"
+            >
+              <div className="stat-box border-top-danger h-100 p-3 bg-white rounded-3 border shadow-xs transition-hover">
+                <div className="d-flex justify-content-between align-items-center mb-1">
+                  <span className="small text-muted fw-semibold">Overdue Residents</span>
+                  <span className="badge bg-danger rounded-pill px-2">{stats?.overdue_count || 0}</span>
+                </div>
+                <h4 className="fw-bold mb-0 text-danger">
+                  {stats?.overdue_count || 0}
+                </h4>
+                <div className="d-flex justify-content-between align-items-center small text-danger fw-semibold mt-1" style={{ fontSize: '0.72rem' }}>
+                  <span>₹{(stats?.overdue_amount || 0).toLocaleString()} overdue</span>
+                  <span>Action &rarr;</span>
+                </div>
+              </div>
+            </Link>
+          </div>
+        </div>
+
+        {/* Resident Payment Breakdown (Paid vs Pending/Partial) */}
+        <div className="row g-2.5 g-md-3 mt-1">
+          <div className="col-6 col-md-3">
+            <Link
+              to={`/admin/rent?month=${selectedMonth}&status=PAID`}
+              className="text-decoration-none text-dark"
+              title="Click to filter fully paid residents"
+            >
+              <div className="p-3 bg-white rounded-3 border shadow-xs transition-hover h-100 d-flex justify-content-between align-items-center">
+                <div>
+                  <span className="small text-muted fw-semibold d-block">Fully Paid Residents</span>
+                  <h5 className="fw-bold mb-0 text-success">{stats?.paid_residents || 0}</h5>
+                  <span className="text-muted small" style={{ fontSize: '0.7rem' }}>Zero dues</span>
+                </div>
+                <div className="bg-success-subtle p-2 rounded-circle text-success">
+                  <i className="bi bi-check-circle-fill fs-5"></i>
+                </div>
+              </div>
+            </Link>
+          </div>
+
+          <div className="col-6 col-md-3">
+            <Link
+              to={`/admin/rent?month=${selectedMonth}&status=PENDING`}
+              className="text-decoration-none text-dark"
+              title="Click to filter pending and partial payments"
+            >
+              <div className="p-3 bg-white rounded-3 border shadow-xs transition-hover h-100 d-flex justify-content-between align-items-center">
+                <div>
+                  <span className="small text-muted fw-semibold d-block">Pending & Partial</span>
+                  <h5 className="fw-bold mb-0 text-warning">{stats?.pending_and_partial_residents || 0}</h5>
+                  <span className="text-muted small" style={{ fontSize: '0.7rem' }}>
+                    {stats?.partially_paid_residents || 0} partial • {stats?.pending_residents || 0} pending
+                  </span>
+                </div>
+                <div className="bg-warning-subtle p-2 rounded-circle text-warning">
+                  <i className="bi bi-pie-chart-fill fs-5"></i>
+                </div>
+              </div>
+            </Link>
+          </div>
+
+          <div className="col-6 col-md-3">
+            <Link
+              to="/admin/residents?status=ACTIVE"
+              className="text-decoration-none text-dark"
+              title="Click to view all active PG residents"
+            >
+              <div className="p-3 bg-white rounded-3 border shadow-xs transition-hover h-100 d-flex justify-content-between align-items-center">
+                <div>
+                  <span className="small text-muted fw-semibold d-block">Active Residents</span>
+                  <h5 className="fw-bold mb-0 text-primary">{stats?.active_residents || 0}</h5>
+                  <span className="text-muted small" style={{ fontSize: '0.7rem' }}>Currently residing</span>
+                </div>
+                <div className="bg-primary-subtle p-2 rounded-circle text-primary">
+                  <i className="bi bi-person-badge-fill fs-5"></i>
+                </div>
+              </div>
+            </Link>
+          </div>
+
+          <div className="col-6 col-md-3">
+            <Link
+              to="/admin/rooms"
+              className="text-decoration-none text-dark"
+              title="Click to view room and bed allocations"
+            >
+              <div className="p-3 bg-white rounded-3 border shadow-xs transition-hover h-100 d-flex justify-content-between align-items-center">
+                <div>
+                  <span className="small text-muted fw-semibold d-block">Occupied Beds</span>
+                  <h5 className="fw-bold mb-0 text-dark">
+                    {stats?.occupied_beds || 0} <span className="small text-muted fw-normal">/ {stats?.total_beds || 0}</span>
+                  </h5>
+                  <span className="text-muted small" style={{ fontSize: '0.7rem' }}>
+                    {stats?.occupancy_rate || 0}% occupied
+                  </span>
+                </div>
+                <div className="bg-info-subtle p-2 rounded-circle text-info">
+                  <i className="bi bi-building fs-5"></i>
+                </div>
+              </div>
+            </Link>
           </div>
         </div>
       </div>
 
-      {/* Occupancy Rate Bar & Distribution */}
-      <div className="bg-white p-4 rounded-4 border shadow-sm">
+      {/* SECTION 2: Operational Summaries (Visits, Bookings & Maintenance Reports) */}
+      <div>
+        <div className="d-flex justify-content-between align-items-center mb-2 px-1">
+          <h6 className="fw-bold text-dark mb-0">
+            <i className="bi bi-grid-fill text-primary me-1"></i>
+            Applications, Visits & Maintenance Summary
+          </h6>
+        </div>
+
+        <div className="row g-2.5 g-md-3">
+          {/* Pending Visits */}
+          <div className="col-6 col-md-3">
+            <Link
+              to="/admin/visits?status=PENDING"
+              className="text-decoration-none text-dark"
+              title="Click to review pending visit appointments"
+            >
+              <div className="p-3 bg-white rounded-3 border shadow-xs transition-hover h-100">
+                <div className="d-flex justify-content-between align-items-center mb-1">
+                  <span className="small text-muted fw-semibold">Pending Visits</span>
+                  <span className="badge bg-warning text-dark rounded-pill">{stats?.pending_visits || 0}</span>
+                </div>
+                <h4 className="fw-bold mb-0 text-warning">{stats?.pending_visits || 0}</h4>
+                <div className="d-flex justify-content-between align-items-center small text-muted mt-1" style={{ fontSize: '0.72rem' }}>
+                  <span>{stats?.approved_visits || 0} approved</span>
+                  <span className="text-primary fw-semibold">Review &rarr;</span>
+                </div>
+              </div>
+            </Link>
+          </div>
+
+          {/* Pending Bookings */}
+          <div className="col-6 col-md-3">
+            <Link
+              to="/admin/bookings?status=PENDING"
+              className="text-decoration-none text-dark"
+              title="Click to review room bookings awaiting bed allocation"
+            >
+              <div className="p-3 bg-white rounded-3 border shadow-xs transition-hover h-100">
+                <div className="d-flex justify-content-between align-items-center mb-1">
+                  <span className="small text-muted fw-semibold">Pending Bookings</span>
+                  <span className="badge bg-danger rounded-pill">{stats?.pending_bookings || 0}</span>
+                </div>
+                <h4 className="fw-bold mb-0 text-danger">{stats?.pending_bookings || 0}</h4>
+                <div className="d-flex justify-content-between align-items-center small text-muted mt-1" style={{ fontSize: '0.72rem' }}>
+                  <span>{stats?.approved_bookings || 0} allocated</span>
+                  <span className="text-primary fw-semibold">Allocate &rarr;</span>
+                </div>
+              </div>
+            </Link>
+          </div>
+
+          {/* Open Maintenance Reports */}
+          <div className="col-6 col-md-3">
+            <Link
+              to="/admin/reports?status=OPEN"
+              className="text-decoration-none text-dark"
+              title="Click to view open resident maintenance issue reports"
+            >
+              <div className="p-3 bg-white rounded-3 border shadow-xs transition-hover h-100">
+                <div className="d-flex justify-content-between align-items-center mb-1">
+                  <span className="small text-muted fw-semibold">Open Maintenance</span>
+                  <span className="badge bg-danger rounded-pill">{stats?.open_reports || 0}</span>
+                </div>
+                <h4 className="fw-bold mb-0 text-danger">{stats?.open_reports || 0}</h4>
+                <div className="d-flex justify-content-between align-items-center small text-muted mt-1" style={{ fontSize: '0.72rem' }}>
+                  <span>{stats?.in_progress_reports || 0} in progress</span>
+                  <span className="text-danger fw-semibold">Inspect &rarr;</span>
+                </div>
+              </div>
+            </Link>
+          </div>
+
+          {/* Resolved Maintenance Reports */}
+          <div className="col-6 col-md-3">
+            <Link
+              to="/admin/reports?status=RESOLVED"
+              className="text-decoration-none text-dark"
+              title="Click to view resolved maintenance issue reports"
+            >
+              <div className="p-3 bg-white rounded-3 border shadow-xs transition-hover h-100">
+                <div className="d-flex justify-content-between align-items-center mb-1">
+                  <span className="small text-muted fw-semibold">Resolved Issues</span>
+                  <span className="badge bg-success rounded-pill">{stats?.resolved_reports || 0}</span>
+                </div>
+                <h4 className="fw-bold mb-0 text-success">{stats?.resolved_reports || 0}</h4>
+                <div className="d-flex justify-content-between align-items-center small text-muted mt-1" style={{ fontSize: '0.72rem' }}>
+                  <span>{stats?.total_reports || 0} total reports</span>
+                  <span className="text-success fw-semibold">Resolved &rarr;</span>
+                </div>
+              </div>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* SECTION 3: Live Occupancy Progress */}
+      <div className="bg-white p-3 p-md-4 rounded-4 border shadow-sm">
         <div className="d-flex justify-content-between align-items-center mb-2">
-          <h6 className="fw-bold mb-0">Live PG Bed Occupancy Rate</h6>
-          <span className="fw-bold text-primary">{stats?.occupancy_rate}%</span>
+          <div>
+            <h6 className="fw-bold mb-0 text-dark">PG Bed Occupancy & Room Capacity</h6>
+            <div className="text-muted small">
+              {stats?.occupied_beds || 0} occupied of {stats?.total_beds || 0} total beds across {stats?.total_rooms || 0} rooms
+            </div>
+          </div>
+          <span className="badge bg-primary px-3 py-1.5 fs-6 fw-bold">
+            {stats?.occupancy_rate || 0}%
+          </span>
         </div>
         <div className="progress" style={{ height: '14px', borderRadius: '8px' }}>
           <div
-            className="progress-bar progress-bar-striped progress-bar-animated bg-warning"
+            className="progress-bar progress-bar-striped progress-bar-animated"
             role="progressbar"
-            style={{ width: `${stats?.occupancy_rate}%` }}
-            aria-valuenow={stats?.occupancy_rate}
+            style={{
+              width: `${stats?.occupancy_rate || 0}%`,
+              backgroundColor: '#EA580C',
+            }}
+            aria-valuenow={stats?.occupancy_rate || 0}
             aria-valuemin="0"
             aria-valuemax="100"
           ></div>
         </div>
         <div className="d-flex justify-content-between small text-muted mt-2">
-          <span>{stats?.occupied_beds} Beds Occupied</span>
-          <span>{stats?.total_beds - stats?.occupied_beds} Beds Available</span>
+          <span>{stats?.occupied_beds || 0} Beds Occupied</span>
+          <span>{stats?.available_rooms || 0} Available Rooms</span>
+          <span>{(stats?.total_beds || 0) - (stats?.occupied_beds || 0)} Beds Vacant</span>
         </div>
       </div>
 
-      {/* Two Columns: Recent Visits & Recent Bookings */}
-      <div className="row g-4">
+      {/* SECTION 4: Recent Activity Feeds (Visits & Bookings) */}
+      <div className="row g-3">
         {/* Recent Visits */}
         <div className="col-lg-6">
-          <div className="bg-white p-4 rounded-4 border shadow-sm h-100 d-flex flex-column justify-content-between">
+          <div className="bg-white p-3 p-md-4 rounded-4 border shadow-sm h-100 d-flex flex-column justify-content-between">
             <div>
               <div className="d-flex justify-content-between align-items-center mb-3">
-                <h6 className="fw-bold mb-0">Recent Visit Requests</h6>
+                <h6 className="fw-bold mb-0 text-dark">Recent Visit Requests</h6>
                 <Link to="/admin/visits" className="small text-decoration-none fw-semibold">
-                  Manage All
+                  Manage All &rarr;
                 </Link>
               </div>
 
               {stats?.recent_visits?.length === 0 ? (
-                <p className="text-muted small">No visit requests recorded.</p>
+                <p className="text-muted small py-3 text-center">No recent visit requests recorded.</p>
               ) : (
                 <div className="table-responsive">
                   <table className="table table-sm align-middle small mb-0">
                     <thead className="table-light">
                       <tr>
                         <th>Visitor</th>
-                        <th>Preferred Time</th>
+                        <th>Schedule</th>
                         <th>Status</th>
                       </tr>
                     </thead>
@@ -262,23 +468,23 @@ export default function AdminDashboard() {
 
         {/* Recent Bookings */}
         <div className="col-lg-6">
-          <div className="bg-white p-4 rounded-4 border shadow-sm h-100 d-flex flex-column justify-content-between">
+          <div className="bg-white p-3 p-md-4 rounded-4 border shadow-sm h-100 d-flex flex-column justify-content-between">
             <div>
               <div className="d-flex justify-content-between align-items-center mb-3">
-                <h6 className="fw-bold mb-0">Recent Room Bookings</h6>
+                <h6 className="fw-bold mb-0 text-dark">Recent Room Bookings</h6>
                 <Link to="/admin/bookings" className="small text-decoration-none fw-semibold">
-                  Manage All
+                  Manage All &rarr;
                 </Link>
               </div>
 
               {stats?.recent_bookings?.length === 0 ? (
-                <p className="text-muted small">No booking requests recorded.</p>
+                <p className="text-muted small py-3 text-center">No recent booking requests recorded.</p>
               ) : (
                 <div className="table-responsive">
                   <table className="table table-sm align-middle small mb-0">
                     <thead className="table-light">
                       <tr>
-                        <th>User</th>
+                        <th>Resident Applicant</th>
                         <th>Room Category</th>
                         <th>Status</th>
                       </tr>

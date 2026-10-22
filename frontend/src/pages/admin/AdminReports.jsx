@@ -30,7 +30,7 @@ export default function AdminReports() {
 
   // Filters & Search
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [sortBy, setSortBy] = useState('newest');
 

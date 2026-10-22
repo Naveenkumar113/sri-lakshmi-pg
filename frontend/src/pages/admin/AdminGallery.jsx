@@ -73,7 +73,7 @@ export default function AdminGallery() {
 
   return (
     <div className="bg-white p-4 rounded-4 border shadow-sm">
-      <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+      <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
         <div>
           <h4 className="fw-bold mb-1">Property Gallery Management</h4>
           <p className="text-secondary small mb-0">
@@ -81,9 +81,24 @@ export default function AdminGallery() {
           </p>
         </div>
 
-        <button onClick={() => setUploadModalOpen(true)} className="btn btn-sm btn-pg-primary fw-semibold">
-          <i className="bi bi-cloud-arrow-up-fill me-1"></i> Upload New Photo
-        </button>
+        <div className="d-flex align-items-center gap-2">
+          <a href="/admin/facilities" className="btn btn-sm btn-outline-secondary">
+            <i className="bi bi-stars me-1"></i> Open Facilities
+          </a>
+          <button onClick={() => setUploadModalOpen(true)} className="btn btn-sm btn-pg-primary fw-semibold">
+            <i className="bi bi-cloud-arrow-up-fill me-1"></i> Upload New Photo
+          </button>
+        </div>
+      </div>
+
+      {/* Facilities & Gallery Sub-navigation Tabs */}
+      <div className="d-flex gap-2 border-bottom pb-2 mb-3">
+        <a href="/admin/facilities" className="btn btn-sm btn-outline-secondary">
+          <i className="bi bi-stars me-1"></i> Facilities
+        </a>
+        <a href="/admin/gallery" className="btn btn-sm btn-dark fw-bold">
+          <i className="bi bi-images me-1"></i> Photo Gallery ({gallery.length})
+        </a>
       </div>
 
       {loading ? (

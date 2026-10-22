@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import api, { cachedGet, invalidateClientCache } from '../../services/api';
 import { smartScrollTo } from '../../utils/scrollHelper';
 
 export default function AdminRentManagement() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('records'); // 'records', 'logs', 'settings'
+  const [searchParams] = useSearchParams();
+
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'records'); // 'records', 'logs', 'settings'
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
   const [records, setRecords] = useState([]);
@@ -16,13 +18,19 @@ export default function AdminRentManagement() {
 
   // Selected billing month (e.g. "2026-10")
   const currentMonthKey = new Date().toISOString().slice(0, 7); // "YYYY-MM"
-  const [selectedMonth, setSelectedMonth] = useState(currentMonthKey);
+  const [selectedMonth, setSelectedMonth] = useState(searchParams.get('month') || currentMonthKey);
 
   // Filters & Active Card Filter Title
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
+  const initialStatus = searchParams.get('status') || 'ALL';
+  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [roomFilter, setRoomFilter] = useState('');
-  const [activeFilterTitle, setActiveFilterTitle] = useState('');
+  const [activeFilterTitle, setActiveFilterTitle] = useState(
+    initialStatus === 'OVERDUE' ? 'Overdue Residents' :
+    initialStatus === 'PAID' ? 'Fully Paid Residents' :
+    initialStatus === 'PENDING' ? 'Pending Residents' :
+    initialStatus === 'PARTIALLY_PAID' ? 'Partially Paid Residents' : ''
+  );
 
   // Modals state
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -162,6 +170,16 @@ export default function AdminRentManagement() {
     }, 250);
     return () => clearTimeout(timer);
   }, [search, statusFilter, roomFilter]);
+
+  useEffect(() => {
+    const recordId = searchParams.get('record_id');
+    if (recordId && records.length > 0) {
+      const match = records.find(r => r.id === recordId || r.resident_id === recordId);
+      if (match) {
+        handleOpenHistoryModal(match);
+      }
+    }
+  }, [records, searchParams]);
 
   useEffect(() => {
     if (activeTab === 'logs') {

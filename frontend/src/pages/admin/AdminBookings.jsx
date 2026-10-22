@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
 
 export default function AdminBookings() {
+  const [searchParams] = useSearchParams();
   const [bookings, setBookings] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState('ALL');
+  const [filterStatus, setFilterStatus] = useState(searchParams.get('status') || 'ALL');
 
   // Modal states
   const [activeBooking, setActiveBooking] = useState(null);
@@ -115,7 +117,7 @@ export default function AdminBookings() {
 
   return (
     <div className="bg-white p-4 rounded-4 border shadow-sm">
-      <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+      <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
         <div>
           <h4 className="fw-bold mb-1">Room Booking & Bed Allocation</h4>
           <p className="text-secondary small mb-0">
@@ -137,6 +139,16 @@ export default function AdminBookings() {
         </div>
       </div>
 
+      {/* Bookings & Visits Sub-navigation Tabs */}
+      <div className="d-flex gap-2 border-bottom pb-2 mb-3">
+        <a href="/admin/bookings" className="btn btn-sm btn-dark fw-bold">
+          <i className="bi bi-door-open me-1"></i> Room Bookings ({bookings.length})
+        </a>
+        <a href="/admin/visits" className="btn btn-sm btn-outline-secondary">
+          <i className="bi bi-calendar-check me-1"></i> Visit Requests
+        </a>
+      </div>
+
       {loading ? (
         <div className="text-center py-5">
           <div className="spinner-border text-primary" role="status"></div>
@@ -147,38 +159,39 @@ export default function AdminBookings() {
           <h6 className="fw-bold mt-2">No bookings matching this status</h6>
         </div>
       ) : (
-        <div className="table-responsive">
-          <table className="table table-hover align-middle mb-0">
-            <thead className="table-light small">
-              <tr>
-                <th>Applicant</th>
-                <th>Contact</th>
-                <th>Category</th>
-                <th>Cooling</th>
-                <th>Joining Date</th>
-                <th>Allocated Room / Bed</th>
-                <th>Status</th>
-                <th className="text-end">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="small">
-              {filtered.map((b) => (
-                <tr key={b.id}>
-                  <td>
-                    <div className="fw-bold text-dark">{b.user?.full_name || 'Resident'}</div>
-                    <div className="text-muted" style={{ fontSize: '0.72rem' }}>
-                      {b.user?.occupation || 'Applicant'} • {b.user?.email}
+        <>
+          {/* Mobile Card List (< 768px) */}
+          <div className="d-md-none d-flex flex-column gap-2">
+            {filtered.map((b) => (
+              <div key={b.id} className="p-3 bg-white rounded-3 border shadow-xs d-flex flex-column gap-2">
+                <div className="d-flex justify-content-between align-items-start">
+                  <div>
+                    <h6 className="fw-bold mb-0 text-dark">{b.user?.full_name || 'Resident'}</h6>
+                    <div className="text-muted small" style={{ fontSize: '0.72rem' }}>
+                      {b.user?.occupation && `${b.user.occupation} • `}
+                      <a href={`tel:${b.user?.phone}`} className="text-decoration-none text-dark fw-semibold">
+                        {b.user?.phone || 'No phone'}
+                      </a>
                     </div>
-                  </td>
-                  <td>{b.user?.phone || '-'}</td>
-                  <td>{b.room_type.replace('_', ' ')}</td>
-                  <td>
-                    <span className={`badge ${b.is_ac ? 'bg-primary' : 'bg-secondary'}`}>
-                      {b.is_ac ? 'AC' : 'Non-AC'}
-                    </span>
-                  </td>
-                  <td>{b.preferred_joining_date} ({b.stay_duration_months}m)</td>
-                  <td>
+                  </div>
+                  <span className={`status-pill status-${b.status.toLowerCase()}`}>
+                    {b.status}
+                  </span>
+                </div>
+
+                <div className="p-2 bg-light rounded-2 small text-secondary d-flex flex-column gap-1" style={{ fontSize: '0.75rem' }}>
+                  <div className="d-flex justify-content-between">
+                    <span>Category & AC:</span>
+                    <strong className="text-dark">
+                      {b.room_type.replace('_', ' ')} • <span className={`badge ${b.is_ac ? 'bg-primary' : 'bg-secondary'}`}>{b.is_ac ? 'AC' : 'Non-AC'}</span>
+                    </strong>
+                  </div>
+                  <div className="d-flex justify-content-between">
+                    <span>Joining Date:</span>
+                    <span>{b.preferred_joining_date} ({b.stay_duration_months} months)</span>
+                  </div>
+                  <div className="d-flex justify-content-between align-items-center">
+                    <span>Allocation:</span>
                     {b.allocated_bed ? (
                       <span className="text-success fw-bold">
                         Room {b.room?.room_number || ''} • Bed {b.allocated_bed}
@@ -186,39 +199,105 @@ export default function AdminBookings() {
                     ) : (
                       <span className="text-muted fst-italic">Pending allocation</span>
                     )}
-                  </td>
-                  <td>
-                    <span className={`status-pill status-${b.status.toLowerCase()}`}>
-                      {b.status}
-                    </span>
-                  </td>
-                  <td className="text-end">
-                    <div className="d-flex justify-content-end gap-1">
-                      {b.status !== 'APPROVED' && (
-                        <button
-                          onClick={() => openModal(b, 'APPROVE')}
-                          className="btn btn-sm btn-success py-1 px-2"
-                          title="Verify Availability & Approve"
-                        >
-                          <i className="bi bi-check-circle"></i> Approve & Allocate
-                        </button>
-                      )}
-                      {b.status !== 'REJECTED' && (
-                        <button
-                          onClick={() => openModal(b, 'REJECT')}
-                          className="btn btn-sm btn-outline-danger py-1 px-2"
-                          title="Reject Request"
-                        >
-                          <i className="bi bi-x-circle"></i> Reject
-                        </button>
-                      )}
-                    </div>
-                  </td>
+                  </div>
+                </div>
+
+                <div className="d-flex flex-wrap gap-1.5 pt-1">
+                  {b.status !== 'APPROVED' && (
+                    <button
+                      onClick={() => openModal(b, 'APPROVE')}
+                      className="btn btn-sm btn-success flex-fill py-1 px-2"
+                    >
+                      <i className="bi bi-check-circle me-1"></i>Approve & Allocate
+                    </button>
+                  )}
+                  {b.status !== 'REJECTED' && (
+                    <button
+                      onClick={() => openModal(b, 'REJECT')}
+                      className="btn btn-sm btn-outline-danger flex-fill py-1 px-2"
+                    >
+                      <i className="bi bi-x-circle me-1"></i>Reject
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop & Tablet Table (>= 768px) */}
+          <div className="table-responsive d-none d-md-block">
+            <table className="table table-hover align-middle mb-0">
+              <thead className="table-light small">
+                <tr>
+                  <th>Applicant</th>
+                  <th>Contact</th>
+                  <th>Category</th>
+                  <th>Cooling</th>
+                  <th>Joining Date</th>
+                  <th>Allocated Room / Bed</th>
+                  <th>Status</th>
+                  <th className="text-end">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="small">
+                {filtered.map((b) => (
+                  <tr key={b.id}>
+                    <td>
+                      <div className="fw-bold text-dark">{b.user?.full_name || 'Resident'}</div>
+                      <div className="text-muted" style={{ fontSize: '0.72rem' }}>
+                        {b.user?.occupation || 'Applicant'} • {b.user?.email}
+                      </div>
+                    </td>
+                    <td>{b.user?.phone || '-'}</td>
+                    <td>{b.room_type.replace('_', ' ')}</td>
+                    <td>
+                      <span className={`badge ${b.is_ac ? 'bg-primary' : 'bg-secondary'}`}>
+                        {b.is_ac ? 'AC' : 'Non-AC'}
+                      </span>
+                    </td>
+                    <td>{b.preferred_joining_date} ({b.stay_duration_months}m)</td>
+                    <td>
+                      {b.allocated_bed ? (
+                        <span className="text-success fw-bold">
+                          Room {b.room?.room_number || ''} • Bed {b.allocated_bed}
+                        </span>
+                      ) : (
+                        <span className="text-muted fst-italic">Pending allocation</span>
+                      )}
+                    </td>
+                    <td>
+                      <span className={`status-pill status-${b.status.toLowerCase()}`}>
+                        {b.status}
+                      </span>
+                    </td>
+                    <td className="text-end">
+                      <div className="d-flex justify-content-end gap-1">
+                        {b.status !== 'APPROVED' && (
+                          <button
+                            onClick={() => openModal(b, 'APPROVE')}
+                            className="btn btn-sm btn-success py-1 px-2"
+                            title="Verify Availability & Approve"
+                          >
+                            <i className="bi bi-check-circle"></i> Approve & Allocate
+                          </button>
+                        )}
+                        {b.status !== 'REJECTED' && (
+                          <button
+                            onClick={() => openModal(b, 'REJECT')}
+                            className="btn btn-sm btn-outline-danger py-1 px-2"
+                            title="Reject Request"
+                          >
+                            <i className="bi bi-x-circle"></i> Reject
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {/* Modal for Approve / Reject */}

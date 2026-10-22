@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api, { cachedGet, invalidateClientCache } from '../../services/api';
 import { smartScrollTo, scrollToFirstError } from '../../utils/scrollHelper';
 
 export default function AdminResidents() {
+  const [searchParams] = useSearchParams();
   const [residents, setResidents] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Filters & Search
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
-  const [roomFilter, setRoomFilter] = useState('');
+  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'ALL');
+  const [roomFilter, setRoomFilter] = useState(searchParams.get('room') || '');
   const [acFilter, setAcFilter] = useState('ALL');
 
   // Modals state

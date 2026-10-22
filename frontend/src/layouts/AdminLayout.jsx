@@ -1,39 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { NavLink, Outlet, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ErrorBoundary from '../components/ErrorBoundary';
-import api from '../services/api';
-import { processIncomingNotificationsForDesktop, registerServiceWorker } from '../services/desktopNotificationService';
 
 export default function AdminLayout() {
   const { user, isAuthenticated, isAdmin, loading, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!isAuthenticated || !isAdmin) return;
-
-    registerServiceWorker();
-
-    const fetchNotificationsAndSync = async () => {
-      try {
-        const [countRes, listRes] = await Promise.all([
-          api.get('/notifications/unread-count'),
-          api.get('/notifications'),
-        ]);
-        setUnreadCount(countRes.data.unread_count || 0);
-        // Sync with Windows Desktop Notification API
-        processIncomingNotificationsForDesktop(listRes.data || []);
-      } catch (err) {
-        // silent fail
-      }
-    };
-
-    fetchNotificationsAndSync();
-    const interval = setInterval(fetchNotificationsAndSync, 15000); // 15-second polling for admin alerts
-    return () => clearInterval(interval);
-  }, [isAuthenticated, isAdmin]);
 
   if (loading) {
     return (
@@ -53,24 +27,19 @@ export default function AdminLayout() {
     navigate('/');
   };
 
-  const navItems = [
-    { to: '/admin/dashboard', icon: 'speedometer2', label: 'Dashboard', end: true },
-    { to: '/admin/rooms', icon: 'building', label: 'Room & Bed Management' },
-    { to: '/admin/residents', icon: 'person-badge', label: 'Residents' },
+  // Simplified and consolidated 10 navigation items
+  const navSections = [
+    { to: '/admin/dashboard', icon: 'speedometer2', label: 'Overall', end: true },
     { to: '/admin/rent', icon: 'currency-rupee', label: 'Rent Management' },
-    { to: '/admin/bookings', icon: 'door-open', label: 'Bookings' },
-    { to: '/admin/visits', icon: 'calendar-check', label: 'Visit Requests' },
-    { to: '/admin/users', icon: 'people', label: 'Registered Users' },
-    { to: '/admin/facilities', icon: 'stars', label: 'Facilities' },
-    { to: '/admin/gallery', icon: 'images', label: 'Gallery' },
+    { to: '/admin/rooms', icon: 'building', label: 'Rooms & Beds' },
+    { to: '/admin/residents', icon: 'person-badge', label: 'Residents' },
+    { to: '/admin/bookings', icon: 'door-open', label: 'Bookings & Visits', aliases: ['/admin/visits'] },
+    { to: '/admin/reports', icon: 'exclamation-octagon', label: 'Issue Reports' },
+    { to: '/admin/facilities', icon: 'stars', label: 'Facilities & Gallery', aliases: ['/admin/gallery'] },
     { to: '/admin/pg-details', icon: 'pencil-square', label: 'PG Information' },
     { to: '/admin/messages', icon: 'chat-left-dots', label: 'Contact Inquiries' },
-    { to: '/admin/reports', icon: 'exclamation-octagon', label: 'Issue Reports' },
-    { to: '/admin/notifications', icon: 'bell', label: 'Notifications' },
     { to: '/admin/profile', icon: 'person-circle', label: 'Admin Profile' },
-    { to: '/admin/settings', icon: 'gear', label: 'Settings & Slots' },
   ];
-
 
   return (
     <div className="d-flex min-vh-100 bg-light">
@@ -83,89 +52,149 @@ export default function AdminLayout() {
         />
       )}
 
-      {/* Sidebar Desktop & Mobile Offcanvas */}
+      {/* Modern Sidebar (Desktop & Mobile Slide-in Drawer) */}
       <aside
-        className={`bg-dark text-white border-end d-flex flex-column justify-content-between p-3 ${
+        className={`text-white d-flex flex-column justify-content-between transition-all ${
           sidebarOpen ? 'd-flex position-fixed h-100 shadow-lg' : 'd-none d-lg-flex'
         }`}
         style={{
-          width: '280px',
-          maxWidth: '85vw',
-          backgroundColor: '#0F172A',
+          width: desktopCollapsed ? '80px' : '260px',
+          backgroundColor: '#0A0F1D', // Deep navy/charcoal background
+          borderRight: '1px solid rgba(255, 255, 255, 0.08)',
           zIndex: 1050,
+          position: sidebarOpen ? 'fixed' : 'sticky',
           top: 0,
           left: 0,
           bottom: 0,
+          height: '100vh',
+          transition: 'width 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
-        <div>
-          {/* Admin Header */}
-          <div className="d-flex align-items-center justify-content-between pb-3 mb-3 border-bottom border-secondary border-opacity-25">
-            <div className="d-flex align-items-center gap-2">
+        <div className="d-flex flex-column h-100 overflow-hidden">
+          {/* Brand Header */}
+          <div
+            className="d-flex align-items-center justify-content-between p-3 border-bottom border-white border-opacity-10"
+            style={{ minHeight: '68px' }}
+          >
+            <div className="d-flex align-items-center gap-2.5 overflow-hidden">
               <div
-                className="d-flex align-items-center justify-content-center text-white rounded-3 fw-bold"
-                style={{ width: '38px', height: '38px', backgroundColor: '#EA580C' }}
+                className="d-flex align-items-center justify-content-center text-white rounded-3 fw-bold flex-shrink-0 shadow-sm"
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  background: 'linear-gradient(135deg, #EA580C 0%, #C2410C 100%)',
+                  fontSize: '0.95rem',
+                }}
               >
-                PG
+                SL
               </div>
-              <div>
-                <div className="fw-bold text-white small lh-1">SRI LAKSHMI</div>
-                <div className="text-white-50" style={{ fontSize: '0.68rem' }}>ADMIN ERP PANEL</div>
-              </div>
+              {!desktopCollapsed && (
+                <div className="overflow-hidden">
+                  <div className="fw-bold text-white small text-truncate" style={{ letterSpacing: '0.01em' }}>
+                    Sri Lakshmi PG Admin
+                  </div>
+                  <div className="text-white-50 small" style={{ fontSize: '0.68rem' }}>
+                    ERP Control Center
+                  </div>
+                </div>
+              )}
             </div>
+
+            {/* Mobile Close Button */}
             <button
-              className="btn btn-sm btn-outline-light d-lg-none p-2"
+              className="btn btn-sm btn-link text-white-50 p-1 d-lg-none text-decoration-none"
               onClick={() => setSidebarOpen(false)}
-              aria-label="Close navigation"
+              aria-label="Close navigation drawer"
             >
               <i className="bi bi-x-lg fs-5"></i>
             </button>
           </div>
 
-          {/* Navigation Links */}
-          <nav className="nav flex-column gap-1 overflow-auto" style={{ maxHeight: 'calc(100vh - 170px)' }}>
-            {navItems.map((item) => (
+          {/* Navigation Links List */}
+          <nav
+            className="nav flex-column gap-1 p-2 flex-grow-1 overflow-auto"
+            style={{ scrollbarWidth: 'thin' }}
+          >
+            {navSections.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 end={item.end}
                 onClick={() => setSidebarOpen(false)}
-                className={({ isActive }) =>
-                  `d-flex align-items-center justify-content-between px-3 py-2.5 rounded-3 text-decoration-none transition-all ${
-                    isActive
-                      ? 'bg-warning text-dark fw-bold shadow-sm'
-                      : 'text-light opacity-75 hover-bg-dark hover-opacity-100'
-                  }`
-                }
-                style={{ minHeight: '44px' }}
+                className={({ isActive }) => {
+                  const isCurrentActive =
+                    isActive ||
+                    (item.aliases && item.aliases.some((alias) => window.location.pathname.startsWith(alias)));
+                  return `d-flex align-items-center rounded-3 text-decoration-none transition-all px-3 py-2.5 ${
+                    desktopCollapsed ? 'justify-content-center px-0' : 'gap-3'
+                  } ${
+                    isCurrentActive
+                      ? 'text-white fw-bold shadow-xs'
+                      : 'text-light opacity-75 hover-opacity-100 hover-bg-dark'
+                  }`;
+                }}
+                style={({ isActive }) => {
+                  const isCurrentActive =
+                    isActive ||
+                    (item.aliases && item.aliases.some((alias) => window.location.pathname.startsWith(alias)));
+                  return {
+                    backgroundColor: isCurrentActive ? 'rgba(234, 88, 12, 0.95)' : 'transparent',
+                    borderLeft: isCurrentActive ? '3px solid #FDBA74' : '3px solid transparent',
+                    minHeight: '44px',
+                  };
+                }}
+                title={desktopCollapsed ? item.label : undefined}
               >
-                <div className="d-flex align-items-center gap-2">
-                  <i className={`bi bi-${item.icon} fs-5`}></i>
-                  <span className="small">{item.label}</span>
-                </div>
-                {item.to === '/admin/notifications' && unreadCount > 0 && (
-                  <span className="badge rounded-pill bg-danger" style={{ fontSize: '0.65rem' }}>
-                    {unreadCount > 9 ? '9+' : unreadCount}
+                <i className={`bi bi-${item.icon} fs-5 flex-shrink-0`}></i>
+                {!desktopCollapsed && (
+                  <span className="small text-truncate" style={{ fontSize: '0.86rem' }}>
+                    {item.label}
                   </span>
                 )}
               </NavLink>
             ))}
           </nav>
-        </div>
 
-        {/* Footer Logout */}
-        <div className="pt-3 border-top border-secondary border-opacity-25">
-          <div className="small text-white-50 mb-2 truncate">
-            {user.full_name}
+          {/* Sidebar Footer & Collapse Toggle */}
+          <div className="p-2 border-top border-white border-opacity-10 mt-auto bg-black bg-opacity-25">
+            {/* Desktop Collapse Option */}
+            <button
+              type="button"
+              onClick={() => setDesktopCollapsed(!desktopCollapsed)}
+              className="btn btn-sm text-white-50 hover-text-white w-100 d-none d-lg-flex align-items-center justify-content-center gap-2 py-2 mb-1 rounded-2"
+              style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}
+              title={desktopCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              <i className={`bi ${desktopCollapsed ? 'bi-chevron-double-right' : 'bi-chevron-double-left'}`}></i>
+              {!desktopCollapsed && <span className="small">Collapse Menu</span>}
+            </button>
+
+            {/* Admin Profile Info */}
+            {!desktopCollapsed && (
+              <div className="px-2 py-1.5 mb-1 d-flex align-items-center justify-content-between">
+                <div className="overflow-hidden">
+                  <div className="small fw-semibold text-white text-truncate">{user.full_name}</div>
+                  <div className="text-white-50" style={{ fontSize: '0.68rem' }}>PG Management</div>
+                </div>
+                <span className="badge bg-success-subtle text-success border border-success-subtle" style={{ fontSize: '0.65rem' }}>
+                  Admin
+                </span>
+              </div>
+            )}
+
+            {/* Logout Button */}
+            <button
+              onClick={handleLogout}
+              className={`btn btn-sm btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2 py-2 ${
+                desktopCollapsed ? 'px-0' : ''
+              }`}
+              style={{ minHeight: '40px' }}
+              title="Logout from Admin ERP"
+            >
+              <i className="bi bi-box-arrow-right"></i>
+              {!desktopCollapsed && <span className="small fw-semibold">Logout</span>}
+            </button>
           </div>
-          <button
-            onClick={handleLogout}
-            className="btn btn-sm btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2 py-2"
-            style={{ minHeight: '44px' }}
-          >
-            <i className="bi bi-box-arrow-right"></i>
-            <span>Logout</span>
-          </button>
         </div>
       </aside>
 
@@ -178,26 +207,37 @@ export default function AdminLayout() {
               className="btn btn-outline-dark d-lg-none d-flex align-items-center justify-content-center p-2"
               style={{ width: '42px', height: '42px' }}
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              aria-label="Toggle navigation menu"
+              aria-label="Toggle navigation drawer"
             >
               <i className="bi bi-list fs-4"></i>
             </button>
             <div>
-              <h5 className="fw-bold mb-0 text-dark" style={{ fontSize: '1.05rem' }}>PG Admin</h5>
-              <div className="text-muted d-sm-none" style={{ fontSize: '0.7rem' }}>Sri Lakshmi Srinivasa</div>
+              <h5 className="fw-bold mb-0 text-dark" style={{ fontSize: '1.05rem' }}>
+                Sri Lakshmi Srinivasa PG
+              </h5>
+              <div className="text-muted small" style={{ fontSize: '0.72rem' }}>
+                Administrative ERP Portal • Velachery, Chennai
+              </div>
             </div>
           </div>
 
           <div className="d-flex align-items-center gap-2">
-            <NavLink to="/" target="_blank" className="btn btn-sm btn-outline-secondary d-none d-sm-inline-flex align-items-center gap-1">
+            <NavLink
+              to="/"
+              target="_blank"
+              className="btn btn-sm btn-outline-secondary d-none d-sm-inline-flex align-items-center gap-1.5"
+            >
               <i className="bi bi-box-arrow-up-right"></i>
               <span>Public Website</span>
             </NavLink>
-            <div className="d-flex align-items-center gap-2">
-              <span className="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
-                Admin
-              </span>
-            </div>
+
+            <NavLink
+              to="/admin/rent"
+              className="btn btn-sm btn-pg-primary d-inline-flex align-items-center gap-1.5 py-1 px-3 shadow-xs"
+            >
+              <i className="bi bi-currency-rupee"></i>
+              <span className="d-none d-sm-inline">Rent Portal</span>
+            </NavLink>
           </div>
         </header>
 
