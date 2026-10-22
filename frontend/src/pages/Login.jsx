@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Auth3DCanvas from '../components/Auth3DCanvas';
 
 export default function Login() {
   const { login } = useAuth();
@@ -58,7 +59,7 @@ export default function Login() {
   return (
     <div className="auth-page-wrapper">
       <div className="auth-split-card">
-        {/* Left Section — Brand Experience (Desktop & Tablet) */}
+        {/* Left Section — Brand Experience & Interactive 3D PG Tower (Desktop & Tablet) */}
         <div
           className="auth-hero-panel"
           style={{
@@ -66,6 +67,8 @@ export default function Login() {
           }}
         >
           <div className="auth-hero-overlay"></div>
+          {/* Interactive 3D WebGL PG Living Experience */}
+          <Auth3DCanvas />
 
           <div className="auth-hero-content">
             {/* Brand Header */}
