@@ -1,8 +1,9 @@
 import urllib.request
 import json
 import time
+import os
 
-BASE_URL = "http://127.0.0.1:8000"
+BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:5000")
 
 def benchmark():
     # Login as admin

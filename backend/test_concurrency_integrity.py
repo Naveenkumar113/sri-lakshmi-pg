@@ -10,8 +10,9 @@ Verifies that:
 import asyncio
 import aiohttp
 import sys
+import os
 
-BASE_URL = "http://127.0.0.1:8000"
+BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:5000")
 
 async def login_admin(session):
     async with session.post(f"{BASE_URL}/api/auth/login", json={

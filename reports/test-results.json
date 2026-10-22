@@ -1,0 +1,101 @@
+{
+  "test_execution_timestamp": "2026-10-22T15:15:00+05:30",
+  "environment": {
+    "frontend": "React 19.2.8, Vite 8.3.4",
+    "backend": "FastAPI, Uvicorn, Python 3.9.6",
+    "database": "PostgreSQL / SQLAlchemy 2.0 with row-level locking",
+    "test_runner": "pytest 8.4.1, aiohttp load tester"
+  },
+  "summary": {
+    "total_tests": 49,
+    "passed": 49,
+    "failed": 0,
+    "blocked": 0,
+    "skipped": 0,
+    "pass_percentage": 100.0,
+    "critical_defects": 0,
+    "high_severity_defects": 0,
+    "release_recommendation": "READY"
+  },
+  "performance_concurrency_benchmarks": [
+    {
+      "concurrency": 50,
+      "success": 50,
+      "failed": 0,
+      "avg_latency_ms": 2606.4,
+      "median_latency_ms": 2605.6,
+      "p95_latency_ms": 2629.1,
+      "p99_latency_ms": 2629.1,
+      "throughput_rps": 18.8,
+      "error_rate_pct": 0.0
+    },
+    {
+      "concurrency": 100,
+      "success": 100,
+      "failed": 0,
+      "avg_latency_ms": 3399.7,
+      "median_latency_ms": 3851.8,
+      "p95_latency_ms": 4749.9,
+      "p99_latency_ms": 4774.3,
+      "throughput_rps": 20.5,
+      "error_rate_pct": 0.0
+    },
+    {
+      "concurrency": 200,
+      "success": 200,
+      "failed": 0,
+      "avg_latency_ms": 8220.0,
+      "median_latency_ms": 8921.3,
+      "p95_latency_ms": 10348.6,
+      "p99_latency_ms": 10388.2,
+      "throughput_rps": 19.1,
+      "error_rate_pct": 0.0
+    },
+    {
+      "concurrency": 300,
+      "success": 300,
+      "failed": 0,
+      "avg_latency_ms": 8346.5,
+      "median_latency_ms": 8617.1,
+      "p95_latency_ms": 13354.0,
+      "p99_latency_ms": 13673.4,
+      "throughput_rps": 21.7,
+      "error_rate_pct": 0.0
+    },
+    {
+      "concurrency": 500,
+      "success": 500,
+      "failed": 0,
+      "avg_latency_ms": 15097.8,
+      "median_latency_ms": 14801.9,
+      "p95_latency_ms": 23911.0,
+      "p99_latency_ms": 23922.7,
+      "throughput_rps": 20.4,
+      "error_rate_pct": 0.0
+    }
+  ],
+  "api_endpoint_latencies_ms": {
+    "/api/auth/login": 410.8,
+    "/api/admin/analytics": 136.2,
+    "/api/admin/rooms": 55.6,
+    "/api/admin/residents": 33.5,
+    "/api/admin/rent/dashboard-stats?month=2026-10": 134.1,
+    "/api/admin/rent/records?page=1&limit=20": 89.2,
+    "/api/admin/bookings": 25.5,
+    "/api/admin/visits": 18.9,
+    "/api/admin/users": 38.6,
+    "/api/admin/facilities": 16.9,
+    "/api/gallery": 14.9,
+    "/api/pg-details": 12.7,
+    "/api/admin/contact": 14.9,
+    "/api/admin/rent/settings": 11.4
+  },
+  "concurrency_integrity_tests": {
+    "test": "Simultaneous Bed Allocation Across 5 Threads",
+    "target_bed": "Room 101, Bed B1",
+    "success_allocations": 1,
+    "blocked_conflicts_400": 4,
+    "server_errors": 0,
+    "status": "PASS"
+  }
+}
