@@ -17,25 +17,40 @@ export const AuthProvider = ({ children }) => {
   const [pendingRedirect, setPendingRedirect] = useState(null);
 
   useEffect(() => {
+    let isMounted = true;
     const initAuth = async () => {
       const storedToken = localStorage.getItem('pg_auth_token');
       if (storedToken) {
         try {
           const res = await api.get('/auth/me');
-          setUser(res.data);
-          localStorage.setItem('pg_auth_user', JSON.stringify(res.data));
+          if (isMounted) {
+            setUser(res.data);
+            localStorage.setItem('pg_auth_user', JSON.stringify(res.data));
+          }
         } catch (err) {
-          console.warn('Session expired or invalid token');
-          localStorage.removeItem('pg_auth_token');
-          localStorage.removeItem('pg_auth_user');
-          setUser(null);
-          setToken(null);
+          // Only clear credentials if backend explicitly rejected with 401 Unauthorized
+          if (err.response && err.response.status === 401) {
+            console.warn('Session expired or invalid token');
+            localStorage.removeItem('pg_auth_token');
+            localStorage.removeItem('pg_auth_user');
+            if (isMounted) {
+              setUser(null);
+              setToken(null);
+            }
+          } else {
+            console.warn('Network glitch during auth check; retaining local session');
+          }
         }
       }
-      setLoading(false);
+      if (isMounted) {
+        setLoading(false);
+      }
     };
 
     initAuth();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const login = async (email, password) => {

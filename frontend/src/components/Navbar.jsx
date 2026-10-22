@@ -324,7 +324,7 @@ export default function Navbar() {
 
                   {/* Account Actions Section */}
                   <div className="text-uppercase fw-bold text-muted mb-1.5" style={{ fontSize: '0.68rem', letterSpacing: '0.04em' }}>
-                    My Account
+                    {isAdmin ? 'Admin Portal' : 'Resident Account'}
                   </div>
                   <div className="d-flex flex-column gap-1">
                     {isAdmin ? (
@@ -335,31 +335,7 @@ export default function Navbar() {
                           onClick={() => setNavOpen(false)}
                         >
                           <i className="bi bi-speedometer2"></i>
-                          <span>Admin ERP Dashboard</span>
-                        </Link>
-                        <Link
-                          to="/admin/rent"
-                          className="btn btn-sm btn-white border text-start d-flex align-items-center gap-2 py-2"
-                          onClick={() => setNavOpen(false)}
-                        >
-                          <i className="bi bi-credit-card text-success"></i>
-                          <span>Rent Management</span>
-                        </Link>
-                        <Link
-                          to="/admin/rooms"
-                          className="btn btn-sm btn-white border text-start d-flex align-items-center gap-2 py-2"
-                          onClick={() => setNavOpen(false)}
-                        >
-                          <i className="bi bi-building text-secondary"></i>
-                          <span>Rooms & Beds</span>
-                        </Link>
-                        <Link
-                          to="/admin/residents"
-                          className="btn btn-sm btn-white border text-start d-flex align-items-center gap-2 py-2"
-                          onClick={() => setNavOpen(false)}
-                        >
-                          <i className="bi bi-person-badge text-secondary"></i>
-                          <span>Residents</span>
+                          <span>Open Admin ERP</span>
                         </Link>
                       </>
                     ) : (
@@ -370,15 +346,7 @@ export default function Navbar() {
                           onClick={() => setNavOpen(false)}
                         >
                           <i className="bi bi-grid"></i>
-                          <span>Dashboard</span>
-                        </Link>
-                        <Link
-                          to="/report"
-                          className="btn btn-sm btn-white border text-start d-flex align-items-center gap-2 py-2"
-                          onClick={() => setNavOpen(false)}
-                        >
-                          <i className="bi bi-exclamation-octagon text-danger"></i>
-                          <span>Report an Issue</span>
+                          <span>My Dashboard</span>
                         </Link>
                         <Link
                           to="/my-bookings"
@@ -397,12 +365,20 @@ export default function Navbar() {
                           <span>My Visits</span>
                         </Link>
                         <Link
+                          to="/report"
+                          className="btn btn-sm btn-white border text-start d-flex align-items-center gap-2 py-2"
+                          onClick={() => setNavOpen(false)}
+                        >
+                          <i className="bi bi-exclamation-octagon text-danger"></i>
+                          <span>Report an Issue</span>
+                        </Link>
+                        <Link
                           to="/profile"
                           className="btn btn-sm btn-white border text-start d-flex align-items-center gap-2 py-2"
                           onClick={() => setNavOpen(false)}
                         >
                           <i className="bi bi-person-gear text-secondary"></i>
-                          <span>Profile Settings</span>
+                          <span>Profile</span>
                         </Link>
                       </>
                     )}
