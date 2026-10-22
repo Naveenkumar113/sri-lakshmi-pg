@@ -1008,3 +1008,189 @@ html, body {
 .has-bottom-bar-padding {
   padding-bottom: calc(54px + env(safe-area-inset-bottom, 0px)) !important;
 }
+
+/* ==========================================================================
+   Premium PG Auth Experience (Login & Register Split Screen)
+   ========================================================================== */
+.auth-page-wrapper {
+  min-height: calc(100vh - 72px);
+  background: #FFF9F3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+}
+
+@media (max-width: 576px) {
+  .auth-page-wrapper {
+    padding: 16px 12px 72px 12px;
+    background: #FFFDFC;
+  }
+}
+
+.auth-split-card {
+  width: 100%;
+  max-width: 1080px;
+  background: #FFFFFF;
+  border-radius: 24px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 20px 50px -15px rgba(16, 24, 40, 0.08), 0 0 1px 1px rgba(16, 24, 40, 0.04);
+  overflow: hidden;
+  display: flex;
+  position: relative;
+}
+
+@media (max-width: 991.98px) {
+  .auth-split-card {
+    max-width: 560px;
+    flex-direction: column;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px -10px rgba(16, 24, 40, 0.06);
+  }
+}
+
+/* Left Brand Hero Panel */
+.auth-hero-panel {
+  flex: 1.1;
+  position: relative;
+  background-color: #101828;
+  background-size: cover;
+  background-position: center;
+  color: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 44px 40px;
+  overflow: hidden;
+}
+
+.auth-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(16, 24, 40, 0.94) 0%, rgba(16, 24, 40, 0.82) 50%, rgba(244, 81, 11, 0.45) 100%);
+  z-index: 1;
+}
+
+.auth-hero-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: space-between;
+}
+
+.auth-feature-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: #FFFFFF;
+  transition: all 0.2s ease;
+}
+
+.auth-feature-pill:hover {
+  background: rgba(255, 255, 255, 0.14);
+  transform: translateX(4px);
+}
+
+.auth-feature-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(244, 81, 11, 0.25);
+  color: #FDBA74;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+/* Right Form Panel */
+.auth-form-panel {
+  flex: 1;
+  padding: 44px 44px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: #FFFFFF;
+}
+
+@media (max-width: 991.98px) {
+  .auth-hero-panel {
+    display: none;
+  }
+  .auth-form-panel {
+    padding: 32px 24px;
+  }
+}
+
+@media (max-width: 576px) {
+  .auth-form-panel {
+    padding: 24px 18px;
+  }
+}
+
+/* Mobile Branded Header inside Form Panel */
+.auth-mobile-header {
+  display: none;
+}
+
+@media (max-width: 991.98px) {
+  .auth-mobile-header {
+    display: block;
+  }
+}
+
+/* Custom Input and Button Heights */
+.auth-input-group .form-control {
+  height: 48px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  border: 1.5px solid #E2E8F0;
+  padding-left: 14px;
+  transition: all 0.2s ease;
+}
+
+.auth-input-group .form-control:focus {
+  border-color: #F4510B;
+  box-shadow: 0 0 0 3px rgba(244, 81, 11, 0.12);
+}
+
+.auth-btn-primary {
+  height: 48px;
+  background: #F4510B;
+  border: none;
+  border-radius: 12px;
+  color: #FFFFFF;
+  font-weight: 600;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(244, 81, 11, 0.3);
+  transition: all 0.25s ease;
+}
+
+.auth-btn-primary:hover:not(:disabled) {
+  background: #DC3802;
+  box-shadow: 0 6px 18px rgba(244, 81, 11, 0.4);
+  transform: translateY(-1px);
+  color: #FFFFFF;
+}
+
+.auth-btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.auth-btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  box-shadow: none;
+}
