@@ -392,13 +392,14 @@ export default function BusSeatMap({
 
       {/* Bus Seat Layout Deck Box */}
       <div
-        className="bus-deck-box p-2 p-md-3 rounded-4 border position-relative"
+        className="bus-deck-box p-2 rounded-3 border position-relative d-flex flex-column justify-content-between"
         style={{
           backgroundColor: '#F8FAFC',
-          border: '2px solid #E2E8F0',
+          border: '1px solid #E2E8F0',
           backgroundImage:
             'radial-gradient(#E2E8F0 1px, transparent 1px), radial-gradient(#E2E8F0 1px, #F8FAFC 1px)',
           backgroundSize: '16px 16px',
+          minHeight: compact ? '160px' : 'auto',
         }}
       >
         {/* Cabin Header Info */}

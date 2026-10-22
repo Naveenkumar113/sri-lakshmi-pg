@@ -42,8 +42,8 @@ export default function AdminLayout() {
   ];
 
   return (
-    <div className="d-flex min-vh-100 bg-light">
-      {/* Mobile Backdrop when sidebar is open */}
+    <div className="d-flex min-vh-100 bg-light position-relative">
+      {/* Mobile Backdrop when sidebar drawer is open */}
       {sidebarOpen && (
         <div
           className="admin-mobile-backdrop d-lg-none"
@@ -52,13 +52,15 @@ export default function AdminLayout() {
         />
       )}
 
-      {/* Modern Sidebar (Desktop & Mobile Slide-in Drawer) */}
+      {/* Modern Compact Sidebar (Desktop 230px, Collapsed 68px, Mobile 260px Slide-in Drawer) */}
       <aside
-        className={`text-white d-flex flex-column justify-content-between transition-all ${
+        className={`text-white d-flex flex-column justify-content-between ${
           sidebarOpen ? 'd-flex position-fixed h-100 shadow-lg' : 'd-none d-lg-flex'
         }`}
         style={{
-          width: desktopCollapsed ? '80px' : '260px',
+          width: desktopCollapsed ? '68px' : '230px',
+          minWidth: desktopCollapsed ? '68px' : '230px',
+          maxWidth: desktopCollapsed ? '68px' : '230px',
           backgroundColor: '#0A0F1D', // Deep navy/charcoal background
           borderRight: '1px solid rgba(255, 255, 255, 0.08)',
           zIndex: 1050,
@@ -67,34 +69,34 @@ export default function AdminLayout() {
           left: 0,
           bottom: 0,
           height: '100vh',
-          transition: 'width 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+          transition: 'width 0.2s ease, min-width 0.2s ease, max-width 0.2s ease',
         }}
       >
         <div className="d-flex flex-column h-100 overflow-hidden">
-          {/* Brand Header */}
+          {/* Compact Brand Header */}
           <div
-            className="d-flex align-items-center justify-content-between p-3 border-bottom border-white border-opacity-10"
-            style={{ minHeight: '68px' }}
+            className="d-flex align-items-center justify-content-between px-3 py-2 border-bottom border-white border-opacity-10"
+            style={{ height: '56px', minHeight: '56px' }}
           >
-            <div className="d-flex align-items-center gap-2.5 overflow-hidden">
+            <div className="d-flex align-items-center gap-2 overflow-hidden">
               <div
-                className="d-flex align-items-center justify-content-center text-white rounded-3 fw-bold flex-shrink-0 shadow-sm"
+                className="d-flex align-items-center justify-content-center text-white rounded-2 fw-bold flex-shrink-0 shadow-sm"
                 style={{
-                  width: '36px',
-                  height: '36px',
+                  width: '32px',
+                  height: '32px',
                   background: 'linear-gradient(135deg, #EA580C 0%, #C2410C 100%)',
-                  fontSize: '0.95rem',
+                  fontSize: '0.88rem',
                 }}
               >
                 SL
               </div>
               {!desktopCollapsed && (
                 <div className="overflow-hidden">
-                  <div className="fw-bold text-white small text-truncate" style={{ letterSpacing: '0.01em' }}>
-                    Sri Lakshmi PG Admin
+                  <div className="fw-bold text-white text-truncate lh-sm" style={{ fontSize: '0.84rem' }}>
+                    Sri Lakshmi PG
                   </div>
-                  <div className="text-white-50 small" style={{ fontSize: '0.68rem' }}>
-                    ERP Control Center
+                  <div className="text-white-50 text-truncate" style={{ fontSize: '0.65rem' }}>
+                    Admin ERP Panel
                   </div>
                 </div>
               )}
@@ -110,9 +112,9 @@ export default function AdminLayout() {
             </button>
           </div>
 
-          {/* Navigation Links List */}
+          {/* Navigation Items (Consistent 38px height, compact padding, scrollable) */}
           <nav
-            className="nav flex-column gap-1 p-2 flex-grow-1 overflow-auto"
+            className="nav flex-column gap-1 p-2 flex-grow-1 overflow-y-auto overflow-x-hidden"
             style={{ scrollbarWidth: 'thin' }}
           >
             {navSections.map((item) => (
@@ -125,8 +127,8 @@ export default function AdminLayout() {
                   const isCurrentActive =
                     isActive ||
                     (item.aliases && item.aliases.some((alias) => window.location.pathname.startsWith(alias)));
-                  return `d-flex align-items-center rounded-3 text-decoration-none transition-all px-3 py-2.5 ${
-                    desktopCollapsed ? 'justify-content-center px-0' : 'gap-3'
+                  return `d-flex align-items-center rounded-2 text-decoration-none transition-all ${
+                    desktopCollapsed ? 'justify-content-center px-0' : 'px-2.5 gap-2.5'
                   } ${
                     isCurrentActive
                       ? 'text-white fw-bold shadow-xs'
@@ -140,14 +142,16 @@ export default function AdminLayout() {
                   return {
                     backgroundColor: isCurrentActive ? 'rgba(234, 88, 12, 0.95)' : 'transparent',
                     borderLeft: isCurrentActive ? '3px solid #FDBA74' : '3px solid transparent',
-                    minHeight: '44px',
+                    height: '38px',
+                    minHeight: '38px',
                   };
                 }}
                 title={desktopCollapsed ? item.label : undefined}
+                aria-label={item.label}
               >
-                <i className={`bi bi-${item.icon} fs-5 flex-shrink-0`}></i>
+                <i className={`bi bi-${item.icon} fs-6 flex-shrink-0`} style={{ width: '18px', textAlign: 'center' }}></i>
                 {!desktopCollapsed && (
-                  <span className="small text-truncate" style={{ fontSize: '0.86rem' }}>
+                  <span className="text-truncate" style={{ fontSize: '0.82rem' }}>
                     {item.label}
                   </span>
                 )}
@@ -155,67 +159,75 @@ export default function AdminLayout() {
             ))}
           </nav>
 
-          {/* Sidebar Footer & Collapse Toggle */}
-          <div className="p-2 border-top border-white border-opacity-10 mt-auto bg-black bg-opacity-25">
-            {/* Desktop Collapse Option */}
+          {/* Compact Bottom Section: Collapse Toggle, Profile & Logout */}
+          <div className="p-2 border-top border-white border-opacity-10 mt-auto bg-black bg-opacity-25 d-flex flex-column gap-1.5">
+            {/* Collapse / Expand Toggle Button on Desktop */}
             <button
               type="button"
               onClick={() => setDesktopCollapsed(!desktopCollapsed)}
-              className="btn btn-sm text-white-50 hover-text-white w-100 d-none d-lg-flex align-items-center justify-content-center gap-2 py-2 mb-1 rounded-2"
-              style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}
+              className="btn btn-sm text-white-50 hover-text-white w-100 d-none d-lg-flex align-items-center justify-content-center gap-1.5 py-1 rounded-2"
+              style={{ backgroundColor: 'rgba(255,255,255,0.05)', height: '30px', fontSize: '0.74rem' }}
               title={desktopCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-label={desktopCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               <i className={`bi ${desktopCollapsed ? 'bi-chevron-double-right' : 'bi-chevron-double-left'}`}></i>
-              {!desktopCollapsed && <span className="small">Collapse Menu</span>}
+              {!desktopCollapsed && <span>Collapse Menu</span>}
             </button>
 
-            {/* Admin Profile Info */}
-            {!desktopCollapsed && (
-              <div className="px-2 py-1.5 mb-1 d-flex align-items-center justify-content-between">
-                <div className="overflow-hidden">
-                  <div className="small fw-semibold text-white text-truncate">{user.full_name}</div>
-                  <div className="text-white-50" style={{ fontSize: '0.68rem' }}>PG Management</div>
+            {/* Compact Admin Info & Logout in Single Clean Row */}
+            {!desktopCollapsed ? (
+              <div className="d-flex align-items-center justify-content-between px-1.5 py-1 bg-white bg-opacity-5 rounded-2">
+                <div className="overflow-hidden pe-1" style={{ maxWidth: '135px' }}>
+                  <div className="fw-semibold text-white text-truncate lh-1" style={{ fontSize: '0.78rem' }}>
+                    {user?.full_name || 'PG Admin'}
+                  </div>
+                  <span className="text-white-50" style={{ fontSize: '0.64rem' }}>
+                    Administrator
+                  </span>
                 </div>
-                <span className="badge bg-success-subtle text-success border border-success-subtle" style={{ fontSize: '0.65rem' }}>
-                  Admin
-                </span>
+                <button
+                  onClick={handleLogout}
+                  className="btn btn-sm btn-outline-danger p-0 d-flex align-items-center justify-content-center rounded-2"
+                  style={{ width: '28px', height: '28px' }}
+                  title="Logout"
+                  aria-label="Logout"
+                >
+                  <i className="bi bi-box-arrow-right fs-6"></i>
+                </button>
               </div>
+            ) : (
+              <button
+                onClick={handleLogout}
+                className="btn btn-sm btn-outline-danger p-0 d-flex align-items-center justify-content-center w-100 rounded-2"
+                style={{ height: '32px' }}
+                title="Logout"
+                aria-label="Logout"
+              >
+                <i className="bi bi-box-arrow-right fs-6"></i>
+              </button>
             )}
-
-            {/* Logout Button */}
-            <button
-              onClick={handleLogout}
-              className={`btn btn-sm btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2 py-2 ${
-                desktopCollapsed ? 'px-0' : ''
-              }`}
-              style={{ minHeight: '40px' }}
-              title="Logout from Admin ERP"
-            >
-              <i className="bi bi-box-arrow-right"></i>
-              {!desktopCollapsed && <span className="small fw-semibold">Logout</span>}
-            </button>
           </div>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-grow-1 d-flex flex-column overflow-hidden min-vh-100">
+      <div className="flex-grow-1 d-flex flex-column overflow-hidden min-vh-100" style={{ minWidth: 0 }}>
         {/* Top Header */}
-        <header className="bg-white border-bottom px-3 px-md-4 py-2.5 py-md-3 d-flex justify-content-between align-items-center sticky-top shadow-xs">
+        <header className="bg-white border-bottom px-3 px-md-4 py-2 d-flex justify-content-between align-items-center sticky-top shadow-xs" style={{ minHeight: '56px' }}>
           <div className="d-flex align-items-center gap-2 gap-md-3">
             <button
-              className="btn btn-outline-dark d-lg-none d-flex align-items-center justify-content-center p-2"
-              style={{ width: '42px', height: '42px' }}
+              className="btn btn-sm btn-outline-dark d-lg-none d-flex align-items-center justify-content-center p-1.5 rounded-2"
+              style={{ width: '36px', height: '36px' }}
               onClick={() => setSidebarOpen(!sidebarOpen)}
               aria-label="Toggle navigation drawer"
             >
-              <i className="bi bi-list fs-4"></i>
+              <i className="bi bi-list fs-5"></i>
             </button>
             <div>
-              <h5 className="fw-bold mb-0 text-dark" style={{ fontSize: '1.05rem' }}>
+              <h5 className="fw-bold mb-0 text-dark" style={{ fontSize: '1rem' }}>
                 Sri Lakshmi Srinivasa PG
               </h5>
-              <div className="text-muted small" style={{ fontSize: '0.72rem' }}>
+              <div className="text-muted small d-none d-sm-block" style={{ fontSize: '0.7rem' }}>
                 Administrative ERP Portal • Velachery, Chennai
               </div>
             </div>
@@ -225,7 +237,8 @@ export default function AdminLayout() {
             <NavLink
               to="/"
               target="_blank"
-              className="btn btn-sm btn-outline-secondary d-none d-sm-inline-flex align-items-center gap-1.5"
+              className="btn btn-sm btn-outline-secondary d-none d-sm-inline-flex align-items-center gap-1.5 py-1 px-2.5"
+              style={{ fontSize: '0.8rem' }}
             >
               <i className="bi bi-box-arrow-up-right"></i>
               <span>Public Website</span>
@@ -234,6 +247,7 @@ export default function AdminLayout() {
             <NavLink
               to="/admin/rent"
               className="btn btn-sm btn-pg-primary d-inline-flex align-items-center gap-1.5 py-1 px-3 shadow-xs"
+              style={{ fontSize: '0.8rem' }}
             >
               <i className="bi bi-currency-rupee"></i>
               <span className="d-none d-sm-inline">Rent Portal</span>

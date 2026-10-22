@@ -750,7 +750,7 @@ export default function AdminRooms() {
                   </div>
 
                   {/* Bus Seat-Selection Bed Map (RedBus Sleeper Berth Design) */}
-                  <div className="card-body p-3 bg-light">
+                  <div className="card-body p-3 bg-light d-flex flex-column justify-content-between flex-grow-1">
                     <BusSeatMap
                       room={room}
                       compact={true}
@@ -768,20 +768,22 @@ export default function AdminRooms() {
                     />
 
                     {/* Occupancy Summary Progress Bar */}
-                    <div className="d-flex justify-content-between align-items-center small mt-3 mb-1">
-                      <span className="fw-semibold text-secondary">
-                        Occupancy: {room.occupied_beds} / {room.capacity}
-                      </span>
-                      <span className="fw-bold text-success">
-                        Available Beds: {room.available_beds}
-                      </span>
-                    </div>
-                    <div className="progress" style={{ height: '6px', borderRadius: '4px' }}>
-                      <div
-                        className={`progress-bar ${isFull ? 'bg-danger' : isPartiallyAvailable ? 'bg-warning' : 'bg-success'}`}
-                        role="progressbar"
-                        style={{ width: `${room.occupancy_percentage || 0}%` }}
-                      ></div>
+                    <div className="mt-2 pt-1 border-top border-light-subtle">
+                      <div className="d-flex justify-content-between align-items-center small mb-1">
+                        <span className="fw-semibold text-secondary" style={{ fontSize: '0.78rem' }}>
+                          Occupancy: {room.occupied_beds} / {room.capacity}
+                        </span>
+                        <span className="fw-bold text-success" style={{ fontSize: '0.78rem' }}>
+                          Available Beds: {room.available_beds}
+                        </span>
+                      </div>
+                      <div className="progress" style={{ height: '6px', borderRadius: '4px' }}>
+                        <div
+                          className={`progress-bar ${isFull ? 'bg-danger' : isPartiallyAvailable ? 'bg-warning' : 'bg-success'}`}
+                          role="progressbar"
+                          style={{ width: `${room.occupancy_percentage || 0}%` }}
+                        ></div>
+                      </div>
                     </div>
                   </div>
 

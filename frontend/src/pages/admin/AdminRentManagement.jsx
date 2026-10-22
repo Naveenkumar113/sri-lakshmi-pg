@@ -13,8 +13,22 @@ export default function AdminRentManagement() {
   const [records, setRecords] = useState([]);
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(1);
-  const [limit] = useState(20);
+  const [limit, setLimit] = useState(10);
   const [rooms, setRooms] = useState([]);
+
+  // Collapsible 8 Summary Cards Overview (collapsed by default, remembered in session)
+  const [showOverview, setShowOverview] = useState(() => {
+    const saved = sessionStorage.getItem('pg_admin_rent_overview_expanded');
+    return saved === 'true'; // false by default on initial page load
+  });
+
+  const toggleOverview = () => {
+    setShowOverview((prev) => {
+      const next = !prev;
+      sessionStorage.setItem('pg_admin_rent_overview_expanded', next.toString());
+      return next;
+    });
+  };
 
   // Selected billing month (e.g. "2026-10")
   const currentMonthKey = new Date().toISOString().slice(0, 7); // "YYYY-MM"
@@ -155,21 +169,24 @@ export default function AdminRentManagement() {
 
   useEffect(() => {
     // Parallel execute independent requests
+    setPage(1);
     Promise.all([
       fetchStats(),
-      fetchRecords(),
       fetchRooms(),
       fetchSettings()
     ]);
   }, [selectedMonth]);
 
   useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter, roomFilter, selectedMonth]);
+
+  useEffect(() => {
     const timer = setTimeout(() => {
-      setPage(1);
       fetchRecords();
-    }, 250);
+    }, 200);
     return () => clearTimeout(timer);
-  }, [search, statusFilter, roomFilter]);
+  }, [page, limit, search, statusFilter, roomFilter, selectedMonth]);
 
   useEffect(() => {
     const recordId = searchParams.get('record_id');
@@ -555,8 +572,60 @@ export default function AdminRentManagement() {
         </button>
       </div>
 
-      {/* 8 Metric KPI Cards in Clean Structured 4x2 Grid (2-column on mobile, 4-column on desktop) */}
-      <div className="row g-2.5 g-md-3">
+      {/* Section Header with Collapsible Overview Toggle */}
+      <div className="bg-white p-3 rounded-4 border shadow-sm d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2.5">
+        <div>
+          <div className="d-flex align-items-center gap-2">
+            <h5 className="fw-bold mb-0 text-dark">Rent Overview & Analytics</h5>
+            <span className="badge bg-secondary-subtle text-secondary border px-2 py-0.5 small">
+              {stats?.month_name || selectedMonth}
+            </span>
+          </div>
+          <div className="text-muted small" style={{ fontSize: '0.75rem' }}>
+            Real-time billing statistics and resident payment collection summary.
+          </div>
+        </div>
+
+        {/* Compact Strip (Always visible) + Show/Hide Overview Button */}
+        <div className="d-flex flex-wrap align-items-center gap-2">
+          {/* Compact 4-metric strip when collapsed */}
+          <div className="d-flex align-items-center gap-2 bg-light px-2.5 py-1.5 rounded-3 border small">
+            <div className="d-flex align-items-center gap-1">
+              <span className="text-muted" style={{ fontSize: '0.72rem' }}>Expected:</span>
+              <strong className="text-dark">₹{(stats?.expected_rent || 0).toLocaleString()}</strong>
+            </div>
+            <span className="text-muted opacity-50">|</span>
+            <div className="d-flex align-items-center gap-1">
+              <span className="text-muted" style={{ fontSize: '0.72rem' }}>Collected:</span>
+              <strong className="text-success">₹{(stats?.collected_rent || 0).toLocaleString()}</strong>
+            </div>
+            <span className="text-muted opacity-50">|</span>
+            <div className="d-flex align-items-center gap-1">
+              <span className="text-muted" style={{ fontSize: '0.72rem' }}>Outstanding:</span>
+              <strong className="text-danger">₹{(stats?.outstanding_rent || 0).toLocaleString()}</strong>
+            </div>
+            <span className="text-muted opacity-50 d-none d-sm-inline">|</span>
+            <div className="d-none d-sm-flex align-items-center gap-1">
+              <span className="text-muted" style={{ fontSize: '0.72rem' }}>Overdue:</span>
+              <strong className="badge bg-danger rounded-pill px-1.5 py-0.5">{stats?.overdue_residents || 0}</strong>
+            </div>
+          </div>
+
+          <button
+            onClick={toggleOverview}
+            className={`btn btn-sm ${showOverview ? 'btn-outline-secondary' : 'btn-pg-primary'} d-inline-flex align-items-center gap-1.5 px-3 py-1.5 shadow-xs`}
+            style={{ minHeight: '36px', fontSize: '0.82rem' }}
+            title={showOverview ? 'Hide all 8 summary metric cards' : 'Expand full 8 summary cards'}
+          >
+            <i className={`bi ${showOverview ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
+            <span>{showOverview ? 'Hide Overview' : 'Show Overview'}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 8 Metric KPI Cards in Clean Structured 4x2 Grid (Collapsible, Smooth) */}
+      {showOverview && (
+        <div className="row g-2.5 g-md-3 animate-fade-in">
         {/* Card 1: Active Residents -> Navigates to /admin/residents */}
         <div className="col-6 col-md-3">
           <div
@@ -770,6 +839,7 @@ export default function AdminRentManagement() {
           </div>
         </div>
       </div>
+      )}
 
       {/* Tabs Navigation (Scrollable on small mobile) */}
       <div id="rent-tabs-section" className="bg-white rounded-4 border shadow-sm overflow-hidden">
@@ -1195,31 +1265,98 @@ export default function AdminRentManagement() {
           </>
         )}
 
-            {/* Pagination */}
-            {totalRecords > limit && (
-              <div className="d-flex justify-content-between align-items-center pt-3 border-top">
-                <span className="small text-muted">
-                  Showing {(page - 1) * limit + 1} to {Math.min(page * limit, totalRecords)} of {totalRecords} records
-                </span>
-                <div className="d-flex gap-1">
-                  <button
-                    disabled={page <= 1}
-                    onClick={() => setPage(page - 1)}
-                    className="btn btn-sm btn-outline-secondary"
-                  >
-                    Previous
-                  </button>
-                  <span className="btn btn-sm btn-light disabled fw-bold px-3">
-                    Page {page}
+            {/* Enhanced Pagination */}
+            {totalRecords > 0 && (
+              <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 pt-3 border-top mt-2">
+                <div className="d-flex align-items-center gap-2">
+                  <span className="small text-muted">
+                    Showing <strong className="text-dark">{(page - 1) * limit + 1}–{Math.min(page * limit, totalRecords)}</strong> of <strong className="text-dark">{totalRecords}</strong> residents
                   </span>
-                  <button
-                    disabled={page * limit >= totalRecords}
-                    onClick={() => setPage(page + 1)}
-                    className="btn btn-sm btn-outline-secondary"
-                  >
-                    Next
-                  </button>
+                  <div className="d-flex align-items-center gap-1 ms-2">
+                    <label htmlFor="rent-page-size" className="small text-muted" style={{ fontSize: '0.78rem' }}>Per page:</label>
+                    <select
+                      id="rent-page-size"
+                      className="form-select form-select-sm py-0.5 px-2"
+                      style={{ width: 'auto', fontSize: '0.8rem', height: '28px' }}
+                      value={limit}
+                      onChange={(e) => {
+                        setLimit(Number(e.target.value));
+                        setPage(1);
+                      }}
+                    >
+                      <option value={10}>10</option>
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                    </select>
+                  </div>
                 </div>
+
+                {Math.ceil(totalRecords / limit) > 1 && (
+                  <nav aria-label="Rent records pagination" className="d-flex align-items-center gap-1">
+                    <button
+                      disabled={page <= 1}
+                      onClick={() => setPage(page - 1)}
+                      className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1 px-2.5 py-1"
+                      style={{ minHeight: '30px', fontSize: '0.8rem' }}
+                      title="Previous page"
+                    >
+                      <i className="bi bi-chevron-left" style={{ fontSize: '0.75rem' }}></i>
+                      <span>Previous</span>
+                    </button>
+
+                    {/* Numbered Page Buttons with Ellipses */}
+                    <div className="d-flex align-items-center gap-1">
+                      {(() => {
+                        const totalPages = Math.ceil(totalRecords / limit);
+                        const pages = [];
+                        if (totalPages <= 7) {
+                          for (let i = 1; i <= totalPages; i++) pages.push(i);
+                        } else {
+                          pages.push(1);
+                          if (page > 3) pages.push('ellipsis-1');
+                          const start = Math.max(2, page - 1);
+                          const end = Math.min(totalPages - 1, page + 1);
+                          for (let i = start; i <= end; i++) pages.push(i);
+                          if (page < totalPages - 2) pages.push('ellipsis-2');
+                          pages.push(totalPages);
+                        }
+
+                        return pages.map((p, idx) => {
+                          if (typeof p === 'string') {
+                            return (
+                              <span key={`ellipsis-${idx}`} className="text-muted px-1 small user-select-none">
+                                …
+                              </span>
+                            );
+                          }
+                          const isActive = p === page;
+                          return (
+                            <button
+                              key={p}
+                              onClick={() => setPage(p)}
+                              className={`btn btn-sm px-2.5 py-0.5 ${isActive ? 'btn-pg-primary fw-bold text-white' : 'btn-outline-secondary'}`}
+                              style={{ minWidth: '30px', height: '30px', fontSize: '0.8rem' }}
+                              aria-current={isActive ? 'page' : undefined}
+                            >
+                              {p}
+                            </button>
+                          );
+                        });
+                      })()}
+                    </div>
+
+                    <button
+                      disabled={page >= Math.ceil(totalRecords / limit)}
+                      onClick={() => setPage(page + 1)}
+                      className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1 px-2.5 py-1"
+                      style={{ minHeight: '30px', fontSize: '0.8rem' }}
+                      title="Next page"
+                    >
+                      <span>Next</span>
+                      <i className="bi bi-chevron-right" style={{ fontSize: '0.75rem' }}></i>
+                    </button>
+                  </nav>
+                )}
               </div>
             )}
           </div>
