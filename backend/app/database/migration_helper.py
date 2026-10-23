@@ -75,6 +75,10 @@ def apply_auto_migrations(engine):
                 conn.execute(text("ALTER TABLE notifications ADD COLUMN report_id VARCHAR(36) REFERENCES issue_reports(id) ON DELETE SET NULL"))
             if "read_at" not in notif_cols:
                 conn.execute(text("ALTER TABLE notifications ADD COLUMN read_at TIMESTAMP"))
+            if "delivery_status" not in notif_cols:
+                conn.execute(text("ALTER TABLE notifications ADD COLUMN delivery_status VARCHAR(30) DEFAULT 'DELIVERED'"))
+            if "delivery_timestamp" not in notif_cols:
+                conn.execute(text("ALTER TABLE notifications ADD COLUMN delivery_timestamp TIMESTAMP"))
 
 
         # 7. For PostgreSQL, create sequence and partial unique index if supported

@@ -667,10 +667,27 @@ class NotificationResponse(BaseModel):
     is_read: bool
     read_at: Optional[datetime] = None
     link: Optional[str] = None
+    delivery_status: Optional[str] = "DELIVERED"
+    delivery_timestamp: Optional[datetime] = None
     created_at: datetime
 
     class Config:
         from_attributes = True
+
+
+class PushSubscriptionCreate(BaseModel):
+    endpoint: str
+    p256dh: str
+    auth: str
+    user_agent: Optional[str] = None
+
+
+class NotificationListResponse(BaseModel):
+    items: List[NotificationResponse]
+    total: int
+    unread_count: int
+    page: int = 1
+    page_size: int = 20
 
 
 # RENT & PAYMENT MANAGEMENT SCHEMAS

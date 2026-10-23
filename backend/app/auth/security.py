@@ -68,3 +68,12 @@ def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
             detail="Access restricted to authorized PG administrators only."
         )
     return current_user
+
+
+def decode_token_user_id(token: str) -> Optional[str]:
+    """Decodes JWT access token and returns user ID (subject) without raising HTTP exceptions."""
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload.get("sub")
+    except Exception:
+        return None

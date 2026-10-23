@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -16,6 +16,7 @@ from ..schemas.schemas import (
     ISSUE_CATEGORIES
 )
 from ..auth.security import get_current_user, get_current_admin
+from ..utils.realtime_manager import dispatch_admin_notification_sync
 
 logger = logging.getLogger(__name__)
 
@@ -111,10 +112,24 @@ def submit_issue_report(
     """
     Resident submits an issue report.
     Resident and room details are automatically populated from the server-side database.
-    Atomically saves the report and creates an in-app administrative notification.
+    Atomically saves the report, creates in-app administrative notifications, prevents duplicate submissions,
+    and dispatches real-time WebSocket, SSE, and Web Push notifications to PG administrators.
     """
-    resident, allocation, room, bed = _get_active_resident_allocation(current_user, db)
+    # 0. Deduplication guard: Check if an identical report was submitted within the last 60 seconds
+    cutoff = datetime.utcnow() - timedelta(seconds=60)
+    recent_duplicate = db.query(IssueReport).filter(
+        IssueReport.user_id == current_user.id,
+        IssueReport.issue_category == report_in.issue_category,
+        IssueReport.description == report_in.description,
+        IssueReport.status == "OPEN",
+        IssueReport.created_at >= cutoff
+    ).first()
 
+    if recent_duplicate:
+        logger.info(f"Duplicate issue report suppressed for user {current_user.id}. Returning existing report {recent_duplicate.report_code}")
+        return recent_duplicate
+
+    resident, allocation, room, bed = _get_active_resident_allocation(current_user, db)
     report_code = _generate_report_code(db)
 
     try:
@@ -135,20 +150,34 @@ def submit_issue_report(
         db.add(new_report)
         db.flush()  # Generates new_report.id within the current transaction
 
-        # Format room descriptor
-        room_str = f"Room {room.room_number}" if room else "No active bed"
-        bed_str = f"Bed {bed.bed_number}" if bed else ""
-        location_str = f"{room_str} ({bed_str})" if bed_str else room_str
+        # Format location descriptor (e.g. "Room S-2, Bed B1" or "Room 101 (Bed 2)")
+        if room and bed:
+            location_str = f"Room {room.room_number}, Bed {bed.bed_number}"
+        elif room:
+            location_str = f"Room {room.room_number}"
+        else:
+            location_str = "No active room"
 
-        # 1. In-app notification for admin: clickable directly to report in admin dashboard
+        now_utc = datetime.utcnow()
+
+        # 1. In-app persistent notification for admin: clickable directly to report in admin dashboard
+        # Format matches user specification: Title: 🔔 Sri Lakshmi PG — New Issue Report | Message: Room S-2, Bed B1 — Tap is not working
+        admin_title = f"🔔 Sri Lakshmi PG — New Issue Report #{report_code}"
+        admin_message = f"{location_str} — {report_in.issue_category}"
+        if report_in.description:
+            desc_snippet = (report_in.description[:60] + "...") if len(report_in.description) > 60 else report_in.description
+            admin_message = f"{location_str} — {desc_snippet}"
+
         admin_notif = Notification(
             user_id=None,
             for_admin=True,
-            title=f"New Issue Report — #{report_code}",
-            message=f"Resident: {current_user.full_name} | {location_str} | Issue: {report_in.issue_category} | Status: Open",
+            title=admin_title,
+            message=admin_message,
             notification_type="REPORT",
             report_id=new_report.id,
-            link=f"/admin/reports?report_id={new_report.id}"
+            link=f"/admin/reports?report_id={new_report.id}",
+            delivery_status="DELIVERED",
+            delivery_timestamp=now_utc
         )
         db.add(admin_notif)
 
@@ -160,13 +189,50 @@ def submit_issue_report(
             message=f"Your report regarding '{report_in.issue_category}' has been submitted and assigned to PG staff.",
             notification_type="REPORT",
             report_id=new_report.id,
-            link=f"/report?report_id={new_report.id}"
+            link=f"/report?report_id={new_report.id}",
+            delivery_status="DELIVERED",
+            delivery_timestamp=now_utc
         )
         db.add(user_notif)
 
         # Atomic commit of both report and notifications
         db.commit()
         db.refresh(new_report)
+        db.refresh(admin_notif)
+
+        # 3. Real-time broadcast to connected Admin WebSockets, SSE streams, and Web Push
+        notification_dict = {
+            "id": admin_notif.id,
+            "user_id": None,
+            "for_admin": True,
+            "title": admin_notif.title,
+            "message": admin_notif.message,
+            "notification_type": admin_notif.notification_type,
+            "report_id": new_report.id,
+            "link": admin_notif.link,
+            "is_read": False,
+            "read_at": None,
+            "delivery_status": admin_notif.delivery_status,
+            "delivery_timestamp": admin_notif.delivery_timestamp.isoformat() if admin_notif.delivery_timestamp else None,
+            "created_at": admin_notif.created_at.isoformat() if admin_notif.created_at else now_utc.isoformat()
+        }
+
+        issue_dict = {
+            "id": new_report.id,
+            "report_code": new_report.report_code,
+            "resident_name": new_report.resident_name,
+            "resident_phone": new_report.resident_phone,
+            "resident_code": new_report.resident_code,
+            "room_number": new_report.room_number,
+            "floor_number": new_report.floor_number,
+            "bed_number": new_report.bed_number,
+            "issue_category": new_report.issue_category,
+            "description": new_report.description,
+            "status": new_report.status,
+            "created_at": new_report.created_at.isoformat() if new_report.created_at else now_utc.isoformat()
+        }
+
+        dispatch_admin_notification_sync(notification_dict, issue_dict)
 
         return new_report
     except Exception as e:

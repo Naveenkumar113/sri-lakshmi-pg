@@ -21,7 +21,7 @@ from .api.facility_routes import router as facility_router, admin_router as faci
 from .api.gallery_routes import router as gallery_router, admin_router as gallery_admin_router
 from .api.pg_routes import router as pg_router, admin_router as pg_admin_router
 from .api.contact_routes import router as contact_router, admin_router as contact_admin_router
-from .api.notification_routes import router as notification_router
+from .api.notification_routes import router as notification_router, websocket_notifications
 from .api.admin_analytics_routes import router as admin_analytics_router
 from .api.rent_routes import router as rent_admin_router
 from .api.report_routes import router as report_router, admin_router as admin_report_router
@@ -100,6 +100,9 @@ app.include_router(admin_analytics_router)
 app.include_router(rent_admin_router)
 app.include_router(report_router)
 app.include_router(admin_report_router)
+
+# Realtime WebSocket alias endpoint
+app.websocket("/api/ws/notifications")(websocket_notifications)
 
 @app.get("/")
 def root():

@@ -257,10 +257,27 @@ class Notification(Base):
     is_read = Column(Boolean, default=False, index=True)
     read_at = Column(DateTime, nullable=True)
     link = Column(String(255), nullable=True)
+    delivery_status = Column(String(30), default="DELIVERED", nullable=False)  # PENDING, DELIVERED, FAILED
+    delivery_timestamp = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
     user = relationship("User", back_populates="notifications")
     report = relationship("IssueReport", foreign_keys=[report_id])
+
+
+class PushSubscription(Base):
+    __tablename__ = "push_subscriptions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
+    endpoint = Column(Text, unique=True, nullable=False, index=True)
+    p256dh = Column(Text, nullable=False)
+    auth = Column(Text, nullable=False)
+    user_agent = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_used_at = Column(DateTime, nullable=True)
+
+    user = relationship("User", foreign_keys=[user_id])
 
 
 class ContactMessage(Base):

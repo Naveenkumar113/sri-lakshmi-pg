@@ -12,6 +12,7 @@ __pycache__/
 .env
 *.db
 *.sqlite3
+vapid_keys.json
 
 # Build outputs
 dist/

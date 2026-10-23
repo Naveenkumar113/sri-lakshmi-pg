@@ -91,11 +91,20 @@ export default function AdminReports() {
   useEffect(() => {
     fetchReports();
 
-    // Background polling every 20 seconds so admin sees incoming resident reports automatically
+    // Instant real-time refresh when new report arrives via WebSocket/SSE
+    const handleNewReport = () => {
+      fetchReports();
+    };
+    window.addEventListener('pg-new-report', handleNewReport);
+
+    // Background polling fallback every 20 seconds
     const timer = setInterval(() => {
       fetchReports();
     }, 20000);
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('pg-new-report', handleNewReport);
+    };
   }, [statusFilter, categoryFilter, sortBy, directReportId]);
 
   useEffect(() => {

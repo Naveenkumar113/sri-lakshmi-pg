@@ -1,6 +1,7 @@
 import React, { useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { NotificationProvider } from './context/NotificationContext';
 
 // Components
 import Navbar from './components/Navbar';
@@ -82,9 +83,10 @@ function PublicLayout({ children }) {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <ScrollToTop />
-        <AuthRequiredModal />
+      <NotificationProvider>
+        <BrowserRouter>
+          <ScrollToTop />
+          <AuthRequiredModal />
 
         <Suspense fallback={<PageLoader />}>
           <Routes>
@@ -150,6 +152,7 @@ export default function App() {
           </Routes>
         </Suspense>
       </BrowserRouter>
+      </NotificationProvider>
     </AuthProvider>
   );
 }

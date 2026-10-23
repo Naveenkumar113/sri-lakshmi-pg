@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, Outlet, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ErrorBoundary from '../components/ErrorBoundary';
+import AdminNotificationBell from '../components/AdminNotificationBell';
 
 export default function AdminLayout() {
   const { user, isAuthenticated, isAdmin, loading, logout } = useAuth();
@@ -287,6 +288,9 @@ export default function AdminLayout() {
           </div>
 
           <div className="d-flex align-items-center gap-2">
+            {/* Real-time Notification Bell & Interactive Center */}
+            <AdminNotificationBell />
+
             <NavLink
               to="/"
               target="_blank"
