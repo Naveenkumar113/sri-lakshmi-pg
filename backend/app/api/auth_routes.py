@@ -39,32 +39,39 @@ def register(request: Request, user_in: UserRegister, db: Session = Depends(get_
         address=user_in.address,
         is_active=True
     )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    try:
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
 
-    # In-app welcome notification
-    welcome_notif = Notification(
-        user_id=new_user.id,
-        for_admin=False,
-        title="Welcome to Sri Lakshmi Srinivasa Gents PG!",
-        message=f"Welcome {new_user.full_name}. You can now schedule visits and request room bookings seamlessly.",
-        notification_type="USER",
-        link="/dashboard"
-    )
-    db.add(welcome_notif)
+        # In-app welcome notification
+        welcome_notif = Notification(
+            user_id=new_user.id,
+            for_admin=False,
+            title="Welcome to Sri Lakshmi Srinivasa Gents PG!",
+            message=f"Welcome {new_user.full_name}. You can now schedule visits and request room bookings seamlessly.",
+            notification_type="USER",
+            link="/dashboard"
+        )
+        db.add(welcome_notif)
 
-    # Admin notification
-    admin_notif = Notification(
-        user_id=None,
-        for_admin=True,
-        title="New User Registration",
-        message=f"{new_user.full_name} ({new_user.email}) registered an account.",
-        notification_type="USER",
-        link="/admin/users"
-    )
-    db.add(admin_notif)
-    db.commit()
+        # Admin notification
+        admin_notif = Notification(
+            user_id=None,
+            for_admin=True,
+            title="New User Registration",
+            message=f"{new_user.full_name} ({new_user.email}) registered an account.",
+            notification_type="USER",
+            link="/admin/users"
+        )
+        db.add(admin_notif)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database persistence error during registration. User was not saved."
+        )
 
     access_token = create_access_token({"sub": new_user.id, "role": new_user.role, "email": new_user.email})
     return {

@@ -215,7 +215,7 @@ export default function Login() {
                   id="login-email"
                   type="email"
                   autoComplete="username"
-                  className={`form-control ps-4 ${validationErrors.email ? 'is-invalid' : ''}`}
+                  className={`form-control ps-5 ${validationErrors.email ? 'is-invalid' : ''}`}
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => {
@@ -226,7 +226,7 @@ export default function Login() {
                   }}
                 />
                 <i
-                  className="bi bi-envelope text-muted position-absolute top-50 translate-middle-y ms-2.5"
+                  className="bi bi-envelope text-muted position-absolute top-50 translate-middle-y start-0 ms-3"
                   style={{ pointerEvents: 'none' }}
                 ></i>
               </div>
@@ -256,7 +256,7 @@ export default function Login() {
                   id="login-password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
-                  className={`form-control ps-4 pe-5 ${validationErrors.password ? 'is-invalid' : ''}`}
+                  className={`form-control ps-5 pe-5 ${validationErrors.password ? 'is-invalid' : ''}`}
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => {
@@ -267,7 +267,7 @@ export default function Login() {
                   }}
                 />
                 <i
-                  className="bi bi-lock text-muted position-absolute top-50 translate-middle-y ms-2.5"
+                  className="bi bi-lock text-muted position-absolute top-50 translate-middle-y start-0 ms-3"
                   style={{ pointerEvents: 'none' }}
                 ></i>
                 <button

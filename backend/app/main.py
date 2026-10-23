@@ -113,7 +113,30 @@ def root():
 
 @app.get("/api/health")
 def health_check():
-    return {"status": "healthy", "service": "sri-lakshmi-pg-api"}
+    from sqlalchemy import text
+    db_info = {
+        "status": "healthy",
+        "service": "sri-lakshmi-pg-api"
+    }
+    try:
+        url = engine.url
+        db_info["database"] = {
+            "dialect": url.drivername,
+            "host": url.host or "local",
+            "port": url.port,
+            "database_name": url.database
+        }
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1;"))
+            db_info["database"]["connected"] = True
+    except Exception as e:
+        db_info["database"] = {
+            "connected": False,
+            "error": str(e)
+        }
+        db_info["status"] = "degraded"
+    return db_info
+
 
 # Global Exception handler to return clean user-friendly JSON without swallowing HTTP errors
 @app.exception_handler(Exception)

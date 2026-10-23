@@ -8,6 +8,11 @@ export default function Auth3DCanvas() {
     const container = mountRef.current;
     if (!container) return;
 
+    // Do not initialize heavy 3D WebGL context on mobile/tablet viewports where hero panel is hidden
+    if (window.innerWidth < 992) {
+      return;
+    }
+
     // Dimensions
     const width = container.clientWidth || 480;
     const height = container.clientHeight || 560;

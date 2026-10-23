@@ -227,12 +227,12 @@ export default function Register() {
                     type="text"
                     required
                     placeholder="e.g. Karthik Ramanathan"
-                    className="form-control ps-4"
+                    className="form-control ps-5"
                     value={formData.full_name}
                     onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                   />
                   <i
-                    className="bi bi-person text-muted position-absolute top-50 translate-middle-y ms-2.5"
+                    className="bi bi-person text-muted position-absolute top-50 translate-middle-y start-0 ms-3"
                     style={{ pointerEvents: 'none' }}
                   ></i>
                 </div>
@@ -250,7 +250,7 @@ export default function Register() {
                     maxLength={10}
                     required
                     placeholder="10-digit mobile number"
-                    className={`form-control ps-4 ${
+                    className={`form-control ps-5 ${
                       formData.phone ? (formData.phone.length === 10 ? 'is-valid' : 'is-invalid') : ''
                     }`}
                     value={formData.phone}
@@ -260,7 +260,7 @@ export default function Register() {
                     }}
                   />
                   <i
-                    className="bi bi-telephone text-muted position-absolute top-50 translate-middle-y ms-2.5"
+                    className="bi bi-telephone text-muted position-absolute top-50 translate-middle-y start-0 ms-3"
                     style={{ pointerEvents: 'none' }}
                   ></i>
                 </div>
@@ -276,12 +276,12 @@ export default function Register() {
                     type="email"
                     required
                     placeholder="name@example.com"
-                    className="form-control ps-4"
+                    className="form-control ps-5"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   />
                   <i
-                    className="bi bi-envelope text-muted position-absolute top-50 translate-middle-y ms-2.5"
+                    className="bi bi-envelope text-muted position-absolute top-50 translate-middle-y start-0 ms-3"
                     style={{ pointerEvents: 'none' }}
                   ></i>
                 </div>
@@ -297,12 +297,12 @@ export default function Register() {
                     type={showPassword ? 'text' : 'password'}
                     required
                     placeholder="At least 6 characters"
-                    className="form-control ps-4 pe-5"
+                    className="form-control ps-5 pe-5"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   />
                   <i
-                    className="bi bi-lock text-muted position-absolute top-50 translate-middle-y ms-2.5"
+                    className="bi bi-lock text-muted position-absolute top-50 translate-middle-y start-0 ms-3"
                     style={{ pointerEvents: 'none' }}
                   ></i>
                   <button

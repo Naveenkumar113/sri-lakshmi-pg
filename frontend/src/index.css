@@ -1172,8 +1172,11 @@ html, body {
   border-radius: 12px;
   font-size: 0.95rem;
   border: 1.5px solid #E2E8F0;
-  padding-left: 14px;
   transition: all 0.2s ease;
+}
+
+.auth-input-group .form-control.ps-5 {
+  padding-left: 2.75rem !important;
 }
 
 .auth-input-group .form-control:focus {
