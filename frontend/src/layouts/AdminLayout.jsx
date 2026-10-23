@@ -35,7 +35,7 @@ export default function AdminLayout() {
     { to: '/admin/rooms', icon: 'building', label: 'Rooms & Beds' },
     { to: '/admin/residents', icon: 'person-badge', label: 'Residents' },
     { to: '/admin/bookings', icon: 'door-open', label: 'Bookings & Visits', aliases: ['/admin/visits'] },
-    { to: '/admin/reports', icon: 'exclamation-octagon', label: 'Issue Reports' },
+    { to: '/admin/reports', icon: 'exclamation-octagon', label: 'Issue Reports', aliases: ['/admin/issue-reports'] },
     { to: '/admin/facilities', icon: 'stars', label: 'Facilities & Gallery', aliases: ['/admin/gallery'] },
     { to: '/admin/pg-details', icon: 'pencil-square', label: 'PG Information' },
     { to: '/admin/messages', icon: 'chat-left-dots', label: 'Contact Inquiries' },

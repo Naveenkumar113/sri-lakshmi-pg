@@ -160,26 +160,50 @@ def submit_issue_report(
 
         now_utc = datetime.utcnow()
 
-        # 1. In-app persistent notification for admin: clickable directly to report in admin dashboard
-        # Format matches user specification: Title: 🔔 Sri Lakshmi PG — New Issue Report | Message: Room S-2, Bed B1 — Tap is not working
-        admin_title = f"🔔 Sri Lakshmi PG — New Issue Report #{report_code}"
-        admin_message = f"{location_str} — {report_in.issue_category}"
-        if report_in.description:
-            desc_snippet = (report_in.description[:60] + "...") if len(report_in.description) > 60 else report_in.description
-            admin_message = f"{location_str} — {desc_snippet}"
+        # 1. In-app persistent notification for admin:
+        # Title: New Maintenance Issue Reported — #REP-202610-XXXX
+        # Message: Naveen Kumar reported an Electrical Issue — Room 7 Sharing, Bed B2.
+        resident_display = current_user.full_name or "A resident"
+        admin_title = f"🔔 Sri Lakshmi PG — New Issue Report: New Maintenance Issue Reported — #{report_code}"
+        admin_message = f"{resident_display} reported a {report_in.issue_category} — {location_str}."
+        if report_in.description and report_in.description.strip():
+            desc_clean = report_in.description.strip()
+            desc_short = (desc_clean[:70] + "...") if len(desc_clean) > 70 else desc_clean
+            admin_message = f"{resident_display} reported a {report_in.issue_category} — {location_str}: \"{desc_short}\""
 
-        admin_notif = Notification(
-            user_id=None,
-            for_admin=True,
-            title=admin_title,
-            message=admin_message,
-            notification_type="REPORT",
-            report_id=new_report.id,
-            link=f"/admin/reports?report_id={new_report.id}",
-            delivery_status="DELIVERED",
-            delivery_timestamp=now_utc
-        )
-        db.add(admin_notif)
+        # Associate notifications directly with active PG administrators
+        admins = db.query(User).filter(User.role == "ADMIN", User.is_active == True).all()
+        created_admin_notifs = []
+
+        if admins:
+            for adm in admins:
+                an = Notification(
+                    user_id=adm.id,
+                    for_admin=True,
+                    title=admin_title,
+                    message=admin_message,
+                    notification_type="REPORT",
+                    report_id=new_report.id,
+                    link=f"/admin/reports?report_id={new_report.id}",
+                    delivery_status="DELIVERED",
+                    delivery_timestamp=now_utc
+                )
+                db.add(an)
+                created_admin_notifs.append(an)
+        else:
+            an = Notification(
+                user_id=None,
+                for_admin=True,
+                title=admin_title,
+                message=admin_message,
+                notification_type="REPORT",
+                report_id=new_report.id,
+                link=f"/admin/reports?report_id={new_report.id}",
+                delivery_status="DELIVERED",
+                delivery_timestamp=now_utc
+            )
+            db.add(an)
+            created_admin_notifs.append(an)
 
         # 2. In-app notification for resident: confirmation in user portal
         user_notif = Notification(
@@ -198,23 +222,25 @@ def submit_issue_report(
         # Atomic commit of both report and notifications
         db.commit()
         db.refresh(new_report)
-        db.refresh(admin_notif)
+        for an in created_admin_notifs:
+            db.refresh(an)
 
         # 3. Real-time broadcast to connected Admin WebSockets, SSE streams, and Web Push
+        primary_admin_notif = created_admin_notifs[0]
         notification_dict = {
-            "id": admin_notif.id,
-            "user_id": None,
+            "id": primary_admin_notif.id,
+            "user_id": primary_admin_notif.user_id,
             "for_admin": True,
-            "title": admin_notif.title,
-            "message": admin_notif.message,
-            "notification_type": admin_notif.notification_type,
+            "title": primary_admin_notif.title,
+            "message": primary_admin_notif.message,
+            "notification_type": primary_admin_notif.notification_type,
             "report_id": new_report.id,
-            "link": admin_notif.link,
+            "link": primary_admin_notif.link,
             "is_read": False,
             "read_at": None,
-            "delivery_status": admin_notif.delivery_status,
-            "delivery_timestamp": admin_notif.delivery_timestamp.isoformat() if admin_notif.delivery_timestamp else None,
-            "created_at": admin_notif.created_at.isoformat() if admin_notif.created_at else now_utc.isoformat()
+            "delivery_status": primary_admin_notif.delivery_status,
+            "delivery_timestamp": primary_admin_notif.delivery_timestamp.isoformat() if primary_admin_notif.delivery_timestamp else None,
+            "created_at": primary_admin_notif.created_at.isoformat() if primary_admin_notif.created_at else now_utc.isoformat()
         }
 
         issue_dict = {

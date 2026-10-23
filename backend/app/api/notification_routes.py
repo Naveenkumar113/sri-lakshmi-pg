@@ -49,7 +49,10 @@ def get_notifications(
     """
     if current_user.role == "ADMIN":
         query = db.query(Notification).filter(
-            or_(Notification.for_admin == True, Notification.user_id == current_user.id)
+            or_(
+                Notification.user_id == current_user.id,
+                (Notification.for_admin == True) & (Notification.user_id == None)
+            )
         )
     else:
         query = db.query(Notification).filter(
@@ -73,7 +76,10 @@ def get_notifications(
 
     total = query.count()
     unread_count = db.query(Notification).filter(
-        or_(Notification.for_admin == True, Notification.user_id == current_user.id) if current_user.role == "ADMIN"
+        or_(
+            Notification.user_id == current_user.id,
+            (Notification.for_admin == True) & (Notification.user_id == None)
+        ) if current_user.role == "ADMIN"
         else Notification.user_id == current_user.id,
         Notification.is_read == False
     ).count()
@@ -104,6 +110,8 @@ def get_paginated_notifications(
     db: Session = Depends(get_db)
 ):
     """Explicit paginated endpoint for admin notification center."""
+    if current_user.role != "ADMIN":
+        raise HTTPException(status_code=403, detail="Admin access required.")
     return get_notifications(
         paginated=True,
         page=page,
@@ -124,7 +132,10 @@ def get_unread_count(
     """Returns number of unread notifications for current user/admin."""
     if current_user.role == "ADMIN":
         count = db.query(Notification).filter(
-            or_(Notification.for_admin == True, Notification.user_id == current_user.id),
+            or_(
+                Notification.user_id == current_user.id,
+                (Notification.for_admin == True) & (Notification.user_id == None)
+            ),
             Notification.is_read == False
         ).count()
     else:
@@ -132,7 +143,7 @@ def get_unread_count(
             Notification.user_id == current_user.id,
             Notification.is_read == False
         ).count()
-    return {"unread_count": count}
+    return {"unread_count": count, "count": count}
 
 
 @router.put("/{notif_id}/read")
@@ -154,7 +165,13 @@ def mark_notification_as_read(
     notif.is_read = True
     notif.read_at = datetime.utcnow()
     db.commit()
-    return {"message": "Notification marked as read.", "id": notif.id, "link": notif.link}
+    return {
+        "message": "Notification marked as read.",
+        "id": notif.id,
+        "is_read": True,
+        "read_at": notif.read_at.isoformat(),
+        "link": notif.link
+    }
 
 
 @router.put("/read-all")
@@ -167,7 +184,10 @@ def mark_all_read(
     now = datetime.utcnow()
     if current_user.role == "ADMIN":
         db.query(Notification).filter(
-            or_(Notification.for_admin == True, Notification.user_id == current_user.id),
+            or_(
+                Notification.user_id == current_user.id,
+                (Notification.for_admin == True) & (Notification.user_id == None)
+            ),
             Notification.is_read == False
         ).update({"is_read": True, "read_at": now}, synchronize_session=False)
     else:

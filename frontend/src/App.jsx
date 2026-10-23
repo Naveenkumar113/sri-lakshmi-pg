@@ -130,6 +130,7 @@ export default function App() {
               <Route path="pg-details" element={<AdminPGDetails />} />
               <Route path="messages" element={<AdminMessages />} />
               <Route path="reports" element={<AdminReports />} />
+              <Route path="issue-reports" element={<AdminReports />} />
               <Route path="notifications" element={<AdminNotifications />} />
               <Route path="profile" element={<AdminProfile />} />
               <Route path="settings" element={<AdminSettings />} />

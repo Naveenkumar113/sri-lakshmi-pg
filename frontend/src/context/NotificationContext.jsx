@@ -8,10 +8,33 @@ import {
   setDesktopNotificationPreference,
   requestDesktopNotificationPermission,
   showIssueReportNotification,
-  subscribeAdminToWebPush,
+  playNotificationChime,
 } from '../services/desktopNotificationService';
 
 const NotificationContext = createContext(null);
+
+const getAuthToken = () => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('pg_auth_token') || localStorage.getItem('token');
+};
+
+const getBackendWsUrl = (authToken) => {
+  let apiBase = api.defaults.baseURL || 'http://127.0.0.1:8000/api';
+  if (typeof window !== 'undefined' && (apiBase.startsWith('/') || !apiBase.startsWith('http'))) {
+    apiBase = `${window.location.origin}${apiBase}`;
+  }
+  const wsBase = apiBase.replace(/^http/, 'ws').replace(/\/api\/?$/, '');
+  return `${wsBase}/api/ws/notifications?token=${encodeURIComponent(authToken)}`;
+};
+
+const getBackendSseUrl = (authToken) => {
+  let apiBase = api.defaults.baseURL || 'http://127.0.0.1:8000/api';
+  if (typeof window !== 'undefined' && (apiBase.startsWith('/') || !apiBase.startsWith('http'))) {
+    apiBase = `${window.location.origin}${apiBase}`;
+  }
+  const httpBase = apiBase.replace(/\/api\/?$/, '');
+  return `${httpBase}/api/notifications/stream?token=${encodeURIComponent(authToken)}`;
+};
 
 export function NotificationProvider({ children }) {
   const { user, isAuthenticated, isAdmin } = useAuth();
@@ -25,24 +48,69 @@ export function NotificationProvider({ children }) {
   const wsRef = useRef(null);
   const sseRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
-  const token = localStorage.getItem('token');
+  const prevUnreadIdsRef = useRef(null);
 
-  // Fetch initial unread count and latest 20 notifications
-  const refreshNotifications = useCallback(async () => {
-    if (!isAuthenticated) return;
-    try {
-      const [countRes, listRes] = await Promise.all([
-        api.get('/notifications/unread-count'),
-        api.get('/notifications?limit=25'),
-      ]);
-      setUnreadCount(countRes.data?.unread_count || 0);
-      setNotifications(Array.isArray(listRes.data) ? listRes.data : listRes.data?.items || []);
-    } catch (err) {
-      console.warn('Failed to refresh notifications:', err);
-    }
-  }, [isAuthenticated]);
+  // Fetch unread count and latest 25 notifications
+  const refreshNotifications = useCallback(
+    async (isPolling = false) => {
+      const token = getAuthToken();
+      if (!isAuthenticated || !token) return;
 
-  // Initial permission check
+      try {
+        const [countRes, listRes] = await Promise.all([
+          api.get('/notifications/unread-count'),
+          api.get('/notifications?limit=25'),
+        ]);
+
+        const count = countRes.data?.unread_count || 0;
+        const rawList = Array.isArray(listRes.data) ? listRes.data : listRes.data?.items || [];
+
+        setUnreadCount(count);
+        setNotifications(rawList);
+
+        // Detect newly arrived unread notifications during polling fallback
+        const currentUnreadIds = new Set(rawList.filter((n) => !n.is_read).map((n) => n.id));
+
+        if (prevUnreadIdsRef.current !== null && isPolling) {
+          const newlyArrived = rawList.filter(
+            (n) => !n.is_read && !prevUnreadIdsRef.current.has(n.id)
+          );
+
+          if (newlyArrived.length > 0) {
+            playNotificationChime();
+
+            // Trigger native notification for the most recent unread report
+            newlyArrived.slice(0, 2).forEach((notif) => {
+              showIssueReportNotification({
+                id: notif.id,
+                report_code: notif.report_id,
+                resident_name: '',
+                room_number: '',
+                bed_number: '',
+                issue_category: notif.title,
+                description: notif.message,
+                link: notif.link || `/admin/reports?report_id=${notif.report_id}`,
+              });
+            });
+
+            // Dispatch global event so AdminReports auto-refreshes
+            window.dispatchEvent(
+              new CustomEvent('pg-new-report', {
+                detail: { count, notifications: newlyArrived },
+              })
+            );
+          }
+        }
+
+        prevUnreadIdsRef.current = currentUnreadIds;
+      } catch (err) {
+        console.warn('Failed to refresh notifications:', err);
+      }
+    },
+    [isAuthenticated]
+  );
+
+  // Check initial desktop notification permissions
   useEffect(() => {
     if (isNotificationSupported()) {
       setPermission(getNotificationPermission());
@@ -50,18 +118,20 @@ export function NotificationProvider({ children }) {
     }
   }, []);
 
-  // Sync notifications on authentication or role change
+  // Sync on login/logout
   useEffect(() => {
     if (isAuthenticated) {
-      refreshNotifications();
+      refreshNotifications(false);
     } else {
       setNotifications([]);
       setUnreadCount(0);
+      prevUnreadIdsRef.current = null;
     }
   }, [isAuthenticated, refreshNotifications]);
 
-  // Real-time WebSocket connection for administrators
+  // Real-Time Delivery Pipeline (WebSockets + SSE Fallback + Resilient Polling)
   useEffect(() => {
+    const token = getAuthToken();
     if (!isAuthenticated || !isAdmin || !token) {
       if (wsRef.current) {
         wsRef.current.close();
@@ -79,10 +149,7 @@ export function NotificationProvider({ children }) {
 
     const connectWebSocket = () => {
       try {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const host = window.location.hostname === 'localhost' ? 'localhost:8000' : window.location.host;
-        const wsUrl = `${protocol}//${host}/api/ws/notifications?token=${encodeURIComponent(token)}`;
-
+        const wsUrl = getBackendWsUrl(token);
         const socket = new WebSocket(wsUrl);
         wsRef.current = socket;
 
@@ -105,7 +172,14 @@ export function NotificationProvider({ children }) {
               setNotifications((prev) => [notif, ...prev.filter((n) => n.id !== notif.id)]);
               setUnreadCount((prev) => prev + 1);
 
-              // Trigger native browser notification
+              if (prevUnreadIdsRef.current) {
+                prevUnreadIdsRef.current.add(notif.id);
+              }
+
+              // Play pleasant audio chime
+              playNotificationChime();
+
+              // Trigger native desktop or mobile notification
               showIssueReportNotification({
                 id: notif.id,
                 report_code: issue?.report_code,
@@ -117,7 +191,7 @@ export function NotificationProvider({ children }) {
                 link: notif.link || `/admin/reports?report_id=${notif.report_id}`,
               });
 
-              // Dispatch global event so AdminReports table auto-refreshes
+              // Dispatch event so AdminReports table auto-refreshes
               window.dispatchEvent(
                 new CustomEvent('pg-new-report', {
                   detail: { issue, notification: notif },
@@ -130,7 +204,7 @@ export function NotificationProvider({ children }) {
         };
 
         socket.onerror = (err) => {
-          console.warn('WebSocket error, falling back to SSE:', err);
+          console.warn('WebSocket error, falling back to SSE stream:', err);
           setIsRealtimeConnected(false);
           startSSEFallback();
         };
@@ -142,7 +216,7 @@ export function NotificationProvider({ children }) {
           reconnectTimeoutRef.current = setTimeout(connectWebSocket, 5000);
         };
       } catch (e) {
-        console.warn('Could not establish WebSocket, using SSE fallback:', e);
+        console.warn('Could not establish WebSocket, trying SSE fallback:', e);
         startSSEFallback();
       }
     };
@@ -150,7 +224,7 @@ export function NotificationProvider({ children }) {
     const startSSEFallback = () => {
       if (sseRef.current || !isSubscribed) return;
       try {
-        const sseUrl = `/api/notifications/stream?token=${encodeURIComponent(token)}`;
+        const sseUrl = getBackendSseUrl(token);
         const eventSource = new EventSource(sseUrl);
         sseRef.current = eventSource;
 
@@ -167,6 +241,9 @@ export function NotificationProvider({ children }) {
               const issue = data.issue;
               setNotifications((prev) => [notif, ...prev.filter((n) => n.id !== notif.id)]);
               setUnreadCount((prev) => prev + 1);
+
+              playNotificationChime();
+
               showIssueReportNotification({
                 id: notif.id,
                 report_code: issue?.report_code,
@@ -177,7 +254,10 @@ export function NotificationProvider({ children }) {
                 description: issue?.description,
                 link: notif.link,
               });
-              window.dispatchEvent(new CustomEvent('pg-new-report', { detail: { issue, notification: notif } }));
+
+              window.dispatchEvent(
+                new CustomEvent('pg-new-report', { detail: { issue, notification: notif } })
+              );
             }
           } catch (e) {
             console.warn('SSE parse error:', e);
@@ -195,19 +275,43 @@ export function NotificationProvider({ children }) {
 
     connectWebSocket();
 
-    // 30-second poll backup to keep unread counter synchronized
-    const syncInterval = setInterval(() => {
-      refreshNotifications();
-    }, 30000);
+    // High-resilience proactive polling interval:
+    // Polls every 6 seconds when tab is active, 15 seconds when backgrounded
+    let pollIntervalMs = document.hidden ? 15000 : 6000;
+    let pollTimer = setInterval(() => {
+      refreshNotifications(true);
+    }, pollIntervalMs);
+
+    const handleVisibilityChange = () => {
+      clearInterval(pollTimer);
+      pollIntervalMs = document.hidden ? 15000 : 6000;
+      pollTimer = setInterval(() => {
+        refreshNotifications(true);
+      }, pollIntervalMs);
+
+      // Instantly refresh when returning to tab
+      if (!document.hidden) {
+        refreshNotifications(true);
+      }
+    };
+
+    const handleWindowFocus = () => {
+      refreshNotifications(true);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleWindowFocus);
 
     return () => {
       isSubscribed = false;
       if (wsRef.current) wsRef.current.close();
       if (sseRef.current) sseRef.current.close();
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
-      clearInterval(syncInterval);
+      clearInterval(pollTimer);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleWindowFocus);
     };
-  }, [isAuthenticated, isAdmin, token, refreshNotifications]);
+  }, [isAuthenticated, isAdmin, refreshNotifications]);
 
   // Request browser permission for native alerts and Web Push
   const enableDesktopNotifications = async () => {
